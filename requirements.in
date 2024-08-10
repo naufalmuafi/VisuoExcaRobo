@@ -1,5 +1,4 @@
 pip-tools
-numpy
 gymnasium
 stable-baselines3
 tensorboard

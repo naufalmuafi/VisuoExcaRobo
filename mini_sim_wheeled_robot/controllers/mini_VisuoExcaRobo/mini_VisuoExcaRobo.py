@@ -40,7 +40,6 @@ def train_PPO(env: gym.Env, model_dir: str, log_dir: str, timesteps) -> None:
     # use MLP policy for observation space 1D-vector
     print("Training the model with PPO...")
     model = PPO("CnnPolicy", env, verbose=1, tensorboard_log=log_dir)
-    # model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log=log_dir)
 
     # train and save the model
     model.learn(total_timesteps=timesteps)
