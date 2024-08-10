@@ -28,7 +28,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         )
 
         # set the max_speed of the motors
-        self.max_speed = 1.3
+        self.max_speed = 5
 
         # set the threshold of the target area
         self.target_threshold = 0.35
