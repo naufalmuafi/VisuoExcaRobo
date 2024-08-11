@@ -1,0 +1,24 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "../protos/excavator.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.20391839606472126 0.2907440448875969 0.9348182647492455 1.2873634252689068
+  position 0.6985874776894979 -18.80094084213045 10.285771225603368
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 1.5 1.5
+}
+excavator {
+  translation 5.62472 2.21452 1.77636e-15
+  controller "exca_cont"
+}

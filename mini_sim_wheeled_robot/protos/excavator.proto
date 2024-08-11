@@ -1,19 +1,19 @@
 #VRML_SIM R2023b utf8
 # license: Apache License 2.0
 # license url: http://www.apache.org/licenses/LICENSE-2.0
-# This is a proto file for Webots for the excavator_wo_normal
-# Extracted from: D:\Users\Muafi\Documents\NAUFAL MU'AFI\Universitas Gadjah Mada\Skripsi\VisuoExcaRobo\aba_excavator\excavator.urdf
+# This is a proto file for Webots for the excavator
+# Extracted from: D:\Users\Muafi\Documents\NAUFAL MU'AFI\Universitas Gadjah Mada\Skripsi\VisuoExcaRobo\Excavator\excavator.urdf
 
-PROTO excavator_wo_normal [
+PROTO excavator [
   field  SFVec3f     translation     0 0 0
   field  SFRotation  rotation        0 0 1 0
-  field  SFString    name            "excavator_wo_normal"  # Is `Robot.name`.
-  field  SFString    controller      "void"                 # Is `Robot.controller`.
-  field  MFString    controllerArgs  []                     # Is `Robot.controllerArgs`.
-  field  SFString    customData      ""                     # Is `Robot.customData`.
-  field  SFBool      supervisor      FALSE                  # Is `Robot.supervisor`.
-  field  SFBool      synchronization TRUE                   # Is `Robot.synchronization`.
-  field  SFBool      selfCollision   FALSE                  # Is `Robot.selfCollision`.
+  field  SFString    name            "excavator"  # Is `Robot.name`.
+  field  SFString    controller      ""           # Is `Robot.controller`.
+  field  MFString    controllerArgs  []           # Is `Robot.controllerArgs`.
+  field  SFString    customData      ""           # Is `Robot.customData`.
+  field  SFBool      supervisor      FALSE        # Is `Robot.supervisor`.
+  field  SFBool      synchronization TRUE         # Is `Robot.synchronization`.
+  field  SFBool      selfCollision   FALSE        # Is `Robot.selfCollision`.
 ]
 {
   Robot {
@@ -26,7 +26,7 @@ PROTO excavator_wo_normal [
     synchronization IS synchronization
     selfCollision IS selfCollision
     children [
-      Solid {
+      DEF base_link Solid {
         children [
           Shape {
             appearance PBRAppearance {
@@ -34,11 +34,11 @@ PROTO excavator_wo_normal [
               roughness 1.000000
               metalness 0
             }
-            geometry Box {
-               size 0.028264 -0.000082 -0.657571
+            geometry DEF base_link Mesh {
+              url "base_link.STL"
             }
           }
-          HingeJoint {
+          DEF link2_to_base HingeJoint {
             jointParameters HingeJointParameters {
               axis 0.000000 0.000000 1.000000
               anchor -0.858500 -0.082500 1.466000
@@ -55,7 +55,7 @@ PROTO excavator_wo_normal [
                 name "link2_to_base_sensor"
               }
             ]
-            endPoint Solid {
+            endPoint DEF link2 Solid {
               translation -0.858500 -0.082500 1.466000
               rotation 0.000000 0.000000 1.000000 0.075368
               children [
@@ -65,11 +65,12 @@ PROTO excavator_wo_normal [
                     roughness 1.000000
                     metalness 0
                   }
-                  geometry Box {
-                     size -0.617652 0.169249 -0.748551
+                  geometry DEF link2 Mesh {
+                    url "link2.STL"
+                    castShadows FALSE
                   }
                 }
-                HingeJoint {
+                DEF link3_to_link2 HingeJoint {
                   jointParameters HingeJointParameters {
                     axis 0.075297 0.997161 -0.000000
                     anchor 1.306000 -0.015884 -0.544000
@@ -86,7 +87,7 @@ PROTO excavator_wo_normal [
                       name "link3_to_link2_sensor"
                     }
                   ]
-                  endPoint Solid {
+                  endPoint DEF link3 Solid {
                     translation 1.306000 -0.015884 -0.544000
                     rotation 0.036815 0.976481 -0.212437 0.351289
                     children [
@@ -96,11 +97,11 @@ PROTO excavator_wo_normal [
                           roughness 1.000000
                           metalness 0
                         }
-                        geometry Box {
-                           size 3.001161 -0.000004 2.024198
+                        geometry DEF link3 Mesh {
+                          url "link3.STL"
                         }
                       }
-                      HingeJoint {
+                      DEF link4_to_link3 HingeJoint {
                         jointParameters HingeJointParameters {
                           axis 0.000000 1.000000 0.000000
                           anchor 6.989100 0.000000 2.550600
@@ -117,7 +118,7 @@ PROTO excavator_wo_normal [
                             name "link4_to_link3_sensor"
                           }
                         ]
-                        endPoint Solid {
+                        endPoint DEF link4 Solid {
                           translation 6.989100 0.000000 2.550600
                           rotation 0.000000 1.000000 0.000000 0.406120
                           children [
@@ -127,11 +128,11 @@ PROTO excavator_wo_normal [
                                 roughness 1.000000
                                 metalness 0
                               }
-                              geometry Box {
-                                 size 0.544768 0.000001 0.709714
+                              geometry DEF link4 Mesh {
+                                url "link4.STL"
                               }
                             }
-                            HingeJoint {
+                            DEF link5_to_link4 HingeJoint {
                               jointParameters HingeJointParameters {
                                 axis 0.000000 1.000000 0.000000
                                 anchor 2.604700 0.000000 0.785070
@@ -148,7 +149,7 @@ PROTO excavator_wo_normal [
                                   name "link5_to_link4_sensor"
                                 }
                               ]
-                              endPoint Solid {
+                              endPoint DEF link5 Solid {
                                 translation 2.604700 0.000000 0.785070
                                 rotation 0.000000 -1.000000 0.000000 0.881310
                                 children [
@@ -158,11 +159,11 @@ PROTO excavator_wo_normal [
                                       roughness 1.000000
                                       metalness 0
                                     }
-                                    geometry Box {
-                                       size 1.006968 0.000001 0.422752
+                                    geometry DEF link5 Mesh {
+                                      url "link5.STL"
                                     }
                                   }
-                                  Solid {
+                                  DEF Link_EE Solid {
                                     translation 2.000000 0.000000 -0.750000
                                     children [
                                       Shape {
@@ -179,14 +180,13 @@ PROTO excavator_wo_normal [
                                     name "Link_EE"
                                     physics Physics {
                                       density -1
-                                      mass 0.000000
+                                      mass 1.000000
+                                      centerOfMass [ 0.000000 0.000000 0.000000 ]
                                     }
                                   }
                                 ]
                                 name "link5"
-                                boundingObject Box {
-                                   size 1.006968 0.000001 0.422752
-                                }
+                                boundingObject USE link5
                                 physics Physics {
                                   density -1
                                   mass 641.548893
@@ -200,9 +200,7 @@ PROTO excavator_wo_normal [
                             }
                           ]
                           name "link4"
-                          boundingObject Box {
-                             size 0.544768 0.000001 0.709714
-                          }
+                          boundingObject USE link4
                           physics Physics {
                             density -1
                             mass 112.346086
@@ -216,9 +214,7 @@ PROTO excavator_wo_normal [
                       }
                     ]
                     name "link3"
-                    boundingObject Box {
-                       size 3.001161 -0.000004 2.024198
-                    }
+                    boundingObject USE link3
                     physics Physics {
                       density -1
                       mass 2653.359577
@@ -232,9 +228,7 @@ PROTO excavator_wo_normal [
                 }
               ]
               name "link2"
-              boundingObject Box {
-                 size -0.617652 0.169249 -0.748551
-              }
+              boundingObject USE link2
               physics Physics {
                 density -1
                 mass 14373.810297
@@ -246,7 +240,7 @@ PROTO excavator_wo_normal [
               }
             }
           }
-          HingeJoint {
+          DEF base_to_kanan HingeJoint {
             jointParameters HingeJointParameters {
               axis 0.000000 1.000000 0.000000
             }
@@ -259,7 +253,7 @@ PROTO excavator_wo_normal [
                 name "base_to_kanan_sensor"
               }
             ]
-            endPoint Solid {
+            endPoint DEF kanan Solid {
               children [
                 Shape {
                   appearance PBRAppearance {
@@ -268,7 +262,8 @@ PROTO excavator_wo_normal [
                     metalness 0
                   }
                   geometry DEF kanan Mesh {
-                    url "D:\Users\Muafi\Documents\NAUFAL MU'AFI\Universitas Gadjah Mada\Skripsi\VisuoExcaRobo/aba_excavator/meshes/kanan.STL"
+                    url "kanan.STL"
+                    castShadows FALSE
                   }
                 }
               ]
@@ -285,7 +280,7 @@ PROTO excavator_wo_normal [
               }
             }
           }
-          HingeJoint {
+          DEF base_to_kiri HingeJoint {
             jointParameters HingeJointParameters {
               axis 0.000000 1.000000 0.000000
             }
@@ -298,7 +293,7 @@ PROTO excavator_wo_normal [
                 name "base_to_kiri_sensor"
               }
             ]
-            endPoint Solid {
+            endPoint DEF kiri Solid {
               children [
                 Shape {
                   appearance PBRAppearance {
@@ -307,7 +302,7 @@ PROTO excavator_wo_normal [
                     metalness 0
                   }
                   geometry DEF kiri Mesh {
-                    url "D:\Users\Muafi\Documents\NAUFAL MU'AFI\Universitas Gadjah Mada\Skripsi\VisuoExcaRobo/aba_excavator/meshes/kiri.STL"
+                    url "kiri.STL"
                   }
                 }
               ]
@@ -326,9 +321,7 @@ PROTO excavator_wo_normal [
           }
         ]
         name "base_link"
-        boundingObject Box {
-           size 0.028264 -0.000082 -0.657571
-        }
+        boundingObject USE base_link
         physics Physics {
           density -1
           mass 1992.015737
@@ -343,7 +336,8 @@ PROTO excavator_wo_normal [
     name IS name
     physics Physics {
       density -1
-      mass 0.000000
+      mass 1.000000
+      centerOfMass [ 0.000000 0.000000 0.000000 ]
     }
   }
 }
