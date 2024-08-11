@@ -28,7 +28,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         )
 
         # set the max_speed of the motors
-        self.max_speed = 5
+        self.max_speed = 3.0
 
         # set the threshold of the target area
         self.target_threshold = 0.35
@@ -36,8 +36,12 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         # get the camera devices
         self.camera = self.getDevice("camera")
 
-        # set the action spaces: 0 = left, 1 = right
-        self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
+        # set the action spaces
+        # continuous action space: 0 = left, 1 = right
+        # self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
+
+        # discrete action space: 0 = forward, 1 = left, 2 = right, 3 = backward
+        self.action_space = spaces.Discrete(4)
 
         # set the observation space: (channels, camera_height, camera_width)
         self.observation_space = spaces.Box(
@@ -90,12 +94,25 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         return self.state, info
 
     def step(self, action):
-        # Rescale actions from [-1, 1] to [-self.max_spped, self.max_spped]
-        scaled_action = action * self.max_speed
-
         # perform a continuous action
-        self.motors[0].setVelocity(scaled_action[0])
-        self.motors[1].setVelocity(scaled_action[1])
+        # rescale actions from [-1, 1] to [-self.max_spped, self.max_spped]
+        # scaled_action = action * self.max_speed
+        # self.motors[0].setVelocity(scaled_action[0])
+        # self.motors[1].setVelocity(scaled_action[1])
+
+        # perform a discrete action
+        if action == 0:
+            self.motors[0].setVelocity(self.max_speed)
+            self.motors[1].setVelocity(self.max_speed)
+        elif action == 1:
+            self.motors[0].setVelocity(-self.max_speed)
+            self.motors[1].setVelocity(self.max_speed)
+        elif action == 2:
+            self.motors[0].setVelocity(self.max_speed)
+            self.motors[1].setVelocity(-self.max_speed)
+        elif action == 3:
+            self.motors[0].setVelocity(-self.max_speed)
+            self.motors[1].setVelocity(-self.max_speed)
 
         # Get the new state
         super().step(self.__timestep)

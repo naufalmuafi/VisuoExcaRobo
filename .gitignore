@@ -1,4 +1,4 @@
 .env
 .idea
-./logs_mini/
-./models_mini/
+logs_mini/
+models_mini/

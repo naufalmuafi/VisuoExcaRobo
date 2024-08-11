@@ -3,3 +3,4 @@ numpy==1.26.4
 gymnasium
 stable-baselines3
 tensorboard
+urdf2webots

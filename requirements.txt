@@ -8,6 +8,8 @@ absl-py==2.1.0
     # via tensorboard
 build==1.2.1
     # via pip-tools
+catkin-pkg==1.0.0
+    # via rospkg
 click==8.1.7
     # via pip-tools
 cloudpickle==3.0.0
@@ -22,6 +24,10 @@ contourpy==1.2.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
+distro==1.9.0
+    # via rospkg
+docutils==0.21.2
+    # via catkin-pkg
 farama-notifications==0.0.4
     # via gymnasium
 filelock==3.15.4
@@ -61,6 +67,7 @@ numpy==1.26.4
     #   pandas
     #   stable-baselines3
     #   tensorboard
+    #   urdf2webots
 packaging==24.1
     # via
     #   build
@@ -68,23 +75,32 @@ packaging==24.1
 pandas==2.2.2
     # via stable-baselines3
 pillow==10.4.0
-    # via matplotlib
+    # via
+    #   matplotlib
+    #   urdf2webots
 pip-tools==7.4.1
     # via -r requirements.in
 protobuf==4.25.4
     # via tensorboard
 pyparsing==3.1.2
-    # via matplotlib
+    # via
+    #   catkin-pkg
+    #   matplotlib
 pyproject-hooks==1.1.0
     # via
     #   build
     #   pip-tools
 python-dateutil==2.9.0.post0
     # via
+    #   catkin-pkg
     #   matplotlib
     #   pandas
 pytz==2024.1
     # via pandas
+pyyaml==6.0.2
+    # via rospkg
+rospkg==1.5.1
+    # via urdf2webots
 six==1.16.0
     # via
     #   python-dateutil
@@ -109,6 +125,8 @@ typing-extensions==4.12.2
     #   torch
 tzdata==2024.1
     # via pandas
+urdf2webots==2023.1.0
+    # via -r requirements.in
 werkzeug==3.0.3
     # via tensorboard
 wheel==0.44.0

@@ -1,12 +1,14 @@
 import os
-import env_VisuoExcaRobo
+
+# import env_VisuoExcaRobo
+import discrete_action_draft
 import gymnasium as gym
 from typing import Tuple
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 
 
-TIMESTEPS = 1000
+TIMESTEPS = 10000
 
 # where to store trained model and logs
 model_dir_name = "models_mini"
