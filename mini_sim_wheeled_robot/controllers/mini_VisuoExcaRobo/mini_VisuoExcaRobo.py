@@ -1,7 +1,5 @@
 import os
-
-# import env_VisuoExcaRobo
-import discrete_action_draft
+import env_VisuoExcaRobo
 import gymnasium as gym
 from typing import Tuple
 from stable_baselines3 import PPO
@@ -41,7 +39,14 @@ def train_PPO(env: gym.Env, model_dir: str, log_dir: str, timesteps) -> None:
     # use Proximal Policy Optimization (PPO) algorithm
     # use MLP policy for observation space 1D-vector
     print("Training the model with PPO...")
-    model = PPO("CnnPolicy", env, verbose=1, tensorboard_log=log_dir)
+    model = PPO(
+        "CnnPolicy",
+        env,
+        verbose=1,
+        tensorboard_log=log_dir,
+        batch_size=1024,
+        learning_rate=1e-4,
+    )
 
     # train and save the model
     model.learn(total_timesteps=timesteps)
