@@ -101,30 +101,38 @@ VisuoExcaRobo is a reinforcement learning project using Webots, Stable Baselines
 
    - Start editing and developing your program within PyCharm.
 
-7. **Install `pip-tools`**:
-
-   - Open the terminal in PyCharm and run:
-
-     ```sh
-     pip install pip-tools
-     ```
-
-8. **Create `requirements.in` File**:
-
-   - Create a file named `requirements.in` in your project directory.
-   - List the required libraries in this file and save it.
-
-9. **Compile and Sync Requirements**:
-
-   - Run the following commands in the terminal:
-
-     ```sh
-     pip-compile
-     pip-sync
-     ```
-
-10. **Run from IDE**:
+7. **Run from IDE**:
     - In Webots, select the `<extern>` option to run the controller script from the IDE.
+
+### Convert any URDF into Webots PROTO
+
+In this section, use [urdf2webots](https://github.com/cyberbotics/urdf2webots) tool. This tool converts URDF files into Webots PROTO files or into Webots Robot node strings.
+Python 3.5 or higher is required.
+
+#### Install
+
+##### Install from pip
+
+```bash
+pip install urdf2webots
+```
+
+On macOS, export the pip binary path to the PATH: `export PATH="/Users/$USER/Library/Python/3.7/bin:$PATH"`
+
+##### Install from Sources
+
+```bash
+git clone --recurse-submodules https://github.com/cyberbotics/urdf2webots.git
+pip install --upgrade --editable urdf2webots
+```
+
+#### Usage
+
+##### From pip
+
+```bash
+python -m urdf2webots.importer --input=someRobot.urdf [--output=outputFile] [--normal] [--box-collision] [--tool-slot=linkName] [--help]
+```
 
 ## Authors
 
