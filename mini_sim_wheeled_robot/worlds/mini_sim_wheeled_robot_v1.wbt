@@ -300,6 +300,6 @@ DEF ROBOT Robot {
     density -1
     mass 0.5
   }
-  controller "cal_distance"
+  controller "<extern>"
   supervisor TRUE
 }

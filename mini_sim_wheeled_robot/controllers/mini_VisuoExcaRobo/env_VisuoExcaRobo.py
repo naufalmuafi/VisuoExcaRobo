@@ -33,11 +33,23 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         # set the threshold of the target area
         self.target_threshold = 0.35
 
+        # get the robot node
+        self.robot = self.getFromDef("ROBOT")
+
         # get the camera devices
         self.camera = self.getDevice("camera")
 
+        # set the discrete action
+        self.discrete_action_space = spaces.Discrete(2)
+
         # set the action spaces: 0 = left, 1 = right
-        self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
+        self.continuous_action_space = spaces.Box(
+            low=-1, high=1, shape=(2,), dtype=np.float32
+        )
+
+        self.action_space = spaces.Tuple(
+            (self.discrete_action_space, self.continuous_action_space)
+        )
 
         # set the observation space: (channels, camera_height, camera_width)
         self.observation_space = spaces.Box(
@@ -58,6 +70,12 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         self.simulationResetPhysics()
         self.simulationReset()
         super().step(self.__timestep)
+
+        # get the robot initial position
+        self.init_pos = self.robot.getPosition()
+
+        # turn over the robot for the first time
+        self.init_move = 1
 
         # get the camera devices
         self.camera = self.getDevice("camera")
@@ -90,15 +108,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         return self.state, info
 
     def step(self, action):
-        # Rescale actions from [-1, 1] to [-self.max_spped, self.max_spped]
-        scaled_action = action * self.max_speed
-
-        # perform a continuous action
-        self.motors[0].setVelocity(scaled_action[0])
-        self.motors[1].setVelocity(scaled_action[1])
-
-        # Get the new state
-        super().step(self.__timestep)
+        discrete_action, continuous_action = action
 
         width = self.camera.getWidth()
         height = self.camera.getHeight()
@@ -109,6 +119,87 @@ class mini_VisuoExcaRobo(Supervisor, Env):
             self.state, width, height, frame_area
         )
 
+        if self.init_move == 1:
+            if discrete_action == 0:
+                # Heuristic behavior: Turn left to search for the target
+                v_left_motor = -self.max_speed
+                v_right_motor = self.max_speed
+            elif discrete_action == 1:
+                # Heuristic behavior: Turn right to search for the target
+                v_left_motor = self.max_speed
+                v_right_motor = -self.max_speed
+
+            self.motors[0].setVelocity(v_left_motor)
+            self.motors[1].setVelocity(v_right_motor)
+
+            self.state, target_area = self.get_and_display_obs(
+                width, height, frame_area
+            )
+
+            if target_area > 0:
+                self.init_move = 0
+        else:
+            # Rescale actions from [-1, 1] to [-self.max_spped, self.max_spped]
+            scaled_action = continuous_action * self.max_speed
+
+            # perform a continuous action
+            self.motors[0].setVelocity(scaled_action[0])
+            self.motors[1].setVelocity(scaled_action[1])
+
+        # Get the new state
+        super().step(self.__timestep)
+
+        # get the new state
+        self.state, target_area = self.get_and_display_obs(width, height, frame_area)
+
+        # Reward for reducing the distance to the target
+        area_increase = target_area - previous_target_area
+
+        if target_area > 0:
+            self.init_move = 0
+
+        # More impatient reward function
+        reward = area_increase * 100  # Reward based on the area increase
+
+        if target_area > previous_target_area:
+            reward += 50  # Additional reward for progress towards target
+        else:
+            reward -= 50  # Penalty for moving away from the target or stagnating
+
+        # get the current position of the robot
+        pos = self.robot.getPosition()
+
+        # calculate the distance between the initial and current position
+        distance = (
+            (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
+        ) ** 0.5
+
+        # Add a time penalty to encourage quicker completion
+        reward -= 1  # Time penalty for each step taken
+
+        # Check if the episode is done
+        if target_area >= self.target_threshold:
+            reward += 10000
+            done = True
+        elif distance >= 0.55:
+            reward -= 10000
+            done = True
+        else:
+            done = False
+
+        # info dictionary can be used for debugging or additional info
+        info = {
+            "robot_position": pos,
+            "distance": distance,
+            "target_area": target_area,
+        }
+
+        return self.state, reward, done, False, info
+
+    def render(self, mode: str = "human") -> None:
+        pass
+
+    def get_and_display_obs(self, width, height, frame_area):
         red_channel, green_channel, blue_channel = [], [], []
 
         if (
@@ -152,33 +243,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
                     self.state, width, height, frame_area
                 )
 
-        # Reward for reducing the distance to the target
-        area_increase = target_area - previous_target_area
-
-        # More impatient reward function
-        reward = area_increase * 100  # Reward based on the area increase
-
-        if target_area > previous_target_area:
-            reward += 50  # Additional reward for progress towards target
-        else:
-            reward -= 50  # Penalty for moving away from the target or stagnating
-
-        # Add a time penalty to encourage quicker completion
-        reward -= 1  # Time penalty for each step taken
-
-        # Check if the episode is done (if target area exceeds threshold)
-        done = bool(target_area >= self.target_threshold)
-
-        if done:
-            reward += 10000  # Large reward for reaching the target
-
-        # info dictionary can be used for debugging or additional info
-        info = {}
-
-        return self.state, reward, done, False, info
-
-    def render(self, mode: str = "human") -> None:
-        pass
+        return self.state, target_area
 
     def display_segmented_image(self, data, width, height):
         segmented_image = self.display.imageNew(data, Display.BGRA, width, height)

@@ -94,7 +94,9 @@ if __name__ == "__main__":
     model_dir, log_dir = create_dir(model_dir_name, log_dir_name)
 
     # check the environment
-    check_environment(env)
+    # check_environment(env)
+    print(f"Check the environment: {env}...")
+    check_env(env)
     print(f"Environment is ready: {env}")
 
     # train and test the model with A2C algorithm
