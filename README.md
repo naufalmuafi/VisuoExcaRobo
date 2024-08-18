@@ -59,34 +59,40 @@ VisuoExcaRobo is a reinforcement learning project using Webots, Stable Baselines
       pip install -r requirements.txt
       ```
 
-### Setting Up PyCharm in Windows for a Webots Project
+### Running Extern Robot Controllers (Linux)
 
-1. **Navigate to the Project Directory**:
+The `WEBOTS_HOME` environment variable must be set to the installation folder of Webots. For example:
 
-   - Open Command Prompt and navigate to your Webots project directory.
+```sh
+export WEBOTS_HOME=/home/username/webots
+```
 
-     ```sh
-     cd path\to\your\webots\project
-     ```
+The following command line should be used to start a controller:
 
-2. **Create a Virtual Environment**:
+Linux:
 
-   - Run the following command to create a virtual environment:
+```sh
+$WEBOTS_HOME/webots-controller [options] path/to/controller/file [controller-args]
+```
 
-     ```sh
-     python -m venv venv
-     ```
+Windows:
 
-3. **Launch PyCharm**:
+```sh
+webots-controller.exe [options] path/to/controller/file [controller-args]
+```
+
+### Setting Up PyCharm in Windows for Running Extern Robot Controllers
+
+1. **Launch PyCharm**:
 
    - Open PyCharm.
 
-4. **Configure Project Structure**:
+2. **Configure Project Structure**:
 
    - Go to `File > Settings > Project: <Your Project> > Project Structure`.
    - Click `Add Content Root` and select `WEBOTS_HOME/lib/controller/python`.
 
-5. **Edit Configuration**:
+3. **Edit Configuration**:
 
    - Click `Edit Configurations` on the top right (next to the run/debug configurations dropdown).
    - Click the `+` icon and select `Python`.
@@ -97,11 +103,11 @@ VisuoExcaRobo is a reinforcement learning project using Webots, Stable Baselines
      - Set the `Value` to `F:\Program Files\Webots\lib\controller\;F:\Program Files\Webots\msys64\mingw64\bin\;F:\Program Files\Webots\msys64\mingw64\bin\cpp`.
    - Make sure the interpreter is installed correctly.
 
-6. **Develop Your Program**:
+4. **Develop Your Program**:
 
    - Start editing and developing your program within PyCharm.
 
-7. **Run from IDE**:
+5. **Run from IDE**:
     - In Webots, select the `<extern>` option to run the controller script from the IDE.
 
 ### Convert any URDF into Webots PROTO
