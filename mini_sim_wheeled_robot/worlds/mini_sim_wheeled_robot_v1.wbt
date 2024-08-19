@@ -13,13 +13,13 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.27283202538276796 0.3958005950498786 0.8768720401995372 1.3324366521686264
-  position -0.7531374757356608 -2.1537689434120018 1.5443640274596862
+  position -1.1305583898995248 -1.9690335493952764 1.600055146672952
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
-RectangleArena {
+DEF FLOOR RectangleArena {
   floorSize 1.5 1.5
 }
 Apple {

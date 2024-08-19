@@ -16,7 +16,7 @@ except ImportError:
     )
 
 
-MAX_EPISODE_STEPS = 3000
+MAX_EPISODE_STEPS = 1500
 
 
 class mini_VisuoExcaRobo(Supervisor, Env):
@@ -38,6 +38,15 @@ class mini_VisuoExcaRobo(Supervisor, Env):
 
         # get the robot node
         self.robot = self.getFromDef("ROBOT")
+
+        # get the floor node
+        arena_tolerance = 0.05
+        self.floor = self.getFromDef("FLOOR")
+        size_field = self.floor.getField("floorSize").getSFVec3f()
+
+        x, y = size_field
+        self.x_max, self.y_max = x / 2 - arena_tolerance, y / 2 - arena_tolerance
+        self.x_min, self.y_min = -self.x_max, -self.y_max
 
         # get the camera devices
         self.camera = self.getDevice("camera")
@@ -122,7 +131,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         self.state, target_area = self.get_and_display_obs(width, height, frame_area)
 
         # Reward for reducing the distance to the target
-        area_increase = target_area - previous_target_area        
+        area_increase = target_area - previous_target_area
 
         # More impatient reward function
         reward = area_increase * 100  # Reward based on the area increase
@@ -152,6 +161,15 @@ class mini_VisuoExcaRobo(Supervisor, Env):
             done = True
         else:
             done = False
+
+        # Arena Boundaries Check
+        if (
+            pos[0] == self.x_min
+            or pos[0] == self.x_max
+            or pos[1] == self.y_min
+            or pos[1] == self.y_max
+        ):
+            done = True
 
         # info dictionary can be used for debugging or additional info
         info = {
