@@ -16,8 +16,11 @@ except ImportError:
     )
 
 
+MAX_EPISODE_STEPS = 3000
+
+
 class mini_VisuoExcaRobo(Supervisor, Env):
-    def __init__(self, max_episode_steps: int = 1000) -> None:
+    def __init__(self, max_episode_steps: int = MAX_EPISODE_STEPS) -> None:
         # Initialize the Robot class
         super().__init__()
         random.seed(42)
@@ -28,7 +31,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         )
 
         # set the max_speed of the motors
-        self.max_speed = 5
+        self.max_speed = 4.0
 
         # set the threshold of the target area
         self.target_threshold = 0.35
@@ -39,17 +42,8 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         # get the camera devices
         self.camera = self.getDevice("camera")
 
-        # set the discrete action
-        self.discrete_action_space = spaces.Discrete(2)
-
         # set the action spaces: 0 = left, 1 = right
-        self.continuous_action_space = spaces.Box(
-            low=-1, high=1, shape=(2,), dtype=np.float32
-        )
-
-        self.action_space = spaces.Tuple(
-            (self.discrete_action_space, self.continuous_action_space)
-        )
+        self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
 
         # set the observation space: (channels, camera_height, camera_width)
         self.observation_space = spaces.Box(
@@ -73,9 +67,6 @@ class mini_VisuoExcaRobo(Supervisor, Env):
 
         # get the robot initial position
         self.init_pos = self.robot.getPosition()
-
-        # turn over the robot for the first time
-        self.init_move = 1
 
         # get the camera devices
         self.camera = self.getDevice("camera")
@@ -108,8 +99,6 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         return self.state, info
 
     def step(self, action):
-        discrete_action, continuous_action = action
-
         width = self.camera.getWidth()
         height = self.camera.getHeight()
         frame_area = width * height
@@ -119,32 +108,12 @@ class mini_VisuoExcaRobo(Supervisor, Env):
             self.state, width, height, frame_area
         )
 
-        if self.init_move == 1:
-            if discrete_action == 0:
-                # Heuristic behavior: Turn left to search for the target
-                v_left_motor = -self.max_speed
-                v_right_motor = self.max_speed
-            elif discrete_action == 1:
-                # Heuristic behavior: Turn right to search for the target
-                v_left_motor = self.max_speed
-                v_right_motor = -self.max_speed
+        # Rescale actions from [-1, 1] to [-self.max_spped, self.max_spped]
+        scaled_action = action * self.max_speed
 
-            self.motors[0].setVelocity(v_left_motor)
-            self.motors[1].setVelocity(v_right_motor)
-
-            self.state, target_area = self.get_and_display_obs(
-                width, height, frame_area
-            )
-
-            if target_area > 0:
-                self.init_move = 0
-        else:
-            # Rescale actions from [-1, 1] to [-self.max_spped, self.max_spped]
-            scaled_action = continuous_action * self.max_speed
-
-            # perform a continuous action
-            self.motors[0].setVelocity(scaled_action[0])
-            self.motors[1].setVelocity(scaled_action[1])
+        # perform a continuous action
+        self.motors[0].setVelocity(scaled_action[0])
+        self.motors[1].setVelocity(scaled_action[1])
 
         # Get the new state
         super().step(self.__timestep)
@@ -153,10 +122,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         self.state, target_area = self.get_and_display_obs(width, height, frame_area)
 
         # Reward for reducing the distance to the target
-        area_increase = target_area - previous_target_area
-
-        if target_area > 0:
-            self.init_move = 0
+        area_increase = target_area - previous_target_area        
 
         # More impatient reward function
         reward = area_increase * 100  # Reward based on the area increase
@@ -181,7 +147,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
         if target_area >= self.target_threshold:
             reward += 10000
             done = True
-        elif distance >= 0.55:
+        elif distance >= 0.6:
             reward -= 10000
             done = True
         else:
@@ -273,5 +239,5 @@ class mini_VisuoExcaRobo(Supervisor, Env):
 register(
     id="mini_VisuoExcaRobo-v1",
     entry_point=lambda: mini_VisuoExcaRobo(),
-    max_episode_steps=1000,
+    max_episode_steps=MAX_EPISODE_STEPS,
 )
