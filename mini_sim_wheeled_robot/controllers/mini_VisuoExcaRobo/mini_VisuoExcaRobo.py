@@ -9,8 +9,8 @@ from stable_baselines3.common.env_checker import check_env
 TIMESTEPS = 1000000
 
 # where to store trained model and logs
-model_dir_name = "./mini_sim_wheeled_robot/models_mini"
-log_dir_name = "./mini_sim_wheeled_robot/logs_mini"
+model_dir_name = "models_mini"
+log_dir_name = "logs_mini"
 
 # define the environment
 env = gym.make("mini_VisuoExcaRobo-v1")
