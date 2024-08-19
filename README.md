@@ -52,10 +52,15 @@ VisuoExcaRobo is a reinforcement learning project using Webots, Stable Baselines
       pip install pip-tools
       ```
 
-    - Compile and install dependencies:
+    - Compile The requirements.in (if requirements.txt is not excise)
+
+    ```bash
+      pip-compile requirements.in      
+      ```
+
+    - Install the dependencies from requirements.txt:
 
       ```bash
-      pip-compile requirements.in
       pip install -r requirements.txt
       ```
 
@@ -138,6 +143,14 @@ pip install --upgrade --editable urdf2webots
 
 ```bash
 python -m urdf2webots.importer --input=someRobot.urdf [--output=outputFile] [--normal] [--box-collision] [--tool-slot=linkName] [--help]
+```
+
+## Tensorboard Log Monitor
+
+Once the learn function is called, you can monitor the RL agent during or after the training, with the following bash command:
+
+```bash
+tensorboard --logdir ./a2c_cartpole_tensorboard/
 ```
 
 ## Authors
