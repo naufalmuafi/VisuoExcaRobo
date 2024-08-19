@@ -6,7 +6,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 
 
-TIMESTEPS = 10000
+TIMESTEPS = 1000000
 
 # where to store trained model and logs
 model_dir_name = "./mini_sim_wheeled_robot/models_mini"
