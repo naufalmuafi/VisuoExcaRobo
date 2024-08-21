@@ -65,7 +65,7 @@ def test_PPO(env: gym.Env, model_dir: str, timesteps: int = TIMESTEPS) -> None:
 
     # run a test
     obs, _ = env.reset()
-    for i in range(timesteps):
+    for i in range(1000):
         action, _states = model.predict(obs)
         obs, reward, done, _, _ = env.step(action)
         print(obs, reward, done)

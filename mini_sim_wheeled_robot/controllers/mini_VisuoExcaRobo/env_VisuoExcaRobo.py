@@ -170,6 +170,7 @@ class mini_VisuoExcaRobo(Supervisor, Env):
             or pos[1] == self.y_max
         ):
             done = True
+            reward -= 10000
 
         # info dictionary can be used for debugging or additional info
         info = {
