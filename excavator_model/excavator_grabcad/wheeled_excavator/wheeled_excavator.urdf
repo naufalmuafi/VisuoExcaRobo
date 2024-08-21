@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<robot name="wheeled_excavator">
+
+  <!-- Base link -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="Weight Keeper v1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="Weight Keeper v1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Cabin -->
+  <link name="cabin_link">
+    <visual>
+      <geometry>
+        <mesh filename="Cabin 1 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="Cabin 1 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <!-- Cabin door -->
+  <link name="cabin_door_link">
+    <visual>
+      <geometry>
+        <mesh filename="Cabin door 01 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="Cabin door 01 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Front support -->
+  <link name="front_support_link">
+    <visual>
+      <geometry>
+        <mesh filename="Front support  2 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="Front support  2 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Arm Part 1 -->
+  <link name="hand_1_link">
+    <visual>
+      <geometry>
+        <mesh filename="Hand 1 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="Hand 1 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Arm Part 2 -->
+  <link name="hand_2_link">
+    <visual>
+      <geometry>
+        <mesh filename="hand 2 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="hand 2 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Hinge -->
+  <link name="hinge_2_link">
+    <visual>
+      <geometry>
+        <mesh filename="Hinge 2 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="Hinge 2 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Part5 -->
+  <link name="part5_link">
+    <visual>
+      <geometry>
+        <mesh filename="Part5 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="Part5 v1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joints definition -->
+  <joint name="cabin_to_base" type="fixed">
+    <parent link="base_link"/>
+    <child link="cabin_link"/>
+  </joint>
+
+  <joint name="door_to_cabin" type="revolute">
+    <parent link="cabin_link"/>
+    <child link="cabin_door_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+  
+  <joint name="front_support_to_base" type="fixed">
+    <parent link="base_link"/>
+    <child link="front_support_link"/>
+  </joint>
+
+  <joint name="hand_1_to_front_support" type="revolute">
+    <parent link="front_support_link"/>
+    <child link="hand_1_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="hand_2_to_hand_1" type="revolute">
+    <parent link="hand_1_link"/>
+    <child link="hand_2_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="hinge_to_hand_2" type="revolute">
+    <parent link="hand_2_link"/>
+    <child link="hinge_2_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="part5_to_hinge" type="revolute">
+    <parent link="hinge_2_link"/>
+    <child link="part5_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+</robot>

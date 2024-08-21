@@ -12,7 +12,6 @@ pos = robot.getPosition()
 
 # Access the size field of the floor
 size_field = floor.getField('floorSize').getSFVec3f()
-
 # Print the floor size
 print("Floor size:", size_field)
 

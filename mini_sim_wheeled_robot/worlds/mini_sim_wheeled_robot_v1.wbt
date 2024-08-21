@@ -12,8 +12,8 @@ WorldInfo {
   title "Simple Navigation"
 }
 Viewpoint {
-  orientation -0.27283202538276796 0.3958005950498786 0.8768720401995372 1.3324366521686264
-  position -1.1305583898995248 -1.9690335493952764 1.600055146672952
+  orientation -0.2569855905046291 0.38090827115188336 0.8881820169543349 1.2992478936510747
+  position -0.901188614180156 -2.2645566843628644 1.5725188160222725
 }
 TexturedBackground {
 }
@@ -101,7 +101,7 @@ DEF ROBOT Robot {
     }
     HingeJoint {
       jointParameters HingeJointParameters {
-        position -24.831710378775746
+        position 20
         axis 0 1 0
         anchor 0 0 0.025
       }
@@ -116,7 +116,7 @@ DEF ROBOT Robot {
       ]
       endPoint Solid {
         translation 0 0.04499999999999971 0.025
-        rotation 0 -1 0 4.683639150057401
+        rotation 0 1 0 2.4489593856408267
         children [
           DEF WHEEL Pose {
             rotation -1 0 0 1.57
@@ -145,7 +145,6 @@ DEF ROBOT Robot {
     }
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 85.73102008259187
         axis 0 1 0
         anchor 0 0 0.025
       }
@@ -159,8 +158,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint Solid {
-        translation 0 -0.04499999999999988 0.025
-        rotation 0 0.9999999999999999 0 5.745446396436831
+        translation 0 -0.045000000000000095 0.025
+        rotation 0 -1 0 4.58735
         children [
           USE WHEEL
         ]
@@ -302,6 +301,6 @@ DEF ROBOT Robot {
     density -1
     mass 0.5
   }
-  controller "<extern>"
+  controller "obs"
   supervisor TRUE
 }

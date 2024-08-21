@@ -1,0 +1,408 @@
+<robot name="onshape">
+<link name="compact_excavator_cabin_body_cmpl">
+<visual>
+<origin xyz="0.15929227608280682738 -0.2512819772778476235 0.33139999999999991687" rpy="1.570796326794896558 -9.3057818912215613423e-24 -4.5449756518009500624e-16" />
+<geometry>
+<mesh filename="package:///compact_excavator_cabin_body.stl"/>
+</geometry>
+<material name="compact_excavator_cabin_body_material">
+<color rgba="0.2313725490196078538 0.38039215686274507888 0.7058823529411765163 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0.15929227608280682738 -0.2512819772778476235 0.33139999999999991687" rpy="1.570796326794896558 -9.3057818912215613423e-24 -4.5449756518009500624e-16" />
+<geometry>
+<mesh filename="package:///compact_excavator_cabin_body.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.14687259964422888503 0.44115718470639297966 0.45091673023147610389" rpy="0 0 0"/>
+<mass value="9732.8038980797628028" />
+<inertia ixx="3175.1655302028038932" ixy="-269.97312494382822479"  ixz="167.61780128589879268" iyy="2627.6328649732372469" iyz="-193.85494965010886403" izz="3742.616047274826542" />
+</inertial>
+</link>
+
+<link name="compact_excavator_turret_cabin_roller">
+<visual>
+<origin xyz="-0.25 -2.6186110041323504109e-15 0" rpy="-1.570796326794896558 -0 -1.2325977355371927047e-32" />
+<geometry>
+<mesh filename="package:///compact_excavator_turret_cabin_roller.stl"/>
+</geometry>
+<material name="compact_excavator_turret_cabin_roller_material">
+<color rgba="0.98039215686274505668 0.71372549019607844922 0.0039215686274509803377 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="-0.25 -2.6186110041323504109e-15 0" rpy="-1.570796326794896558 -0 -1.2325977355371927047e-32" />
+<geometry>
+<mesh filename="package:///compact_excavator_turret_cabin_roller.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.25 -2.6054736931005860751e-15 -0.024479606502805662666" rpy="0 0 0"/>
+<mass value="72.827596459303620691" />
+<inertia ixx="1.099653317522871987" ixy="-2.7108603781094622134e-32"  ixz="-1.2447660391936814803e-72" iyy="1.0996533175228724311" iyz="2.9990054258902069892e-40" izz="2.1659744096152291348" />
+</inertial>
+</link>
+
+<link name="compact_excavator_frame_body">
+<visual>
+<origin xyz="1.232595164407830946e-32 8.7258015952359883014e-17 -0.11999999999999998168" rpy="1.570796326794896558 -0 2.4651904365350562318e-32" />
+<geometry>
+<mesh filename="package:///compact_excavator_frame_body.stl"/>
+</geometry>
+<material name="compact_excavator_frame_body_material">
+<color rgba="0.91764705882352937127 0.91764705882352937127 0.91764705882352937127 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="1.232595164407830946e-32 8.7258015952359883014e-17 -0.11999999999999998168" rpy="1.570796326794896558 -0 2.4651904365350562318e-32" />
+<geometry>
+<mesh filename="package:///compact_excavator_frame_body.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.0067641129059075200819 -0.12553013124423664792 -0.18649077363537946983" rpy="0 0 0"/>
+<mass value="459.11707598787205598" />
+<inertia ixx="103.54309263053609413" ixy="2.8689912175751035583"  ixz="-0.26918599165092144121" iyy="71.550382439979060223" iyz="-8.7881744003938315757" izz="164.71779214088334697" />
+</inertial>
+</link>
+
+<link name="compact_excavator_main_drive_wheel_cmpl_(1)">
+<visual>
+<origin xyz="0 -2.0816681711721685133e-17 -0.015000000000000124345" rpy="-3.141592653589793116 -2.0807134519566454969e-32 5.2577708942031777146e-17" />
+<geometry>
+<mesh filename="package:///compact_excavator_main_drive_wheel.stl"/>
+</geometry>
+<material name="compact_excavator_main_drive_wheel_material">
+<color rgba="0.91764705882352937127 0.91764705882352937127 0.91764705882352937127 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 -2.0816681711721685133e-17 -0.015000000000000124345" rpy="-3.141592653589793116 -2.0807134519566454969e-32 5.2577708942031777146e-17" />
+<geometry>
+<mesh filename="package:///compact_excavator_main_drive_wheel.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="2.7929494467705319618e-05 -2.4226277708340838271e-16 -0.047030821852304713349" rpy="0 0 0"/>
+<mass value="35.986291345795820007" />
+<inertia ixx="0.20071737580058110484" ixy="2.1151248144254331483e-17"  ixz="7.9696042408110000254e-05" iyy="0.20066206838835709547" iyz="2.9623558171777900037e-16" izz="0.29333573070696433716" />
+</inertial>
+</link>
+
+<joint name="left_sprocket_wheel" type="continuous">
+<origin xyz="-0.5739999999999999547 -0.80000000000000015543 -0.2750000000000000222" rpy="1.570796326794896558 -0.3547477759675310427 1.5707963267948976682" />
+<parent link="compact_excavator_frame_body" />
+<child link="compact_excavator_main_drive_wheel_cmpl_(1)" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="compact_excavator_main_drive_wheel_cmpl">
+<visual>
+<origin xyz="-6.9388939039072283776e-18 0 -0.015000000000000013323" rpy="3.141592653589793116 -8.8584862394572233055e-32 -4.1054183189918654794e-18" />
+<geometry>
+<mesh filename="package:///compact_excavator_main_drive_wheel.stl"/>
+</geometry>
+<material name="compact_excavator_main_drive_wheel_material">
+<color rgba="0.91764705882352937127 0.91764705882352937127 0.91764705882352937127 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="-6.9388939039072283776e-18 0 -0.015000000000000013323" rpy="3.141592653589793116 -8.8584862394572233055e-32 -4.1054183189918654794e-18" />
+<geometry>
+<mesh filename="package:///compact_excavator_main_drive_wheel.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="2.7929494467698390888e-05 -2.2144767850277592569e-16 -0.047030821852304602326" rpy="0 0 0"/>
+<mass value="35.986291345795820007" />
+<inertia ixx="0.20071737580058127137" ixy="6.1250580134766935832e-18"  ixz="7.9696042408110027359e-05" iyy="0.20066206838835703996" iyz="2.9623106429686494369e-16" izz="0.29333573070696433716" />
+</inertial>
+</link>
+
+<joint name="right_sprocket_wheel" type="continuous">
+<origin xyz="0.5739999999999999547 -0.80000000000000004441 -0.2750000000000000222" rpy="1.570796326794896558 -1.2984776443375001254 -1.5707963267948972241" />
+<parent link="compact_excavator_frame_body" />
+<child link="compact_excavator_main_drive_wheel_cmpl" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="compact_excavator_front_wheel">
+<visual>
+<origin xyz="1.1102230246251565404e-16 -1.1102230246251565404e-16 -0.032500000000000084377" rpy="1.570796326794896558 1.570796326794896336 0" />
+<geometry>
+<mesh filename="package:///compact_excavator_front_wheel.stl"/>
+</geometry>
+<material name="compact_excavator_front_wheel_material">
+<color rgba="0.91764705882352937127 0.91764705882352937127 0.91764705882352937127 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="1.1102230246251565404e-16 -1.1102230246251565404e-16 -0.032500000000000084377" rpy="1.570796326794896558 1.570796326794896336 0" />
+<geometry>
+<mesh filename="package:///compact_excavator_front_wheel.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="8.8979772495497043726e-17 -1.1262368284473494847e-16 -0.032500000000000070499" rpy="0 0 0"/>
+<mass value="17.64673591392957519" />
+<inertia ixx="0.153078316536178205" ixy="1.0629206596102168903e-17"  ixz="2.6922495826861160064e-17" iyy="0.15307831653617814949" iyz="6.9747558075870228735e-33" izz="0.29963755764746907717" />
+</inertial>
+</link>
+
+<joint name="left_idle_passive_wheel" type="continuous">
+<origin xyz="-0.61299999999999998934 0.80000000000000026645 -0.2750000000000000222" rpy="1.570796326794896558 -1.0222876983448163646 -1.5707963267948941155" />
+<parent link="compact_excavator_frame_body" />
+<child link="compact_excavator_front_wheel" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="compact_excavator_front_wheel_2">
+<visual>
+<origin xyz="0 0 -0.032500000000000084377" rpy="-1.570796326794896558 -1.570796326794896336 0" />
+<geometry>
+<mesh filename="package:///compact_excavator_front_wheel.stl"/>
+</geometry>
+<material name="compact_excavator_front_wheel_material">
+<color rgba="0.91764705882352937127 0.91764705882352937127 0.91764705882352937127 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 0 -0.032500000000000084377" rpy="-1.570796326794896558 -1.570796326794896336 0" />
+<geometry>
+<mesh filename="package:///compact_excavator_front_wheel.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-2.2042529967018601071e-17 1.6013803822193002062e-18 -0.032500000000000098255" rpy="0 0 0"/>
+<mass value="17.64673591392957519" />
+<inertia ixx="0.153078316536178205" ixy="-3.7736718547636912232e-33"  ixz="-2.6922495826861147738e-17" iyy="0.153078316536178205" iyz="-6.9321227369532044948e-49" izz="0.29963755764746907717" />
+</inertial>
+</link>
+
+<joint name="right_idle_passive_wheel" type="continuous">
+<origin xyz="0.54800000000000004263 0.80000000000000015543 -0.27499999999999996669" rpy="1.57079632679489678 -1.1102232252180887662e-16 -1.5707963267948976682" />
+<parent link="compact_excavator_frame_body" />
+<child link="compact_excavator_front_wheel_2" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="push_blade_bucket">
+<visual>
+<origin xyz="-0.021564399534920564161 1.0799900599760599018 -0.25500000000000000444" rpy="-1.570796326794896558 -1.570796326794896558 0" />
+<geometry>
+<mesh filename="package:///push_blade_bucket.stl"/>
+</geometry>
+<material name="push_blade_bucket_material">
+<color rgba="0.61568627450980395466 0.81176470588235294379 0.92941176470588238168 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="-0.021564399534920564161 1.0799900599760599018 -0.25500000000000000444" rpy="-1.570796326794896558 -1.570796326794896558 0" />
+<geometry>
+<mesh filename="package:///push_blade_bucket.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.10970493109347190241 0.88075063461342828486 -0.25500033703320834633" rpy="0 0 0"/>
+<mass value="147.01808168083425699" />
+<inertia ixx="31.881096131626421197" ixy="0.91247385061899932701"  ixz="-1.6212090668492922982e-05" iyy="21.196220352263214437" iyz="4.9900082202379639952e-06" izz="13.169227707961496776" />
+</inertial>
+</link>
+
+<joint name="plow1" type="revolute">
+<origin xyz="-0.25500000000000005995 0.4880000000000002669 -0.20500000000000001554" rpy="1.570796326794896558 -1.3195606112546109934 -1.57079632679489678" />
+<parent link="compact_excavator_frame_body" />
+<child link="push_blade_bucket" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<joint name="tankSpin_wheel" type="continuous">
+<origin xyz="-0.25 -2.6052883279480892481e-15 -0.050000000000000002776" rpy="-5.5511151231419568159e-17 -1.1102230246202266528e-16 1.57079632679489678" />
+<parent link="compact_excavator_turret_cabin_roller" />
+<child link="compact_excavator_frame_body" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<joint name="fixed_base" type="fixed">
+<origin xyz="-0.25 -2.394831672112794725e-15 0.049999999999999988898" rpy="-6.5400986663891116335e-25 -1.0029564927205460558e-23 3.1415926535897926719" />
+<parent link="compact_excavator_cabin_body_cmpl" />
+<child link="compact_excavator_turret_cabin_roller" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<link name="part01_pin_1">
+<visual>
+<origin xyz="2.7755575615628913511e-17 0.074999999999999955591 -0.14999999999999996669" rpy="-1.570796326794896336 -6.1629758220391547298e-33 -3.9110122218931175387e-17" />
+<geometry>
+<mesh filename="package:///part01_pin_1.stl"/>
+</geometry>
+<material name="part01_pin_1_material">
+<color rgba="0.61568627450980395466 0.81176470588235294379 0.92941176470588238168 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="2.7755575615628913511e-17 0.074999999999999955591 -0.14999999999999996669" rpy="-1.570796326794896336 -6.1629758220391547298e-33 -3.9110122218931175387e-17" />
+<geometry>
+<mesh filename="package:///part01_pin_1.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.026030309007671018073 0.10672288733099301317 0.097553850513847364945" rpy="0 0 0"/>
+<mass value="98.140190062279060612" />
+<inertia ixx="2.6085778666185075458" ixy="0.040227300901953748358"  ixz="0.42136783119553594679" iyy="3.1665232143977135593" iyz="-0.15916376835413623136" izz="1.7889951810686841593" />
+</inertial>
+</link>
+
+<link name="part02_cmpl">
+<visual>
+<origin xyz="0 -1.1102230246251565404e-16 -0.079999999999999987788" rpy="-1.8986444163684491919e-18 -4.7989883477086379722e-18 -5.5740196908052639442e-17" />
+<geometry>
+<mesh filename="package:///part02.stl"/>
+</geometry>
+<material name="part02_material">
+<color rgba="0.77647058823529413463 0.7568627450980391913 0.73725490196078435901 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 -1.1102230246251565404e-16 -0.079999999999999987788" rpy="-1.8986444163684491919e-18 -4.7989883477086379722e-18 -5.5740196908052639442e-17" />
+<geometry>
+<mesh filename="package:///part02.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="-0.04007940207094668611 1.215334476695421273 -0.079873417172118876817" rpy="0 0 0"/>
+<mass value="694.17793513858055121" />
+<inertia ixx="242.81245205849677404" ixy="71.370938403077758494"  ixz="0.0065905643878567711502" iyy="49.641340591529456105" iyz="-0.034260052091464154866" izz="289.83702909122945357" />
+</inertial>
+</link>
+
+<link name="part03">
+<visual>
+<origin xyz="0 -2.2204460492503130808e-16 -0.054999999999999882316" rpy="3.141592653589793116 -2.9355922150226585865e-17 -1.6244440429287848019e-17" />
+<geometry>
+<mesh filename="package:///part03.stl"/>
+</geometry>
+<material name="part03_material">
+<color rgba="0.98039215686274505668 0.71372549019607844922 0.0039215686274509803377 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0 -2.2204460492503130808e-16 -0.054999999999999882316" rpy="3.141592653589793116 -2.9355922150226585865e-17 -1.6244440429287848019e-17" />
+<geometry>
+<mesh filename="package:///part03.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.10866226733951289685 -0.60164797350906107365 -0.055167291851018741833" rpy="0 0 0"/>
+<mass value="265.34907807560875881" />
+<inertia ixx="57.599134249663784146" ixy="0.078442580554215754485"  ixz="0.0049826290162324230956" iyy="1.8968981412117758012" iyz="0.02459901605653430981" izz="58.868680211308259231" />
+</inertial>
+</link>
+
+<link name="part04">
+<visual>
+<origin xyz="0.060000000000000053291 0.14000000000000012434 0.054999999999999993339" rpy="-1.570796326794896558 -1.570796326794896558 0" />
+<geometry>
+<mesh filename="package:///part04.stl"/>
+</geometry>
+<material name="part04_material">
+<color rgba="0.76862745098039220171 0.88627450980392152857 0.95294117647058818044 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0.060000000000000053291 0.14000000000000012434 0.054999999999999993339" rpy="-1.570796326794896558 -1.570796326794896558 0" />
+<geometry>
+<mesh filename="package:///part04.stl"/>
+</geometry>
+</collision>
+<visual>
+<origin xyz="0.078718096856630614955 0.97961106773940276327 0.054999999999992416067" rpy="9.6276401840221615033e-15 3.0234573268304492925e-15 3.0159289474462172009" />
+<geometry>
+<mesh filename="package:///bucket.stl"/>
+</geometry>
+<material name="bucket_material">
+<color rgba="0.61568627450980395466 0.81176470588235294379 0.92941176470588238168 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0.078718096856630614955 0.97961106773940276327 0.054999999999992416067" rpy="9.6276401840221615033e-15 3.0234573268304492925e-15 3.0159289474462172009" />
+<geometry>
+<mesh filename="package:///bucket.stl"/>
+</geometry>
+</collision>
+<visual>
+<origin xyz="0.16999999999999237943 0.30800000000000604672 0.054999999999999299449" rpy="-3.1415926535897793492 -1.570796326794896558 0" />
+<geometry>
+<mesh filename="package:///bucket_mount.stl"/>
+</geometry>
+<material name="bucket_mount_material">
+<color rgba="0.49803921568627451677 0.49803921568627451677 0.49803921568627451677 1.0"/>
+</material>
+</visual>
+<collision>
+<origin xyz="0.16999999999999237943 0.30800000000000604672 0.054999999999999299449" rpy="-3.1415926535897793492 -1.570796326794896558 0" />
+<geometry>
+<mesh filename="package:///bucket_mount.stl"/>
+</geometry>
+</collision>
+<inertial>
+<origin xyz="0.21363777998579594475 0.42618058483691984017 0.055071497454761988988" rpy="0 0 0"/>
+<mass value="132.70765933863819441" />
+<inertia ixx="14.03567187790122972" ixy="-1.6652440163767181502"  ixz="0.0020270508814650067472" iyy="6.8549730106956987541" iyz="0.0040437120644442776929" izz="11.610921270718170817" />
+</inertial>
+</link>
+
+<joint name="scoop1" type="revolute">
+<origin xyz="0.12000000000000410338 -1.5403327562575612752 9.4368957093138305936e-16" rpy="3.1415926535897917837 1.8859935444767496044e-16 -1.5963552846072552871" />
+<parent link="part03" />
+<child link="part04" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" lower="-1.2217304763960306069" upper="0.87266462599716476678"/>
+<joint_properties friction="0.0"/>
+</joint>
+
+<joint name="upperToLow" type="revolute">
+<origin xyz="-0.84000000000000030198 2.3549999999999999822 -0.13500000000000003664" rpy="3.1415926535897922278 6.9325343981756730312e-15 2.5555644018935783635" />
+<parent link="part02_cmpl" />
+<child link="part03" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<joint name="lower_arm" type="revolute">
+<origin xyz="0.079999999999996157518 0.074999999999997291056 -0.1500000000000039635" rpy="-1.570796326794896558 0.39285813115170314935 -1.5707963267949009989" />
+<parent link="part01_pin_1" />
+<child link="part02_cmpl" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+<joint name="full_arm_rotation" type="revolute">
+<origin xyz="-0.040707723917193447405 -0.80673603465099630316 0.38039999999999996039" rpy="3.141592653589793116 4.8797124238540929311e-17 0.21446312817660284633" />
+<parent link="compact_excavator_cabin_body_cmpl" />
+<child link="part01_pin_1" />
+<axis xyz="0 0 1"/>
+<limit effort="1" velocity="20" />
+<joint_properties friction="0.0"/>
+</joint>
+
+
+</robot>

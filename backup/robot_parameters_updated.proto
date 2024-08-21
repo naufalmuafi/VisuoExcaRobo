@@ -1,0 +1,766 @@
+
+WorldInfo {
+  CFM 0.00001
+  ERP 0.8
+}
+#VRML_SIM R2023b utf8
+# license: Apache License 2.0
+# license url: http://www.apache.org/licenses/LICENSE-2.0
+# This is a proto file for Webots for the robot
+# Extracted from: D:\Users\Muafi\Documents\NAUFAL MU'AFI\Universitas Gadjah Mada\Skripsi\VisuoExcaRobo\excavator_model\excavatorURDF-main\robot_corrected.urdf
+
+PROTO robot [
+  field  SFVec3f     translation     0 0 0
+  field  SFRotation  rotation        0 0 1 0
+  field  SFString    name            "robot"  # Is `Robot.name`.
+  field  SFString    controller      "void"   # Is `Robot.controller`.
+  field  MFString    controllerArgs  []       # Is `Robot.controllerArgs`.
+  field  SFString    customData      ""       # Is `Robot.customData`.
+  field  SFBool      supervisor      FALSE    # Is `Robot.supervisor`.
+  field  SFBool      synchronization TRUE     # Is `Robot.synchronization`.
+  field  SFBool      selfCollision   FALSE    # Is `Robot.selfCollision`.
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    controller IS controller
+    controllerArgs IS controllerArgs
+    customData IS customData
+    supervisor IS supervisor
+    synchronization IS synchronization
+    selfCollision IS selfCollision
+    children [
+      Pose {
+        translation 0.159292 -0.251282 0.331400
+        rotation 1.000000 -0.000000 -0.000000 1.570796
+        children [
+          Shape {
+            appearance DEF compact_excavator_cabin_body_material PBRAppearance {
+              baseColor 0.231373 0.380392 0.705882
+              roughness 1.000000
+              metalness 0
+            }
+            geometry DEF compact_excavator_cabin_body Mesh {
+              url "compact_excavator_cabin_body.stl"
+            }
+          }
+        ]
+      }
+      DEF compact_excavator_turret_cabin_roller Solid {
+        translation -0.250000 -0.000000 0.050000
+        rotation 0.000000 -0.000000 1.000000 3.141593
+        children [
+          Pose {
+            translation -0.250000 -0.000000 0.000000
+            rotation -1.000000 0.000000 -0.000000 1.570796
+            children [
+              Shape {
+                appearance DEF compact_excavator_turret_cabin_roller_material PBRAppearance {
+                  baseColor 0.980392 0.713725 0.003922
+                  roughness 1.000000
+                  metalness 0
+                }
+                geometry DEF compact_excavator_turret_cabin_roller Mesh {
+                  url "compact_excavator_turret_cabin_roller.stl"
+                }
+              }
+            ]
+          }
+          DEF tankSpin_wheel HingeJoint {
+            jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+              axis -0.000000 -0.000000 1.000000
+              anchor -0.250000 -0.000000 -0.050000
+            }
+            device [
+              RotationalMotor {
+                name "tankSpin_wheel"
+                maxVelocity 20.0
+                maxTorque 1.0
+              }
+              PositionSensor {
+                name "tankSpin_wheel_sensor"
+              }
+            ]
+            endPoint DEF compact_excavator_frame_body Solid {
+              translation -0.250000 -0.000000 -0.050000
+              rotation 0.000000 -0.000000 1.000000 1.570796
+              children [
+                Pose {
+                  translation 0.000000 0.000000 -0.120000
+                  rotation 1.000000 0.000000 0.000000 1.570796
+                  children [
+                    Shape {
+                      appearance DEF compact_excavator_frame_body_material PBRAppearance {
+                        baseColor 0.917647 0.917647 0.917647
+                        roughness 1.000000
+                        metalness 0
+                      }
+                      geometry DEF compact_excavator_frame_body Mesh {
+                        url "compact_excavator_frame_body.stl"
+                      }
+                    }
+                  ]
+                }
+                DEF left_sprocket_wheel HingeJoint {
+                  jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+                    axis 1.000000 0.000000 -0.000000
+                    anchor -0.574000 -0.800000 -0.275000
+                  }
+                  device [
+                    RotationalMotor {
+                      name "left_sprocket_wheel"
+                      maxVelocity 20.0
+                      maxTorque 1.0
+                    }
+                    PositionSensor {
+                      name "left_sprocket_wheel_sensor"
+                    }
+                  ]
+                  endPoint DEF compact_excavator_main_drive_wheel_cmpl_(1) Solid {
+                    translation -0.574000 -0.800000 -0.275000
+                    rotation 0.634439 0.441558 0.634439 2.309969
+                    children [
+                      Pose {
+                        translation 0.000000 -0.000000 -0.015000
+                        rotation -1.000000 -0.000000 -0.000000 3.141593
+                        children [
+                          Shape {
+                            appearance DEF compact_excavator_main_drive_wheel_material PBRAppearance {
+                              baseColor 0.917647 0.917647 0.917647
+                              roughness 1.000000
+                              metalness 0
+                            }
+                            geometry DEF compact_excavator_main_drive_wheel Mesh {
+                              url "compact_excavator_main_drive_wheel.stl"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                    name "compact_excavator_main_drive_wheel_cmpl_(1)"
+                    boundingObject Pose {
+                      translation 0.000000 -0.000000 -0.015000
+                      rotation -1.000000 -0.000000 -0.000000 3.141593
+                      children [
+                        USE compact_excavator_main_drive_wheel
+                      ]
+                    }
+                    physics Physics {
+                      density -1
+                      mass 35.986291
+                      centerOfMass [ 0.000028 -0.000000 -0.047031 ]
+                      inertiaMatrix [
+                        2.007174e-01 2.006621e-01 2.933357e-01
+                        2.115125e-17 7.969604e-05 2.962356e-16
+                      ]
+                    }
+                  }
+                }
+                DEF right_sprocket_wheel HingeJoint {
+                  jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+                    axis -1.000000 0.000000 -0.000000
+                    anchor 0.574000 -0.800000 -0.275000
+                  }
+                  device [
+                    RotationalMotor {
+                      name "right_sprocket_wheel"
+                      maxVelocity 20.0
+                      maxTorque 1.0
+                    }
+                    PositionSensor {
+                      name "right_sprocket_wheel_sensor"
+                    }
+                  ]
+                  endPoint DEF compact_excavator_main_drive_wheel_cmpl Solid {
+                    translation 0.574000 -0.800000 -0.275000
+                    rotation 0.134506 -0.981742 -0.134506 1.589222
+                    children [
+                      Pose {
+                        translation -0.000000 0.000000 -0.015000
+                        rotation 1.000000 -0.000000 0.000000 3.141593
+                        children [
+                          Shape {
+                            appearance USE compact_excavator_main_drive_wheel_material
+                            geometry USE compact_excavator_main_drive_wheel
+                          }
+                        ]
+                      }
+                    ]
+                    name "compact_excavator_main_drive_wheel_cmpl"
+                    boundingObject Pose {
+                      translation -0.000000 0.000000 -0.015000
+                      rotation 1.000000 -0.000000 0.000000 3.141593
+                      children [
+                        USE compact_excavator_main_drive_wheel
+                      ]
+                    }
+                    physics Physics {
+                      density -1
+                      mass 35.986291
+                      centerOfMass [ 0.000028 -0.000000 -0.047031 ]
+                      inertiaMatrix [
+                        2.007174e-01 2.006621e-01 2.933357e-01
+                        6.125058e-18 7.969604e-05 2.962311e-16
+                      ]
+                    }
+                  }
+                }
+                DEF left_idle_passive_wheel HingeJoint {
+                  jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+                    axis -1.000000 -0.000000 0.000000
+                    anchor -0.613000 0.800000 -0.275000
+                  }
+                  device [
+                    RotationalMotor {
+                      name "left_idle_passive_wheel"
+                      maxVelocity 20.0
+                      maxTorque 1.0
+                    }
+                    PositionSensor {
+                      name "left_idle_passive_wheel_sensor"
+                    }
+                  ]
+                  endPoint DEF compact_excavator_front_wheel Solid {
+                    translation -0.613000 0.800000 -0.275000
+                    rotation 0.261412 -0.929154 -0.261412 1.644211
+                    children [
+                      Pose {
+                        translation 0.000000 -0.000000 -0.032500
+                        rotation 0.577350 0.577350 -0.577350 2.094395
+                        children [
+                          Shape {
+                            appearance DEF compact_excavator_front_wheel_material PBRAppearance {
+                              baseColor 0.917647 0.917647 0.917647
+                              roughness 1.000000
+                              metalness 0
+                            }
+                            geometry DEF compact_excavator_front_wheel Mesh {
+                              url "compact_excavator_front_wheel.stl"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                    name "compact_excavator_front_wheel"
+                    boundingObject Pose {
+                      translation 0.000000 -0.000000 -0.032500
+                      rotation 0.577350 0.577350 -0.577350 2.094395
+                      children [
+                        USE compact_excavator_front_wheel
+                      ]
+                    }
+                    physics Physics {
+                      density -1
+                      mass 17.646736
+                      centerOfMass [ 0.000000 -0.000000 -0.032500 ]
+                      inertiaMatrix [
+                        1.530783e-01 1.530783e-01 2.996376e-01
+                        1.062921e-17 2.692250e-17 6.974756e-33
+                      ]
+                    }
+                  }
+                }
+                DEF right_idle_passive_wheel HingeJoint {
+                  jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+                    axis -1.000000 0.000000 -0.000000
+                    anchor 0.548000 0.800000 -0.275000
+                  }
+                  device [
+                    RotationalMotor {
+                      name "right_idle_passive_wheel"
+                      maxVelocity 20.0
+                      maxTorque 1.0
+                    }
+                    PositionSensor {
+                      name "right_idle_passive_wheel_sensor"
+                    }
+                  ]
+                  endPoint DEF compact_excavator_front_wheel_2 Solid {
+                    translation 0.548000 0.800000 -0.275000
+                    rotation 0.577350 -0.577350 -0.577350 2.094395
+                    children [
+                      Pose {
+                        translation 0.000000 0.000000 -0.032500
+                        rotation -0.577350 -0.577350 -0.577350 2.094395
+                        children [
+                          Shape {
+                            appearance USE compact_excavator_front_wheel_material
+                            geometry USE compact_excavator_front_wheel
+                          }
+                        ]
+                      }
+                    ]
+                    name "compact_excavator_front_wheel_2"
+                    boundingObject Pose {
+                      translation 0.000000 0.000000 -0.032500
+                      rotation -0.577350 -0.577350 -0.577350 2.094395
+                      children [
+                        USE compact_excavator_front_wheel
+                      ]
+                    }
+                    physics Physics {
+                      density -1
+                      mass 17.646736
+                      centerOfMass [ -0.000000 0.000000 -0.032500 ]
+                      inertiaMatrix [
+                        1.530783e-01 1.530783e-01 2.996376e-01
+                        -3.773672e-33 -2.692250e-17 -6.932123e-49
+                      ]
+                    }
+                  }
+                }
+                DEF plow1 HingeJoint {
+                  jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+                    axis -1.000000 0.000000 -0.000000
+                    anchor -0.255000 0.488000 -0.205000
+                  }
+                  device [
+                    RotationalMotor {
+                      name "plow1"
+                      maxVelocity 20.0
+                      maxTorque 1.0
+                    }
+                    PositionSensor {
+                      name "plow1_sensor"
+                    }
+                  ]
+                  endPoint DEF push_blade_bucket Solid {
+                    translation -0.255000 0.488000 -0.205000
+                    rotation 0.124316 -0.984424 -0.124316 1.586494
+                    children [
+                      Pose {
+                        translation -0.021564 1.079990 -0.255000
+                        rotation -0.577350 -0.577350 -0.577350 2.094395
+                        children [
+                          Shape {
+                            appearance DEF push_blade_bucket_material PBRAppearance {
+                              baseColor 0.615686 0.811765 0.929412
+                              roughness 1.000000
+                              metalness 0
+                            }
+                            geometry DEF push_blade_bucket Mesh {
+                              url "push_blade_bucket.stl"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                    name "push_blade_bucket"
+                    boundingObject Pose {
+                      translation -0.021564 1.079990 -0.255000
+                      rotation -0.577350 -0.577350 -0.577350 2.094395
+                      children [
+                        USE push_blade_bucket
+                      ]
+                    }
+                    physics Physics {
+                      density -1
+                      mass 147.018082
+                      centerOfMass [ -0.109705 0.880751 -0.255000 ]
+                      inertiaMatrix [
+                        3.188110e+01 2.119622e+01 1.316923e+01
+                        9.124739e-01 -1.621209e-05 4.990008e-06
+                      ]
+                    }
+                  }
+                }
+              ]
+              name "compact_excavator_frame_body"
+              boundingObject Pose {
+                translation 0.000000 0.000000 -0.120000
+                rotation 1.000000 0.000000 0.000000 1.570796
+                children [
+                  USE compact_excavator_frame_body
+                ]
+              }
+              physics Physics {
+                density -1
+                mass 459.117076
+                centerOfMass [ -0.006764 -0.125530 -0.186491 ]
+                inertiaMatrix [
+                  1.035431e+02 7.155038e+01 1.647178e+02
+                  2.868991e+00 -2.691860e-01 -8.788174e+00
+                ]
+              }
+            }
+          }
+        ]
+        name "compact_excavator_turret_cabin_roller"
+        boundingObject Pose {
+          translation -0.250000 -0.000000 0.000000
+          rotation -1.000000 0.000000 -0.000000 1.570796
+          children [
+            USE compact_excavator_turret_cabin_roller
+          ]
+        }
+        physics Physics {
+          density -1
+          mass 72.827596
+          centerOfMass [ -0.250000 -0.000000 -0.024480 ]
+          inertiaMatrix [
+            1.099653e+00 1.099653e+00 2.165974e+00
+            -2.710860e-32 -1.244766e-72 2.999005e-40
+          ]
+        }
+      }
+      DEF full_arm_rotation HingeJoint {
+        jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+          axis -0.000000 -0.000000 -1.000000
+          anchor -0.040708 -0.806736 0.380400
+        }
+        device [
+          RotationalMotor {
+            name "full_arm_rotation"
+            maxVelocity 20.0
+            maxTorque 1.0
+          }
+          PositionSensor {
+            name "full_arm_rotation_sensor"
+          }
+        ]
+        endPoint DEF part01_pin_1 Solid {
+          translation -0.040708 -0.806736 0.380400
+          rotation 0.994256 0.107026 -0.000000 3.141593
+          children [
+            Pose {
+              translation 0.000000 0.075000 -0.150000
+              rotation -1.000000 0.000000 -0.000000 1.570796
+              children [
+                Shape {
+                  appearance DEF part01_pin_1_material PBRAppearance {
+                    baseColor 0.615686 0.811765 0.929412
+                    roughness 1.000000
+                    metalness 0
+                  }
+                  geometry DEF part01_pin_1 Mesh {
+                    url "part01_pin_1.stl"
+                  }
+                }
+              ]
+            }
+            DEF lower_arm HingeJoint {
+              jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+                axis 1.000000 -0.000000 0.000000
+                anchor 0.080000 0.075000 -0.150000
+              }
+              device [
+                RotationalMotor {
+                  name "lower_arm"
+                  maxVelocity 20.0
+                  maxTorque 1.0
+                }
+                PositionSensor {
+                  name "lower_arm_sensor"
+                }
+              ]
+              endPoint DEF part02_cmpl Solid {
+                translation 0.080000 0.075000 -0.150000
+                rotation -0.485609 0.726890 -0.485609 1.884501
+                children [
+                  Pose {
+                    translation 0.000000 -0.000000 -0.080000
+                    children [
+                      Shape {
+                        appearance DEF part02_material PBRAppearance {
+                          baseColor 0.776471 0.756863 0.737255
+                          roughness 1.000000
+                          metalness 0
+                        }
+                        geometry DEF part02 Mesh {
+                          url "part02.stl"
+                        }
+                      }
+                    ]
+                  }
+                  DEF upperToLow HingeJoint {
+                    jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+                      axis 0.000000 -0.000000 -1.000000
+                      anchor -0.840000 2.355000 -0.135000
+                    }
+                    device [
+                      RotationalMotor {
+                        name "upperToLow"
+                        maxVelocity 20.0
+                        maxTorque 1.0
+                      }
+                      PositionSensor {
+                        name "upperToLow_sensor"
+                      }
+                    ]
+                    endPoint DEF part03 Solid {
+                      translation -0.840000 2.355000 -0.135000
+                      rotation 0.288839 0.957378 -0.000000 3.141593
+                      children [
+                        Pose {
+                          translation 0.000000 -0.000000 -0.055000
+                          rotation 1.000000 -0.000000 0.000000 3.141593
+                          children [
+                            Shape {
+                              appearance DEF part03_material PBRAppearance {
+                                baseColor 0.980392 0.713725 0.003922
+                                roughness 1.000000
+                                metalness 0
+                              }
+                              geometry DEF part03 Mesh {
+                                url "part03.stl"
+                              }
+                            }
+                          ]
+                        }
+                        DEF scoop1 HingeJoint {
+                          jointParameters 
+HingeJointParameters {
+  stopERP 0.8
+  stopCFM 0.00001
+  springConstant 1000  # Example value, adjust as needed
+  dampingConstant 0.5  # Example value, adjust as needed
+}
+
+                            axis -0.000000 0.000000 -1.000000
+                            anchor 0.120000 -1.540333 0.000000
+                          }
+                          device [
+                            RotationalMotor {
+                              name "scoop1"
+                              maxVelocity 20.0
+                              minPosition -1.2217304763960306
+                              maxPosition 0.8726646259971648
+                              maxTorque 1.0
+                            }
+                            PositionSensor {
+                              name "scoop1_sensor"
+                            }
+                          ]
+                          endPoint DEF part04 Solid {
+                            translation 0.120000 -1.540333 0.000000
+                            rotation 0.698013 -0.716085 -0.000000 3.141593
+                            children [
+                              Pose {
+                                translation 0.060000 0.140000 0.055000
+                                rotation -0.577350 -0.577350 -0.577350 2.094395
+                                children [
+                                  Shape {
+                                    appearance DEF part04_material PBRAppearance {
+                                      baseColor 0.768627 0.886275 0.952941
+                                      roughness 1.000000
+                                      metalness 0
+                                    }
+                                    geometry DEF part04 Mesh {
+                                      url "part04.stl"
+                                    }
+                                  }
+                                ]
+                              }
+                              Pose {
+                                translation 0.078718 0.979611 0.055000
+                                rotation -0.000000 0.000000 1.000000 3.015929
+                                children [
+                                  Shape {
+                                    appearance DEF bucket_material PBRAppearance {
+                                      baseColor 0.615686 0.811765 0.929412
+                                      roughness 1.000000
+                                      metalness 0
+                                    }
+                                    geometry DEF bucket Mesh {
+                                      url "bucket.stl"
+                                    }
+                                  }
+                                ]
+                              }
+                              Pose {
+                                translation 0.170000 0.308000 0.055000
+                                rotation -0.707107 -0.000000 -0.707107 3.141593
+                                children [
+                                  Shape {
+                                    appearance DEF bucket_mount_material PBRAppearance {
+                                      baseColor 0.498039 0.498039 0.498039
+                                      roughness 1.000000
+                                      metalness 0
+                                    }
+                                    geometry DEF bucket_mount Mesh {
+                                      url "bucket_mount.stl"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                            name "part04"
+                            boundingObject Group {
+                              children [
+                                Pose {
+                                  translation 0.060000 0.140000 0.055000
+                                  rotation -0.577350 -0.577350 -0.577350 2.094395
+                                  children [
+                                    USE part04
+                                  ]
+                                }
+                                Pose {
+                                  translation 0.078718 0.979611 0.055000
+                                  rotation -0.000000 0.000000 1.000000 3.015929
+                                  children [
+                                    USE bucket
+                                  ]
+                                }
+                                Pose {
+                                  translation 0.170000 0.308000 0.055000
+                                  rotation -0.707107 -0.000000 -0.707107 3.141593
+                                  children [
+                                    USE bucket_mount
+                                  ]
+                                }
+                              ]
+                            }
+                            physics Physics {
+                              density -1
+                              mass 132.707659
+                              centerOfMass [ 0.213638 0.426181 0.055071 ]
+                              inertiaMatrix [
+                                1.403567e+01 6.854973e+00 1.161092e+01
+                                -1.665244e+00 2.027051e-03 4.043712e-03
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                      name "part03"
+                      boundingObject Pose {
+                        translation 0.000000 -0.000000 -0.055000
+                        rotation 1.000000 -0.000000 0.000000 3.141593
+                        children [
+                          USE part03
+                        ]
+                      }
+                      physics Physics {
+                        density -1
+                        mass 265.349078
+                        centerOfMass [ 0.108662 -0.601648 -0.055167 ]
+                        inertiaMatrix [
+                          5.759913e+01 1.896898e+00 5.886868e+01
+                          7.844258e-02 4.982629e-03 2.459902e-02
+                        ]
+                      }
+                    }
+                  }
+                ]
+                name "part02_cmpl"
+                boundingObject Pose {
+                  translation 0.000000 -0.000000 -0.080000
+                  children [
+                    USE part02
+                  ]
+                }
+                physics Physics {
+                  density -1
+                  mass 694.177935
+                  centerOfMass [ -0.040079 1.215334 -0.079873 ]
+                  inertiaMatrix [
+                    2.428125e+02 4.964134e+01 2.898370e+02
+                    7.137094e+01 6.590564e-03 -3.426005e-02
+                  ]
+                }
+              }
+            }
+          ]
+          name "part01_pin_1"
+          boundingObject Pose {
+            translation 0.000000 0.075000 -0.150000
+            rotation -1.000000 0.000000 -0.000000 1.570796
+            children [
+              USE part01_pin_1
+            ]
+          }
+          physics Physics {
+            density -1
+            mass 98.140190
+            centerOfMass [ -0.026030 0.106723 0.097554 ]
+            inertiaMatrix [
+              2.608578e+00 3.166523e+00 1.788995e+00
+              4.022730e-02 4.213678e-01 -1.591638e-01
+            ]
+          }
+        }
+      }
+    ]
+    name IS name
+    boundingObject Pose {
+      translation 0.159292 -0.251282 0.331400
+      rotation 1.000000 -0.000000 -0.000000 1.570796
+      children [
+        USE compact_excavator_cabin_body
+      ]
+    }
+    physics Physics {
+      density -1
+      mass 9732.803898
+      centerOfMass [ -0.146873 0.441157 0.450917 ]
+      inertiaMatrix [
+        3.175166e+03 2.627633e+03 3.742616e+03
+        -2.699731e+02 1.676178e+02 -1.938549e+02
+      ]
+    }
+  }
+}

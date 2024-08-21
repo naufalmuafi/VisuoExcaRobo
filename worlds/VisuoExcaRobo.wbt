@@ -5,15 +5,150 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
 
 WorldInfo {
+  basicTimeStep 16
 }
 Viewpoint {
-  orientation -0.23281218499688863 0.2775887798467637 0.9320638153153246 1.4654491812783528
-  position -0.7703514227377627 -4.9892366340974235 2.6921802769485117
+  orientation -0.08155019673184238 0.9375449191062667 0.3381702087278262 0.5035513838922225
+  position -11.17731451759079 -2.6047844009799572 5.89292837562139
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
-  floorSize 2 2
+  floorSize 20 20
+}
+DEF EXCAVATOR Robot {
+  translation 6.292125423839709e-10 2.2130510841226386e-06 0.19988025451860786
+  rotation -0.9999999999987083 -1.6070234606929661e-06 2.9377202889491146e-08 2.4755047510263997e-06
+  children [
+    Pose {
+      children [
+        DEF BODY Shape {
+          appearance PBRAppearance {
+            baseColor 0.917647 0.917647 0.917647
+            roughness 1
+            metalness 0
+          }
+          geometry Box {
+            size 1.7 1.7 0.22
+          }
+        }
+      ]
+    }
+    DEF WHEEL1 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 3.944715691954095e-08
+        axis 0 1 0
+        anchor 0.85 0.9000000000000001 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel1_motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0.85 0.9000000000000001 0
+        rotation 0 1 0 4.2146848510894035e-08
+        children [
+          DEF WHEEL Pose {
+            rotation -1 0 0 1.57
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.980392 0.713725 0.003922
+                  roughness 1
+                  metalness 0
+                }
+                geometry Cylinder {
+                  height 0.1
+                  radius 0.2
+                }
+              }
+            ]
+          }
+        ]
+        name "wheel1"
+        boundingObject USE WHEEL
+        physics DEF PHYSICS_WHEEL Physics {
+          density -1
+          mass 0.05
+        }
+      }
+    }
+    DEF WHEEL2 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 3.946096151677051e-08
+        axis 0 1 0
+        anchor 0.85 -0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel2_motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0.85 -0.9 0
+        rotation 0 1 0 4.2146848510894035e-08
+        children [
+          USE WHEEL
+        ]
+        name "wheel2"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+    DEF WHEEL3 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 3.9447147755276025e-08
+        axis 0 1 0
+        anchor -0.85 0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel3_motor"
+        }
+      ]
+      endPoint Solid {
+        translation -0.85 0.9 0
+        rotation 0 1 0 4.2146848510894035e-08
+        children [
+          USE WHEEL
+        ]
+        name "wheel3"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+    DEF WHEEL4 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 3.946095245408605e-08
+        axis 0 1 0
+        anchor -0.85 -0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel4_motor"
+        }
+      ]
+      endPoint Solid {
+        translation -0.85 -0.9 0
+        rotation 0 1 0 4.2146848510894035e-08
+        children [
+          USE WHEEL
+        ]
+        name "wheel4"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+  ]
+  name "wheeledExcavator"
+  boundingObject USE BODY
+  physics Physics {
+    density -1
+    mass 1
+  }
+  controller "obs_controller"
+  supervisor TRUE
 }
