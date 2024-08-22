@@ -8,8 +8,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.09669002246880422 -0.240179257833399 -0.9659011148464316 5.493369862297417
-  position -7.712451886677735 -8.593695057730896 3.004772245863961
+  orientation 0.14961692645866748 -0.20672880093487692 -0.966890882251503 4.998062434464843
+  position -2.8699118205780585 -12.337056716710311 4.1063203062966895
 }
 TexturedBackground {
 }
@@ -36,7 +36,7 @@ DEF EXCAVATOR Robot {
       ]
     }
     DEF BLUE_CABIN Pose {
-      translation 0.15 -0.5 0.6
+      translation 0.15 -0.5 1
       rotation 1 0 0 1.570796
       children [
         Shape {
@@ -71,6 +71,21 @@ DEF EXCAVATOR Robot {
         translation 2 0 0.16900000000000004
         rotation 0 0 1 3.141593
         children [
+          DEF TRIAL Pose {
+            translation 2 0 0.05
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.666667 0 0
+                  roughness 1
+                  metalness 0
+                }
+                geometry Box {
+                  size 1 1 0.1
+                }
+              }
+            ]
+          }
           DEF TURRET Pose {
             translation 2 0 0
             rotation -1 0 0 1.570796

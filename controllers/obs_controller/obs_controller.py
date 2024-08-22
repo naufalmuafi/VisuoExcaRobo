@@ -3,20 +3,32 @@ from controller import Supervisor
 # Create the Robot instance
 robot = Supervisor()
 
-# Get the time step of the current world.
+# Get the time step of the current world
 timestep = int(robot.getBasicTimeStep())
 
 # Initialize motors for all wheels
-motors = []
+motors = [robot.getDevice(f"wheel{i}_motor") for i in range(1, 5)]
 
-for i in range(1, 5):
-    motor = robot.getDevice("wheel" + str(i) + "_motor")
-    motor.setVelocity(0.0)
+# Initialize turret motor
+turret_motor = robot.getDevice("turret_motor")
+
+# Set motors to velocity control mode
+for motor in motors:
     motor.setPosition(float("inf"))
-    motors.append(motor)
+    motor.setVelocity(0.0)
+
+# Set turret motor to velocity control mode
+turret_motor.setPosition(float("inf"))
+turret_motor.setVelocity(0.0)
 
 # Main loop:
-# - perform simulation steps until Webots is stopping the controller
+start_time = robot.getTime()
+
 while robot.step(timestep) != -1:
-    for i in range(4):
-        motors[i].setVelocity(1.0)
+    # Set velocity for the first 3 seconds, then stop
+    velocity = 1.0 if robot.getTime() - start_time <= 3.0 else 0.0
+    for motor in motors:
+        motor.setVelocity(velocity)
+
+    # Set turret motor velocity
+    turret_motor.setVelocity(1.0)
