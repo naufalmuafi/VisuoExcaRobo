@@ -27,30 +27,38 @@ turret_motor.setPosition(float("inf"))
 turret_motor.setVelocity(0.0)
 
 
-# Function to move turret to a specific angle (in degrees)
-def move_turret_to_angle_degrees(angle_degrees):
-    # Convert degrees to radians
-    angle_radians = math.radians(angle_degrees)
-    turret_motor.setPosition(angle_radians)
-
-
 def run_all_motors(velocity):
     for motor in motors:
         motor.setVelocity(velocity)
 
 
-def run_turret_to(angle, turret_speed=0.2):
-    init_pos = turret_sensor.getValue()
-    target_pos = math.radians(angle)
+# Function to calculate the shortest rotation direction and angle difference
+def calculate_turret_movement(current_angle, target_angle):
+    diffA = math.degrees(target_angle) - math.degrees(current_angle)
+    diffB = 360 - diffA
 
-    routeA = angle - math.degrees(init_pos)
-    routeB = (2 * math.pi) - routeA
-    direction = 1 if routeA < routeB else -1
+    if diffA < diffB or diffA == diffB:
+        direction = 1
+    elif diffA > diffB:
+        direction = -1
 
-    while init_pos != target_pos:
-        turret_motor.setVelocity(turret_speed * direction)
-        init_pos = turret_sensor.getValue()
-        print(math.degrees(init_pos))
+    return direction
+
+
+# Function to move turret to a specific angle in degrees
+def move_turret_to_angle(target_angle_degrees, turret_speed=0.2):
+    target_angle_radians = math.radians(
+        target_angle_degrees
+    )  # Convert target angle to radians
+
+    # Get the current position of the turret
+    current_angle = turret_sensor.getValue()
+
+    # Calculate the difference to the target position
+    direction = calculate_turret_movement(current_angle, target_angle_radians)
+
+    # move the turret to the target position
+    turret_motor.setVelocity(turret_speed * direction)
 
 
 # Main loop:
@@ -71,4 +79,5 @@ while robot.step(timestep) != -1:
     # elif duration > 8.0:
     #     run_all_motors(0.0)
 
-    run_turret_to(90)
+    move_turret_to_angle(300)
+    print(math.degrees(turret_sensor.getValue()))
