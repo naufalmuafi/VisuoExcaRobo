@@ -8,8 +8,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.1737232767369272 -0.20717893519672848 -0.9627549594421909 4.850098042304616
-  position -0.7797783340339794 -14.610082201862383 5.885808553224773
+  orientation 0.1345204468101951 -0.205726372875387 -0.9693198176523178 5.096246879922543
+  position -3.529931226434501 -12.020912494585598 4.301081890441678
 }
 TexturedBackground {
 }
@@ -19,7 +19,7 @@ RectangleArena {
   floorSize 20 20
 }
 DEF EXCAVATOR Robot {
-  translation 0 0 0.19988
+  translation 0 0 0.204728
   children [
     DEF WHITE_UNDERCARRIAGE Pose {
       children [
@@ -51,7 +51,84 @@ DEF EXCAVATOR Robot {
         translation 2 0 0.16900000000000004
         rotation 0 0 1 3.141593
         children [
-          DEF CABIN_AND_ARM Pose {
+          DEF ARM HingeJoint {
+            jointParameters HingeJointParameters {
+              axis 0 0 -1
+            }
+            device [
+              RotationalMotor {
+                name "arm_rotation_motor"
+              }
+              PositionSensor {
+                name "arm_rotation_sensor"
+              }
+            ]
+            endPoint DEF ARM_SOLID Solid {
+              rotation 1 0 0 3.14159
+              children [
+                DEF ARM_CONNECTOR_POSE Pose {
+                  translation 0.82 0 -0.47
+                  rotation 0.5802380124028778 0.5715310122167613 -0.5802380124028778 -2.1031453071795863
+                  children [
+                    Shape {
+                      appearance DEF PART1_MATERIAL PBRAppearance {
+                        baseColor 0.615686 0.811765 0.929412
+                        roughness 1
+                        metalness 0
+                      }
+                      geometry DEF PART1_MESH Mesh {
+                        url [
+                          "../protos/wheeledExcavator/part01_pin_1.stl"
+                        ]
+                      }
+                      castShadows FALSE
+                    }
+                  ]
+                }
+                DEF LOWER_ARM HingeJoint {
+                  jointParameters HingeJointParameters {
+                  }
+                  device [
+                    RotationalMotor {
+                      name "lower_arm_motor"
+                    }
+                    PositionSensor {
+                      name "lower_arm_sensor"
+                    }
+                  ]
+                  endPoint DEF PART2 Solid {
+                    translation 0.82 0 -0.45
+                    rotation -0.936479656448536 0.2608452037189367 0.2344475053287155 1.62
+                    children [
+                      Pose {
+                        children [
+                          Shape {
+                            appearance DEF PART2_MATERIAL PBRAppearance {
+                              baseColor 0.776471 0.756863 0.737255
+                              roughness 1
+                              metalness 0
+                            }
+                            geometry DEF PART2_MESH Mesh {
+                              url [
+                                "../protos/WheeledExcavator/part02.stl"
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+              name "ARM_SOLID"
+              boundingObject USE ARM_CONNECTOR_POSE
+              physics Physics {
+                density -1
+                mass 1
+              }
+            }
+          }
+          DEF CABIN Pose {
             translation 1.45 -0.2 0.28
             rotation -0.5773502691896258 0.5773502691896258 0.5773502691896258 -2.094395307179586
             children [
@@ -93,12 +170,11 @@ DEF EXCAVATOR Robot {
         boundingObject Group {
           children [
             USE TURRET
-            USE CABIN_AND_ARM
           ]
         }
         physics Physics {
           density -1
-          mass 0.05
+          mass 1
         }
       }
     }
