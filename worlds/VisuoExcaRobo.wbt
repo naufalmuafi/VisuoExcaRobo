@@ -51,11 +51,11 @@ DEF EXCAVATOR Robot {
         translation 2 0 0.16900000000000004
         rotation 0 0 1 3.141593
         children [
-          DEF BLUE_CABIN Pose {
+          DEF CABIN_AND_ARM Pose {
             translation 1.45 -0.2 0.28
             rotation -0.5773502691896258 0.5773502691896258 0.5773502691896258 -2.094395307179586
             children [
-              Shape {
+              DEF BLUE_CABIN_BODY Shape {
                 appearance DEF compact_excavator_cabin_body_material PBRAppearance {
                   baseColor 0.231373 0.380392 0.705882
                   roughness 1
@@ -68,6 +68,7 @@ DEF EXCAVATOR Robot {
                 }
                 castShadows FALSE
               }
+
             ]
           }
           DEF TURRET Pose {
@@ -90,7 +91,12 @@ DEF EXCAVATOR Robot {
           }
         ]
         name "yelow_turret_solid"
-        boundingObject USE TURRET
+        boundingObject Group {
+          children [
+            USE TURRET
+            USE CABIN_AND_ARM
+          ]
+        }
         physics Physics {
           density -1
           mass 0.05
