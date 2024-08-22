@@ -5,15 +5,226 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
 
 WorldInfo {
+  basicTimeStep 16
 }
 Viewpoint {
-  orientation -0.23281218499688863 0.2775887798467637 0.9320638153153246 1.4654491812783528
-  position -0.7703514227377627 -4.9892366340974235 2.6921802769485117
+  orientation 0.06309541616863923 -0.10982483351273632 -0.9919463062093664 5.2332094393394
+  position -3.1497058776710016 -7.329461325772828 1.4075102301431452
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
-  floorSize 2 2
+  floorSize 20 20
+}
+DEF EXCAVATOR Robot {
+  translation 0 0 0.19988
+  children [
+    DEF WHITE_UNDERCARRIAGE Pose {
+      children [
+        DEF BODY Shape {
+          appearance PBRAppearance {
+            baseColor 0.917647 0.917647 0.917647
+            roughness 1
+            metalness 0
+          }
+          geometry Box {
+            size 1.7 1.7 0.22
+          }
+        }
+      ]
+    }
+    DEF BLUE_CABIN Pose {
+      translation 0.15 -0.5 1
+      rotation 1 0 0 1.570796
+      children [
+        Shape {
+          appearance DEF compact_excavator_cabin_body_material PBRAppearance {
+            baseColor 0.231373 0.380392 0.705882
+            roughness 1
+            metalness 0
+          }
+          geometry DEF compact_excavator_cabin_body Mesh {
+            url [
+              "../protos/wheeledExcavator/compact_excavator_cabin_body.stl"
+            ]
+          }
+          castShadows FALSE
+        }
+      ]
+    }
+    DEF TURRET_ROLLER HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 0 1
+      }
+      device [
+        RotationalMotor {
+          name "turret_motor"
+        }
+        PositionSensor {
+          name "turret_sensor"
+        }
+      ]
+      endPoint DEF TURRET_SOLID Solid {
+        translation 2 0 0.16900000000000004
+        rotation 0 0 1 3.141593
+        children [
+          DEF TRIAL Pose {
+            translation 2 0 0.2
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.666667 0 0
+                  roughness 1
+                  metalness 0
+                }
+                geometry Box {
+                  size 1 1 0.1
+                }
+              }
+            ]
+          }
+          DEF TURRET Pose {
+            translation 2 0 0
+            rotation -1 0 0 1.570796
+            children [
+              Shape {
+                appearance DEF compact_excavator_turret_cabin_roller_material PBRAppearance {
+                  baseColor 0.980392 0.713725 0.003922
+                  roughness 1
+                  metalness 0
+                }
+                geometry DEF compact_excavator_turret_cabin_roller Mesh {
+                  url [
+                    "../protos/wheeledExcavator/compact_excavator_turret_cabin_roller.stl"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+        name "yelow_turret_solid"
+        boundingObject USE TURRET
+        physics Physics {
+          density -1
+          mass 0.05
+        }
+      }
+    }
+    DEF WHEEL1 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 3.944715691954095e-08
+        axis 0 1 0
+        anchor 0.85 0.9000000000000001 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel1_motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0.85 0.9000000000000001 0
+        rotation 0 1 0 4.2146848510894035e-08
+        children [
+          DEF WHEEL Pose {
+            rotation -1 0 0 1.57
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.980392 0.713725 0.003922
+                  roughness 1
+                  metalness 0
+                }
+                geometry Cylinder {
+                  height 0.1
+                  radius 0.2
+                }
+              }
+            ]
+          }
+        ]
+        name "wheel1"
+        boundingObject USE WHEEL
+        physics DEF PHYSICS_WHEEL Physics {
+          density -1
+          mass 0.05
+        }
+      }
+    }
+    DEF WHEEL2 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 3.946096151677051e-08
+        axis 0 1 0
+        anchor 0.85 -0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel2_motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0.85 -0.9 0
+        rotation 0 1 0 4.2146848510894035e-08
+        children [
+          USE WHEEL
+        ]
+        name "wheel2"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+    DEF WHEEL3 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 3.9447147755276025e-08
+        axis 0 1 0
+        anchor -0.85 0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel3_motor"
+        }
+      ]
+      endPoint Solid {
+        translation -0.85 0.9 0
+        rotation 0 1 0 4.2146848510894035e-08
+        children [
+          USE WHEEL
+        ]
+        name "wheel3"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+    DEF WHEEL4 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 3.946095245408605e-08
+        axis 0 1 0
+        anchor -0.85 -0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel4_motor"
+        }
+      ]
+      endPoint Solid {
+        translation -0.85 -0.9 0
+        rotation 0 1 0 4.2146848510894035e-08
+        children [
+          USE WHEEL
+        ]
+        name "wheel4"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+  ]
+  name "wheeledExcavator"
+  boundingObject USE BODY
+  physics Physics {
+    density -1
+    mass 1
+  }
+  controller "obs_controller"
+  supervisor TRUE
 }

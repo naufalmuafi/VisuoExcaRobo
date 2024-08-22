@@ -1,0 +1,241 @@
+#VRML_SIM R2023b utf8
+# license: Apache License 2.0
+# license url: http://www.apache.org/licenses/LICENSE-2.0
+# This is a proto file for Webots for the wheeledExcavator
+# Extracted from: D:\Users\Muafi\Documents\NAUFAL MU'AFI\Universitas Gadjah Mada\Skripsi\VisuoExcaRobo\excavator_model\excavator_grabcad\wheeled_excavator\wheeled_excavator.urdf
+
+PROTO wheeledExcavator [
+  field  SFVec3f     translation     0 0 0
+  field  SFRotation  rotation        0 0 1 0
+  field  SFString    name            "wheeledExcavator"  # Is `Robot.name`.
+  field  SFString    controller      "void"              # Is `Robot.controller`.
+  field  MFString    controllerArgs  []                  # Is `Robot.controllerArgs`.
+  field  SFString    customData      ""                  # Is `Robot.customData`.
+  field  SFBool      supervisor      FALSE               # Is `Robot.supervisor`.
+  field  SFBool      synchronization TRUE                # Is `Robot.synchronization`.
+  field  SFBool      selfCollision   FALSE               # Is `Robot.selfCollision`.
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    controller IS controller
+    controllerArgs IS controllerArgs
+    customData IS customData
+    supervisor IS supervisor
+    synchronization IS synchronization
+    selfCollision IS selfCollision
+    children [
+      Shape {
+        appearance PBRAppearance {
+          baseColor 0.500000 0.500000 0.500000
+          roughness 1.000000
+          metalness 0
+        }
+        geometry DEF Weight_Keeper_v1 Mesh {
+          url "Weight Keeper v1.stl"
+        }
+      }
+      DEF cabin_link Solid {
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry DEF Cabin_1_v1 Mesh {
+              url "Cabin 1 v1.stl"
+            }
+          }
+          DEF door_to_cabin HingeJoint {
+            jointParameters HingeJointParameters {
+              axis 0.000000 0.000000 1.000000
+            }
+            device [
+              RotationalMotor {
+                name "door_to_cabin"
+                maxTorque 10000
+              }
+              PositionSensor {
+                name "door_to_cabin_sensor"
+              }
+            ]
+            endPoint DEF cabin_door_link Solid {
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.500000 0.500000 0.500000
+                    roughness 1.000000
+                    metalness 0
+                  }
+                  geometry DEF Cabin_door_01_v1 Mesh {
+                    url "Cabin door 01 v1.stl"
+                  }
+                }
+              ]
+              name "cabin_door_link"
+              boundingObject USE Cabin_door_01_v1
+              physics Physics {
+              }
+            }
+          }
+        ]
+        name "cabin_link"
+        boundingObject USE Cabin_1_v1
+        physics Physics {
+        }
+      }
+      DEF front_support_link Solid {
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.500000 0.500000 0.500000
+              roughness 1.000000
+              metalness 0
+            }
+            geometry DEF Front_support__2_v1 Mesh {
+              url "Front support  2 v1.stl"
+            }
+          }
+          DEF hand_1_to_front_support HingeJoint {
+            jointParameters HingeJointParameters {
+              axis 0.000000 1.000000 0.000000
+            }
+            device [
+              RotationalMotor {
+                name "hand_1_to_front_support"
+                maxTorque 10000
+              }
+              PositionSensor {
+                name "hand_1_to_front_support_sensor"
+              }
+            ]
+            endPoint DEF hand_1_link Solid {
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.500000 0.500000 0.500000
+                    roughness 1.000000
+                    metalness 0
+                  }
+                  geometry DEF Hand_1_v1 Mesh {
+                    url "Hand 1 v1.stl"
+                  }
+                }
+                DEF hand_2_to_hand_1 HingeJoint {
+                  jointParameters HingeJointParameters {
+                    axis 0.000000 1.000000 0.000000
+                  }
+                  device [
+                    RotationalMotor {
+                      name "hand_2_to_hand_1"
+                      maxTorque 10000
+                    }
+                    PositionSensor {
+                      name "hand_2_to_hand_1_sensor"
+                    }
+                  ]
+                  endPoint DEF hand_2_link Solid {
+                    children [
+                      Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.500000 0.500000 0.500000
+                          roughness 1.000000
+                          metalness 0
+                        }
+                        geometry DEF hand_2_v1 Mesh {
+                          url "hand 2 v1.stl"
+                        }
+                      }
+                      DEF hinge_to_hand_2 HingeJoint {
+                        jointParameters HingeJointParameters {
+                          axis 0.000000 1.000000 0.000000
+                        }
+                        device [
+                          RotationalMotor {
+                            name "hinge_to_hand_2"
+                            maxTorque 10000
+                          }
+                          PositionSensor {
+                            name "hinge_to_hand_2_sensor"
+                          }
+                        ]
+                        endPoint DEF hinge_2_link Solid {
+                          children [
+                            Shape {
+                              appearance PBRAppearance {
+                                baseColor 0.500000 0.500000 0.500000
+                                roughness 1.000000
+                                metalness 0
+                              }
+                              geometry DEF Hinge_2_v1 Mesh {
+                                url "Hinge 2 v1.stl"
+                              }
+                            }
+                            DEF part5_to_hinge HingeJoint {
+                              jointParameters HingeJointParameters {
+                                axis 0.000000 1.000000 0.000000
+                              }
+                              device [
+                                RotationalMotor {
+                                  name "part5_to_hinge"
+                                  maxTorque 10000
+                                }
+                                PositionSensor {
+                                  name "part5_to_hinge_sensor"
+                                }
+                              ]
+                              endPoint DEF part5_link Solid {
+                                children [
+                                  Shape {
+                                    appearance PBRAppearance {
+                                      baseColor 0.500000 0.500000 0.500000
+                                      roughness 1.000000
+                                      metalness 0
+                                    }
+                                    geometry DEF Part5_v1 Mesh {
+                                      url "Part5 v1.stl"
+                                    }
+                                  }
+                                ]
+                                name "part5_link"
+                                boundingObject USE Part5_v1
+                                physics Physics {
+                                }
+                              }
+                            }
+                          ]
+                          name "hinge_2_link"
+                          boundingObject USE Hinge_2_v1
+                          physics Physics {
+                          }
+                        }
+                      }
+                    ]
+                    name "hand_2_link"
+                    boundingObject USE hand_2_v1
+                    physics Physics {
+                    }
+                  }
+                }
+              ]
+              name "hand_1_link"
+              boundingObject USE Hand_1_v1
+              physics Physics {
+              }
+            }
+          }
+        ]
+        name "front_support_link"
+        boundingObject USE Front_support__2_v1
+        physics Physics {
+        }
+      }
+    ]
+    name IS name
+    boundingObject USE Weight_Keeper_v1
+    physics Physics {
+    }
+  }
+}
