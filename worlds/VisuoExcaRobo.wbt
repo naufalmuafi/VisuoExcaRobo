@@ -8,8 +8,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation -0.2982715996532384 0.4297142435847588 0.8522791336766828 1.366957664864739
-  position -5.073617021318723 -17.51472788707476 14.632272660444315
+  orientation 0.09669002246880422 -0.240179257833399 -0.9659011148464316 5.493369862297417
+  position -7.712451886677735 -8.593695057730896 3.004772245863961
 }
 TexturedBackground {
 }
@@ -21,7 +21,7 @@ RectangleArena {
 DEF EXCAVATOR Robot {
   translation 0 0 0.19988
   children [
-    Pose {
+    DEF WHITE_UNDERCARRIAGE Pose {
       children [
         DEF BODY Shape {
           appearance PBRAppearance {
@@ -34,6 +34,69 @@ DEF EXCAVATOR Robot {
           }
         }
       ]
+    }
+    DEF BLUE_CABIN Pose {
+      translation 0.15 -0.5 0.6
+      rotation 1 0 0 1.570796
+      children [
+        Shape {
+          appearance DEF compact_excavator_cabin_body_material PBRAppearance {
+            baseColor 0.231373 0.380392 0.705882
+            roughness 1
+            metalness 0
+          }
+          geometry DEF compact_excavator_cabin_body Mesh {
+            url [
+              "../protos/wheeledExcavator/compact_excavator_cabin_body.stl"
+            ]
+          }
+          castShadows FALSE
+        }
+      ]
+    }
+    DEF TURRET_ROLLER HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 0 1
+        anchor -0.25 0 -0.05
+      }
+      device [
+        RotationalMotor {
+          name "turret_motor"
+        }
+        PositionSensor {
+          name "turret_sensor"
+        }
+      ]
+      endPoint DEF TURRET_SOLID Solid {
+        translation 2 0 0.16900000000000004
+        rotation 0 0 1 3.141593
+        children [
+          DEF TURRET Pose {
+            translation 2 0 0
+            rotation -1 0 0 1.570796
+            children [
+              Shape {
+                appearance DEF compact_excavator_turret_cabin_roller_material PBRAppearance {
+                  baseColor 0.980392 0.713725 0.003922
+                  roughness 1
+                  metalness 0
+                }
+                geometry DEF compact_excavator_turret_cabin_roller Mesh {
+                  url [
+                    "../protos/wheeledExcavator/compact_excavator_turret_cabin_roller.stl"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+        name "yelow_turret_solid"
+        boundingObject USE TURRET
+        physics Physics {
+          density -1
+          mass 0.05
+        }
+      }
     }
     DEF WHEEL1 HingeJoint {
       jointParameters HingeJointParameters {
