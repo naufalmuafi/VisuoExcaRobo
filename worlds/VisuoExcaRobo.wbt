@@ -8,8 +8,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.1345204468101951 -0.205726372875387 -0.9693198176523178 5.096246879922543
-  position -3.529931226434501 -12.020912494585598 4.301081890441678
+  orientation 0.15493927314364114 -0.21010607787684124 -0.9653233953846404 4.978461104526804
+  position -1.2128823414789147 -9.032377477888348 3.8328315653488976
 }
 TexturedBackground {
 }
@@ -35,7 +35,7 @@ DEF EXCAVATOR Robot {
         }
       ]
     }
-    DEF TURRET_ROLLER HingeJoint {
+    DEF CABIN_TURRET_ARM HingeJoint {
       jointParameters HingeJointParameters {
         axis 0 0 1
       }
@@ -96,11 +96,11 @@ DEF EXCAVATOR Robot {
                       name "lower_arm_sensor"
                     }
                   ]
-                  endPoint DEF PART2 Solid {
+                  endPoint DEF LOWER_ARM_SOLID Solid {
                     translation 0.82 0 -0.45
-                    rotation -0.936479656448536 0.2608452037189367 0.2344475053287155 1.62
+                    rotation -0.9364796564485361 0.2608452037189367 0.2344475053287155 1.62
                     children [
-                      Pose {
+                      DEF LOWER_ARM_POSE Pose {
                         children [
                           Shape {
                             appearance DEF PART2_MATERIAL PBRAppearance {
@@ -116,7 +116,114 @@ DEF EXCAVATOR Robot {
                           }
                         ]
                       }
+                      DEF UPPERTOLOW HingeJoint {
+                        jointParameters HingeJointParameters {
+                        }
+                        device [
+                          RotationalMotor {
+                            name "uppertolow_motor"
+                          }
+                          PositionSensor {
+                            name "uppertolow_sensor"
+                          }
+                        ]
+                        endPoint DEF UPPERTOLOW_SOLID Solid {
+                          translation -0.836322 2.3541 0
+                          rotation 0 0 1 1.8326
+                          children [
+                            DEF SCOOP HingeJoint {
+                              jointParameters HingeJointParameters {
+                              }
+                              device [
+                                RotationalMotor {
+                                  name "scoop_motor"
+                                }
+                                PositionSensor {
+                                  name "scoop_sensor"
+                                }
+                              ]
+                              endPoint DEF SCOOP Solid {
+                                children [
+                                  DEF SCOOP_CONNECTOR Pose {
+                                    translation -0.01 1.6 1.0195e-08
+                                    rotation 0 1 0 -1.5707953071795862
+                                    children [
+                                      Shape {
+                                        appearance PBRAppearance {
+                                          baseColor 0.768627 0.886275 0.952941
+                                          roughness 1
+                                          metalness 0
+                                        }
+                                        geometry Mesh {
+                                          url [
+                                            "../protos/wheeledExcavator/part04.stl"
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                  DEF BUCKET_MOUNT Pose {
+                                    translation -0.19 1.71 2.97583e-07
+                                    rotation 0.577349935856137 0.577349935856137 0.5773509358560258 -2.094395307179586
+                                    children [
+                                      DEF BUCKET_MOUNT_SHAPE Shape {
+                                        appearance PBRAppearance {
+                                          baseColor 0.498039 0.498039 0.498039
+                                          roughness 1
+                                          metalness 0
+                                        }
+                                        geometry Mesh {
+                                          url [
+                                            "../protos/wheeledExcavator/bucket_mount.stl"
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                  DEF BUCKET Pose {
+                                    translation -0.85194 1.52726 0
+                                    rotation 0 0 1 -1.5707953071795862
+                                    children [
+                                      DEF BUCKET_SHAPE Shape {
+                                        appearance DEF BUCKET_MATERIAL PBRAppearance {
+                                          baseColor 0.615686 0.811765 0.929412
+                                          roughness 1
+                                          metalness 0
+                                        }
+                                        geometry DEF BUCKET Mesh {
+                                          url [
+                                            "../protos/WheeledExcavator/bucket.stl"
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                                name "scoop"
+                              }
+                            }
+                            DEF UPPERTOLOW_POSE Pose {
+                              children [
+                                DEF UPPERTOLOW_SHAPE Shape {
+                                  appearance PBRAppearance {
+                                    baseColor 0.980392 0.713725 0.003922
+                                    roughness 1
+                                    metalness 0
+                                  }
+                                  geometry Mesh {
+                                    url [
+                                      "../protos/wheeledExcavator/part03.stl"
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                          boundingObject USE UPPERTOLOW_SHAPE
+                        }
+                      }
                     ]
+                    boundingObject USE LOWER_ARM_POSE
                   }
                 }
               ]
