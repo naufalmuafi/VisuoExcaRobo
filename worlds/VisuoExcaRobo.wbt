@@ -8,8 +8,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.18055030803876085 -0.26803585170946415 -0.9463394573119579 5.045965537295121
-  position -2.2814359459772926 -8.94503308137653 4.333627332081109
+  orientation 0.1737232767369272 -0.20717893519672848 -0.9627549594421909 4.850098042304616
+  position -0.7797783340339794 -14.610082201862383 5.885808553224773
 }
 TexturedBackground {
 }
@@ -68,7 +68,6 @@ DEF EXCAVATOR Robot {
                 }
                 castShadows FALSE
               }
-
             ]
           }
           DEF TURRET Pose {
