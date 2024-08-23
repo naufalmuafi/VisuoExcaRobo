@@ -113,6 +113,21 @@ def move_uppertolow(
         motors["uppertolow"].setVelocity(0.0)
 
 
+def move_scoop(
+    direction, min_position=-1.1, max_position=1.1, velocity=MAX_MOTOR_SPEED
+):
+    current_position = sensors["scoop"].getValue()
+
+    # Check if the motor is within the defined range
+    if min_position <= current_position <= max_position:
+        if direction == 0:
+            motors["scoop"].setVelocity(velocity)
+        elif direction == 1:
+            motors["scoop"].setVelocity(-velocity)
+    else:
+        motors["scoop"].setVelocity(0.0)
+
+
 # Main loop:
 start_time = robot.getTime()
 
@@ -133,5 +148,5 @@ while robot.step(timestep) != -1:
     # elif duration > 8.0:
     #     run_all_wheels(0.0)
 
-    move_uppertolow(1)
-    print(sensors["uppertolow"].getValue())
+    move_scoop(1)
+    print(sensors["scoop"].getValue())
