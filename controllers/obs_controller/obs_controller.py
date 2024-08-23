@@ -98,6 +98,21 @@ def move_lower_arm(
         motors["lower_arm"].setVelocity(0.0)
 
 
+def move_uppertolow(
+    direction, min_position=-0.9, max_position=0.9, velocity=MAX_MOTOR_SPEED
+):
+    current_position = sensors["uppertolow"].getValue()
+
+    # Check if the motor is within the defined range
+    if min_position <= current_position <= max_position:
+        if direction == 0:
+            motors["uppertolow"].setVelocity(velocity)
+        elif direction == 1:
+            motors["uppertolow"].setVelocity(-velocity)
+    else:
+        motors["uppertolow"].setVelocity(0.0)
+
+
 # Main loop:
 start_time = robot.getTime()
 
@@ -118,5 +133,5 @@ while robot.step(timestep) != -1:
     # elif duration > 8.0:
     #     run_all_wheels(0.0)
 
-    move_lower_arm(1)
-    print(sensors["lower_arm"].getValue())
+    move_uppertolow(1)
+    print(sensors["uppertolow"].getValue())
