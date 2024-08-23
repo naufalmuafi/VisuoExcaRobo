@@ -56,7 +56,10 @@ def move_turret_to_angle(target_angle_degrees, turret_speed=MAX_MOTOR_SPEED):
     direction = calculate_turret_movement(
         current_angle, math.radians(target_angle_degrees)
     )
-    motors["turret"].setVelocity(turret_speed * direction)
+    if current_angle != math.radians(target_angle_degrees):
+        motors["turret"].setVelocity(turret_speed * direction)
+    else:
+        motors["turret"].setVelocity(0.0)
 
 
 def move_joint(name, direction, min_position, max_position, velocity=MAX_MOTOR_SPEED):
@@ -144,7 +147,7 @@ def digging_operation():
 
     targets = {
         "lower_arm": 0.1,
-        "uppertolow": 0.3,
+        "uppertolow": 0.45,
         "scoop": 1.0,
     }
 
@@ -159,14 +162,16 @@ def digging_operation():
         }
 
         if step == 0:
-            # Move up
+            # Move up with adjusted target for uppertolow
             move_arm_connector(1, toCenter=True)
             move_lower_arm(1, min_position=-targets["lower_arm"])
-            move_uppertolow(1, min_position=-targets["uppertolow"])
+            move_uppertolow(1, min_position=-targets["uppertolow"] + 0.2)
             move_scoop(1, min_position=-targets["scoop"])
 
+            adjusted_targets = {"uppertolow": -targets["uppertolow"] + 0.2}
             if all(
-                current_positions[joint] <= -target for joint, target in targets.items()
+                current_positions[joint] <= adjusted_targets.get(joint, target)
+                for joint, target in {**targets, **adjusted_targets}.items()
             ):
                 delay_start_time = robot.getTime()
                 step = 1
@@ -185,7 +190,7 @@ def digging_operation():
             adjusted_targets = {"scoop": targets["scoop"] - 0.3}
             if all(
                 current_positions[joint] >= adjusted_targets.get(joint, target)
-                for joint, target in targets.items()
+                for joint, target in {**targets, **adjusted_targets}.items()
             ):
                 delay_start_time = robot.getTime()
                 step = 3
@@ -221,8 +226,7 @@ while robot.step(timestep) != -1:
     # elif duration > 8.0:
     #     run_all_wheels(0.0)
 
-    # print(sensors["arm_connector"].getValue())
-
+    # move_turret_to_angle(90)
     step_position = digging_operation()
     print(step_position)
     exit(1)
