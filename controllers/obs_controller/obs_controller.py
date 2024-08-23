@@ -126,77 +126,69 @@ def move_scoop(
 
 
 def digging_operation():
-    initial_arm_connector_position = sensors["arm_connector"].getValue()
-    initial_lower_arm_position = sensors["lower_arm"].getValue()
-    initial_uppertolow_position = sensors["uppertolow"].getValue()
-    initial_scoop_position = sensors["scoop"].getValue()
+    initial_positions = {
+        "arm_connector": sensors["arm_connector"].getValue(),
+        "lower_arm": sensors["lower_arm"].getValue(),
+        "uppertolow": sensors["uppertolow"].getValue(),
+        "scoop": sensors["scoop"].getValue(),
+    }
 
-    # Target positions for the digging operation
     targets = {
         "lower_arm": 0.1,
         "uppertolow": 0.3,
         "scoop": 1.0,
     }
+
     step = 0
-    up_targets_reached = False
-    down_targets_reached = False
     delay_start_time = None
 
     while True:
-        current_lower_arm_position = sensors["lower_arm"].getValue()
-        current_uppertolow_position = sensors["uppertolow"].getValue()
-        current_scoop_position = sensors["scoop"].getValue()
+        current_positions = {
+            "lower_arm": sensors["lower_arm"].getValue(),
+            "uppertolow": sensors["uppertolow"].getValue(),
+            "scoop": sensors["scoop"].getValue(),
+        }
 
         if step == 0:
-            # move up
+            # Move up
             move_arm_connector(1, toCenter=True)
             move_lower_arm(1, min_position=-targets["lower_arm"])
             move_uppertolow(1, min_position=-targets["uppertolow"])
             move_scoop(1, min_position=-targets["scoop"])
 
-            up_targets_reached = (
-                current_lower_arm_position <= -targets["lower_arm"]
-                and current_uppertolow_position <= -targets["uppertolow"]
-                and current_scoop_position <= -targets["scoop"]
-            )
-
-            if up_targets_reached:
-                delay_start_time = robot.getTime()  # Start delay timer
+            if all(
+                current_positions[joint] <= -target for joint, target in targets.items()
+            ):
+                delay_start_time = robot.getTime()
                 step = 1
 
         elif step == 1:
-            # Delay for 2 seconds
             if robot.getTime() - delay_start_time >= 1.0:
                 step = 2
 
         elif step == 2:
-            # move down
+            # Move down
             move_arm_connector(1, toCenter=True)
             move_lower_arm(0, max_position=targets["lower_arm"])
             move_uppertolow(0, max_position=targets["uppertolow"])
             move_scoop(0, max_position=targets["scoop"] - 0.3)
 
-            down_targets_reached = (
-                current_lower_arm_position >= targets["lower_arm"]
-                and current_uppertolow_position >= targets["uppertolow"]
-                and current_scoop_position >= targets["scoop"] - 0.3
-            )
-
-            if down_targets_reached:
+            adjusted_targets = {"scoop": targets["scoop"] - 0.3}
+            if all(
+                current_positions[joint] >= adjusted_targets.get(joint, target)
+                for joint, target in targets.items()
+            ):
+                delay_start_time = robot.getTime()
                 step = 3
-                delay2_start_time = robot.getTime()
 
         elif step == 3:
-            # Delay for 1 second before breaking
-            if robot.getTime() - delay2_start_time >= 1.0:
+            if robot.getTime() - delay_start_time >= 1.0:
                 return [
-                    initial_arm_connector_position,
-                    initial_lower_arm_position,
-                    initial_uppertolow_position,
-                    initial_scoop_position,
+                    initial_positions[joint]
+                    for joint in ["arm_connector", "lower_arm", "uppertolow", "scoop"]
                 ]
 
-        robot.step(timestep)  # Ensure that the robot continues stepping during the loop
+        robot.step(timestep)
 
 
 # Main loop:
