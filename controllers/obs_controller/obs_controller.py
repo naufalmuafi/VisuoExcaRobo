@@ -1,7 +1,7 @@
 import math
-from controller import Supervisor
+from controller import Supervisor, Display
 
-MAX_MOTOR_SPEED = 0.3
+MAX_MOTOR_SPEED = 0.7
 
 # Initialize the robot instance and timestep
 robot = Supervisor()
@@ -23,6 +23,15 @@ for motor in wheel_motors + list(motors.values()):
 # Enable sensors
 for sensor in sensors.values():
     sensor.enable(timestep)
+
+# Initialize camera device
+camera = robot.getDevice("cabin_camera")
+camera.enable(timestep)
+camera.recognitionEnable(timestep)
+camera.enableRecognitionSegmentation()
+
+width = camera.getWidth()
+height = camera.getHeight()
 
 
 def run_all_wheels(velocity):
@@ -114,7 +123,7 @@ def move_uppertolow(
 
 # 0 is inside, 1 is outside
 def move_scoop(
-    direction, min_position=-1.1, max_position=1.1, velocity=MAX_MOTOR_SPEED + 0.1
+    direction, min_position=-1.1, max_position=1.1, velocity=MAX_MOTOR_SPEED + 0.3
 ):
     current_position = sensors["scoop"].getValue()
 

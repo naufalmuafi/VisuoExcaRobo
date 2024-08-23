@@ -8,8 +8,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.12629530897796412 -0.17037074664881072 -0.9772529373793087 4.985259331125809
-  position -1.152676214956525 -9.862168985522029 3.899855545186257
+  orientation 0.08084196122705334 -0.1320901215290802 -0.9879356138430259 5.173888487262499
+  position -5.058447346705302 -12.672875092476454 4.081597693781491
 }
 TexturedBackground {
 }
@@ -51,14 +51,32 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF YELLOW_TURRET_SOLID Solid {
-        translation 1.999999014579043 1.4026200447928598e-05 0.29996746313036393
-        rotation 4.210109758686455e-06 -5.033511027180568e-07 0.9999999999910109 3.1416015426782633
+        translation 1.9999990145790483 1.4026200447928625e-05 0.29996746313036393
+        rotation 4.210109758686485e-06 -5.033511027180581e-07 0.9999999999910109 3.1416015426782633
         children [
           DEF CABIN_CAMERA Camera {
+            translation 1.75 0.47 1.12
+            rotation 0.2170962280351095 3.066058232766974e-07 -0.9761502075873537 -3.1415853071795863
             children [
               DEF CAMERA_POSE Pose {
-                translation 1.75 0.47 0.98
                 children [
+                  DEF CAMERA_STICK Pose {
+                    translation 0.0223154 0 -0.121423
+                    rotation 0 -1 0 0.4
+                    children [
+                      DEF CAMERA_STICK_MATERIAL Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.109804 0.109804 0.109804
+                          roughness 1
+                          metalness 0
+                        }
+                        geometry Cylinder {
+                          height 0.17
+                          radius 0.02
+                        }
+                      }
+                    ]
+                  }
                   DEF CAMERA_SHAPE Shape {
                     appearance PBRAppearance {
                       baseColor 0.917647 0.917647 0.917647
@@ -73,6 +91,12 @@ DEF EXCAVATOR Robot {
               }
             ]
             name "cabin_camera"
+            boundingObject Group {
+              children [
+                USE CAMERA_SHAPE
+                USE CAMERA_STICK
+              ]
+            }
             fieldOfView 1.0472
             width 256
             height 128
@@ -347,8 +371,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499999927954093 0.9000000069437967 6.0727520607604415e-06
-        rotation -0.37739969666464596 0.9260504641584255 -8.239780370805138e-05 4.2146848510894035e-08
+        translation 0.8499999927954942 0.9000000069437967 6.07275206086389e-06
+        rotation -0.2737468358770513 0.9618017811770858 -5.9765274010675337e-05 4.2146848510894035e-08
         children [
           DEF WHEEL Pose {
             rotation -1 0 0 1.57
@@ -387,8 +411,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499999927069478 -0.8999999932661558 9.272111954745872e-06
-        rotation -0.25908136522460107 0.9658554979474773 -5.7253710582720014e-05 4.2146848510894035e-08
+        translation 0.8499999927071127 -0.8999999932661558 9.272111954877298e-06
+        rotation -0.17094658088373132 0.9852802977108461 -3.7775495638854737e-05 4.2146848510894035e-08
         children [
           USE WHEEL
         ]
@@ -409,8 +433,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation -0.8500000062701446 0.9000000065073429 2.4998850201185824e-06
-        rotation -0.47136682845641015 0.8819372439382684 -0.00010385334144243907 8.940696716308595e-08
+        translation -0.8500000062701446 0.9000000065073429 2.4998850201185925e-06
+        rotation -0.47136682845641015 0.8819372439382684 -0.0001038533414424395 8.940696716308595e-08
         children [
           USE WHEEL
         ]
@@ -432,7 +456,7 @@ DEF EXCAVATOR Robot {
       ]
       endPoint Solid {
         translation -0.8500000063601736 -0.8999999937026129 5.699244916341664e-06
-        rotation -0.4713747935005441 0.8819329867060517 -0.00010493837488676085 8.940696716308595e-08
+        rotation -0.4713747935005441 0.8819329867060517 -0.00010493837488676042 8.940696716308595e-08
         children [
           USE WHEEL
         ]
