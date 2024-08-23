@@ -49,8 +49,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF TURRET_SOLID Solid {
-        translation 2 0 0.3
-        rotation 0 0 1 3.141593
+        translation 1.999999014625853 -3.0590444713984866e-06 0.29996746313036393
+        rotation 4.2101076086360466e-06 -5.033690854064426e-07 0.999999999991011 3.141593000051595
         children [
           DEF ARM HingeJoint {
             jointParameters HingeJointParameters {
@@ -65,7 +65,7 @@ DEF EXCAVATOR Robot {
               }
             ]
             endPoint DEF ARM_SOLID Solid {
-              rotation 1 0 0 3.14159
+              rotation 1 0 1.9750552711854814e-23 3.14159
               children [
                 DEF ARM_CONNECTOR_POSE Pose {
                   translation 0.82 0 -0.47
@@ -223,6 +223,7 @@ DEF EXCAVATOR Robot {
                                       "../protos/wheeledExcavator/part03.stl"
                                     ]
                                   }
+                                  castShadows FALSE
                                 }
                               ]
                             }
@@ -306,8 +307,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.85 0.9000000000000001 0
-        rotation 0 1 0 4.2146848510894035e-08
+        translation 0.8499999927952582 0.9000000069437967 6.0727520605688214e-06
+        rotation -0.7040307237122114 0.7101694983869883 -0.0001537206328386868 5.960464477539063e-08
         children [
           DEF WHEEL Pose {
             rotation -1 0 0 1.57
@@ -346,8 +347,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.85 -0.9 0
-        rotation 0 1 0 4.2146848510894035e-08
+        translation 0.8499999927065554 -0.8999999932661558 9.272111954429248e-06
+        rotation -0.7022670486219306 0.7119135961129727 -0.0001552074040352037 5.960464477539063e-08
         children [
           USE WHEEL
         ]
@@ -368,8 +369,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation -0.85 0.9 0
-        rotation 0 1 0 4.2146848510894035e-08
+        translation -0.8500000062702444 0.9000000065073429 2.499885019868117e-06
+        rotation -0.7076574944852349 0.706555621437802 -0.0001559279350869497 5.960464477539063e-08
         children [
           USE WHEEL
         ]
@@ -390,8 +391,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation -0.85 -0.9 0
-        rotation 0 1 0 4.2146848510894035e-08
+        translation -0.8500000063604007 -0.8999999937026129 5.699244916088182e-06
+        rotation -0.7073784795844894 0.7068349608055495 -0.0001574920744730615 5.960464477539063e-08
         children [
           USE WHEEL
         ]
@@ -402,6 +403,7 @@ DEF EXCAVATOR Robot {
     }
   ]
   name "wheeledExcavator"
+  boundingObject USE BODY
   physics Physics {
     density -1
     mass 1
