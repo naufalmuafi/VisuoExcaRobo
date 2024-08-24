@@ -185,9 +185,9 @@ def digging_operation():
             move_arm_connector(1, toCenter=True)
             move_lower_arm(0, max_position=targets["lower_arm"])
             move_uppertolow(0, max_position=targets["uppertolow"])
-            move_scoop(0, max_position=targets["scoop"] - 0.3)
+            move_scoop(0, max_position=targets["scoop"] - 0.5)
 
-            adjusted_targets = {"scoop": targets["scoop"] - 0.3}
+            adjusted_targets = {"scoop": targets["scoop"] - 0.5}
             if all(
                 current_positions[joint] >= adjusted_targets.get(joint, target)
                 for joint, target in {**targets, **adjusted_targets}.items()
