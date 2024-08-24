@@ -3,13 +3,14 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/trees/protos/SimpleTree.proto"
 
 WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.08084196122705334 -0.1320901215290802 -0.9879356138430259 5.173888487262499
-  position -5.058447346705302 -12.672875092476454 4.081597693781491
+  orientation 0.20770131749266743 -0.4966534877976756 -0.8427309628643144 5.361892271720794
+  position -18.16789237823086 -20.192584057486776 14.459928569209348
 }
 TexturedBackground {
 }
@@ -19,7 +20,7 @@ RectangleArena {
   floorSize 20 20
 }
 DEF EXCAVATOR Robot {
-  translation 5.380999634214084e-06 -1.5251656161197002e-05 0.19967424238512874
+  translation -7 0 0.18
   rotation 0.08834423488361984 0.9735918321660189 -0.21050947841473108 0.00015609734490093597
   children [
     DEF WHITE_UNDERCARRIAGE Pose {
@@ -51,8 +52,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF YELLOW_TURRET_SOLID Solid {
-        translation 1.999999014579051 1.4026200447928639e-05 0.29996746313036393
-        rotation 4.2101097586865005e-06 -5.033511027180587e-07 0.9999999999910109 3.1416015426782633
+        translation 1.9999990145790518 1.4026200447928642e-05 0.29996746313036393
+        rotation 4.2101097586865056e-06 -5.033511027180589e-07 0.9999999999910109 3.1416015426782633
         children [
           DEF CABIN_CAMERA Camera {
             translation 1.75 0.47 1.12
@@ -371,8 +372,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499999927955357 0.9000000069437967 6.072752060914464e-06
-        rotation -0.23314304372880978 0.9724424500041565 -5.089970746815753e-05 4.2146848510894035e-08
+        translation 0.8499999927955508 0.9000000069437967 6.072752060932855e-06
+        rotation -0.21983387207854105 0.9755373218814098 -4.7993773185018e-05 4.2146848510894035e-08
         children [
           DEF WHEEL Pose {
             rotation -1 0 0 1.57
@@ -411,8 +412,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499999927071933 -0.8999999932661558 9.27211195494155e-06
-        rotation -0.139182755575213 0.9902667113482982 -3.075576436658921e-05 4.2146848510894035e-08
+        translation 0.8499999927072226 -0.8999999932661558 9.272111954964915e-06
+        rotation -0.12912876968183382 0.9916278334265699 -2.8533888454876193e-05 4.2146848510894035e-08
         children [
           USE WHEEL
         ]
@@ -433,8 +434,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation -0.8500000062701446 0.9000000065073429 2.4998850201185976e-06
-        rotation -0.47136682845641015 0.8819372439382684 -0.00010385334144243972 8.940696716308595e-08
+        translation -0.8500000062701446 0.9000000065073429 2.4998850201185993e-06
+        rotation -0.47136682845641015 0.8819372439382684 -0.0001038533414424398 8.940696716308595e-08
         children [
           USE WHEEL
         ]
@@ -456,7 +457,7 @@ DEF EXCAVATOR Robot {
       ]
       endPoint Solid {
         translation -0.8500000063601736 -0.8999999937026129 5.699244916341664e-06
-        rotation -0.4713747935005441 0.8819329867060517 -0.0001049383748867602 8.940696716308595e-08
+        rotation -0.4713747935005441 0.8819329867060517 -0.00010493837488676012 8.940696716308595e-08
         children [
           USE WHEEL
         ]
@@ -474,4 +475,19 @@ DEF EXCAVATOR Robot {
   }
   controller "obs_controller"
   supervisor TRUE
+}
+DEF TREE_1 SimpleTree {
+  translation -7 6 0
+}
+DEF TREE_2 SimpleTree {
+  translation 6 5 0
+  name "tree(1)"
+}
+DEF TREE_3 SimpleTree {
+  translation 6 -5 0
+  name "tree(2)"
+}
+DEF TREE_3 SimpleTree {
+  translation -8 -8 0
+  name "tree(3)"
 }
