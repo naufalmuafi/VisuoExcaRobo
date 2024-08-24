@@ -4,13 +4,21 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/trees/protos/SimpleTree.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/pallet/protos/WoodenPalletStack.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/WoodenBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/MetalStorageBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/rocks/protos/Rock.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/PlasticFruitBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/CardboardBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/balls/protos/Ball.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/fruits/protos/FruitBowl.proto"
 
 WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.20770131749266743 -0.4966534877976756 -0.8427309628643144 5.361892271720794
-  position -18.16789237823086 -20.192584057486776 14.459928569209348
+  orientation 0.263737105420084 -0.5781524017578346 -0.772128577094698 5.215922369224846
+  position -10.541157021809706 -12.2139605574721 12.538340737455473
 }
 TexturedBackground {
 }
@@ -20,7 +28,7 @@ RectangleArena {
   floorSize 20 20
 }
 DEF EXCAVATOR Robot {
-  translation -7 0 0.18
+  translation -6 0 0.2
   rotation 0.08834423488361984 0.9735918321660189 -0.21050947841473108 0.00015609734490093597
   children [
     DEF WHITE_UNDERCARRIAGE Pose {
@@ -52,18 +60,18 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF YELLOW_TURRET_SOLID Solid {
-        translation 1.9999990145790518 1.4026200447928642e-05 0.29996746313036393
-        rotation 4.2101097586865056e-06 -5.033511027180589e-07 0.9999999999910109 3.1416015426782633
+        translation 1.9999990145790607 1.4026200447928686e-05 0.29996746313036393
+        rotation 4.210109758686556e-06 -5.033511027180611e-07 0.9999999999910109 3.1416015426782633
         children [
           DEF CABIN_CAMERA Camera {
-            translation 1.75 0.47 1.12
-            rotation 0.2170962280351095 3.066058232766974e-07 -0.9761502075873537 -3.1415853071795863
+            translation 1.33 0.46 0.93
+            rotation -0.11960298072285644 0.009999636485096178 0.992771441104333 -2.925
             children [
               DEF CAMERA_POSE Pose {
                 children [
                   DEF CAMERA_STICK Pose {
-                    translation 0.0223154 0 -0.121423
-                    rotation 0 -1 0 0.4
+                    translation 0.013 0 -0.121423
+                    rotation 0 -1 0 0.1382003061004253
                     children [
                       DEF CAMERA_STICK_MATERIAL Shape {
                         appearance PBRAppearance {
@@ -98,7 +106,7 @@ DEF EXCAVATOR Robot {
                 USE CAMERA_STICK
               ]
             }
-            fieldOfView 1.0472
+            fieldOfView 1.1
             width 256
             height 128
             antiAliasing TRUE
@@ -372,8 +380,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499999927955508 0.9000000069437967 6.072752060932855e-06
-        rotation -0.21983387207854105 0.9755373218814098 -4.7993773185018e-05 4.2146848510894035e-08
+        translation 0.8499999927956584 0.9000000069437967 6.072752061063889e-06
+        rotation -0.14402531047756711 0.9895740037780081 -3.1442061553626265e-05 4.2146848510894035e-08
         children [
           DEF WHEEL Pose {
             rotation -1 0 0 1.57
@@ -412,8 +420,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499999927072226 -0.8999999932661558 9.272111954964915e-06
-        rotation -0.12912876968183382 0.9916278334265699 -2.8533888454876193e-05 4.2146848510894035e-08
+        translation 0.8499999927074314 -0.8999999932661558 9.272111955131387e-06
+        rotation -0.075527615667891 0.9971437103010841 -1.6688653113278378e-05 4.2146848510894035e-08
         children [
           USE WHEEL
         ]
@@ -434,8 +442,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation -0.8500000062701446 0.9000000065073429 2.4998850201185993e-06
-        rotation -0.47136682845641015 0.8819372439382684 -0.0001038533414424398 8.940696716308595e-08
+        translation -0.8500000062701446 0.9000000065073429 2.4998850201186162e-06
+        rotation -0.47136682845641015 0.8819372439382684 -0.00010385334144244052 8.940696716308595e-08
         children [
           USE WHEEL
         ]
@@ -457,7 +465,7 @@ DEF EXCAVATOR Robot {
       ]
       endPoint Solid {
         translation -0.8500000063601736 -0.8999999937026129 5.699244916341664e-06
-        rotation -0.4713747935005441 0.8819329867060517 -0.00010493837488676012 8.940696716308595e-08
+        rotation -0.4713747935005441 0.8819329867060517 -0.0001049383748867594 8.940696716308595e-08
         children [
           USE WHEEL
         ]
@@ -479,6 +487,10 @@ DEF EXCAVATOR Robot {
 DEF TREE_1 SimpleTree {
   translation -7 6 0
 }
+DEF WOODEN_PALLET WoodenPalletStack {
+  translation 4.29203 0.706337 4.44089e-14
+  rotation 0 0 1 -2.094395307179586
+}
 DEF TREE_2 SimpleTree {
   translation 6 5 0
   name "tree(1)"
@@ -490,4 +502,37 @@ DEF TREE_3 SimpleTree {
 DEF TREE_3 SimpleTree {
   translation -8 -8 0
   name "tree(3)"
+}
+DEF WOODEN_BOX WoodenBox {
+  translation 2.25583 2.91381 0.3
+  rotation 0 0 1 0.261799
+}
+DEF STORAGE_BOX MetalStorageBox {
+  translation 0.187659 4.38444 0
+}
+DEF BIG_ROCK Rock {
+  translation -0.982672 -3.15542 -1.19904e-13
+  scale 6
+}
+DEF SMALL_ROCK Rock {
+  translation -1.01117 -2.58642 -2.65565e-13
+  name "rock(7)"
+  scale 4
+}
+DEF FRUIT_BOX PlasticFruitBox {
+  translation -1.97537 2.84267 -7.10543e-15
+  rotation 0 0 1 0.523599
+}
+DEF CARDBOARD CardboardBox {
+  translation 0.841852 -3.19137 0.3
+}
+DEF TARGET Ball {
+  translation 3.24319 -2.77057 0.393653
+  color 1 0 0
+  radius 0.4
+}
+DEF FRUIT_BALL FruitBowl {
+  translation 0.524415 1.83755 0
+  rotation 0 0 1 0.785398
+  name "fruit_bowl"
 }
