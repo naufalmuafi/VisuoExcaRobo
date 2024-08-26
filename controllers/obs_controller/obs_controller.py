@@ -33,33 +33,67 @@ camera.enableRecognitionSegmentation()
 width = camera.getWidth()
 height = camera.getHeight()
 
+target_memory = []
+
 
 def run_all_wheels(velocity):
     for motor in wheel_motors:
         motor.setVelocity(velocity)
 
 
-def calculate_turret_movement(current_angle, target_angle):
-    diffA = math.degrees(target_angle) - math.degrees(current_angle)
+def calculate_turret_movement(initial_angle, target_angle):
+    diffA = target_angle - initial_angle
     diffB = 360 - diffA
 
-    if diffA < diffB or diffA == diffB:
-        direction = 1
-    elif diffA > diffB:
-        direction = -1
+    if diffA > 180:
+        direction = 1 if diffA < diffB or diffA == diffB else -1
+    else:
+        direction = 1 if target_angle >= initial_angle else -1
 
     return direction
 
 
-def move_turret_to_angle(target_angle_degrees, turret_speed=MAX_MOTOR_SPEED):
-    current_angle = sensors["turret"].getValue()
-    direction = calculate_turret_movement(
-        current_angle, math.radians(target_angle_degrees)
+def move_turret_to_angle(
+    target_position, initial_position=0.0, turret_speed=MAX_MOTOR_SPEED, init=False
+):
+    target_position = (
+        target_memory[-1] + initial_position
+        if len(target_memory) == 1
+        else (
+            target_memory[-1] + target_memory[-2]
+            if len(target_memory) > 1
+            else target_position
+        )
     )
-    if current_angle != math.radians(target_angle_degrees):
-        motors["turret"].setVelocity(turret_speed * direction)
-    else:
+    initial_position = (
+        target_memory[-1]
+        if len(target_memory) == 1
+        else (target_memory[-2] if len(target_memory) > 1 else initial_position)
+    )
+
+    # target_position = (
+    #     math.degrees(initial_position) + target_position
+    #     if not init
+    #     else target_position
+    # )
+
+    tolerance = 0.1
+    current_angle = sensors["turret"].getValue()
+    direction = calculate_turret_movement(initial_position, target_position)
+    print(
+        f"initial pos: {initial_position}, target pos: {target_position}, direction: {direction}"
+    )
+    if (
+        math.radians(target_position) - tolerance
+        <= current_angle
+        <= math.radians(target_position) + tolerance
+    ):
         motors["turret"].setVelocity(0.0)
+        target_memory.append(target_position)
+        # return math.radians(target_position)
+    else:
+        motors["turret"].setVelocity(turret_speed * direction)
+        # return initial_position
 
 
 def move_joint(name, direction, min_position, max_position, velocity=MAX_MOTOR_SPEED):
@@ -205,6 +239,10 @@ def digging_operation():
         robot.step(timestep)
 
 
+# Setup Spaces
+robot.step(timestep)
+initial_turret_position = math.degrees(sensors["turret"].getValue())
+
 # Main loop:
 start_time = robot.getTime()
 
@@ -212,21 +250,24 @@ while robot.step(timestep) != -1:
     # Set velocity for the first 3 seconds, then stop
     duration = robot.getTime() - start_time
 
-    # if duration <= 5.0:
+    if duration <= 5.0:
+        move_turret_to_angle(90, initial_turret_position)
     #     move_arm_connector(1)
     # run_all_wheels(1.0)
     # motors["turret"].setVelocity(0.2)
-    # elif duration > 5.0:
+    elif duration > 5.0 and duration <= 20.0:
+        move_turret_to_angle(-10)
     #     move_arm_connector(0, toCenter=True)
     # run_all_wheels(0.0)
     # motors["turret"].setVelocity(0.0)
     # elif duration >= 5.0 and duration <= 8.0:
     # run_all_wheels(-1.0)
 
-    # elif duration > 8.0:
-    #     run_all_wheels(0.0)
+    elif duration > 20.0:
+        motors["turret"].setVelocity(0.0)
 
     # move_turret_to_angle(90)
-    step_position = digging_operation()
-    print(step_position)
-    exit(1)
+    # step_position = digging_operation()
+    # print(step_position)
+    # exit(1)
+    # print(f"turret: {math.degrees(sensors['turret'].getValue())}")

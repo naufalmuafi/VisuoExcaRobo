@@ -8,3 +8,4 @@ orthographicViewHeight: 1
 textFiles: -1
 consoles: Console:All:All
 renderingDevicePerspectives: wheeledExcavator:cabin_camera;1;0.953125;0.00414508;0.0147992
+renderingDevicePerspectives: wheeledExcavator:segmented_image_display;1;0.960938;0.00414507;0.287526

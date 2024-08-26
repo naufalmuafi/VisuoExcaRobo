@@ -3,8 +3,6 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/trees/protos/SimpleTree.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/pallet/protos/WoodenPalletStack.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/WoodenBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/MetalStorageBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/rocks/protos/Rock.proto"
@@ -12,19 +10,20 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/CardboardBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/balls/protos/Ball.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/fruits/protos/FruitBowl.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/pallet/protos/WoodenPalletStack.proto"
 
 WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.263737105420084 -0.5781524017578346 -0.772128577094698 5.215922369224846
-  position -10.541157021809706 -12.2139605574721 12.538340737455473
+  orientation 0.2582849136639906 -0.4316433505872649 -0.8642759520357977 5.072036758057918
+  position -11.334883091594644 -16.84556920214225 13.588177455049847
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
-RectangleArena {
+DEF FLOOR RectangleArena {
   floorSize 20 20
 }
 DEF EXCAVATOR Robot {
@@ -60,9 +59,14 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF YELLOW_TURRET_SOLID Solid {
-        translation 1.9999990145790607 1.4026200447928686e-05 0.29996746313036393
-        rotation 4.210109758686556e-06 -5.033511027180611e-07 0.9999999999910109 3.1416015426782633
+        translation 1.9999990145790654 1.4026200447928713e-05 0.29996746313036393
+        rotation 4.2101097586865835e-06 -5.033511027180622e-07 0.999999999991011 3.1416015426782633
         children [
+          DEF SEGMENTED_IMAGE_DISPLAY Display {
+            name "segmented_image_display"
+            width 256
+            height 128
+          }
           DEF CABIN_CAMERA Camera {
             translation 1.33 0.46 0.93
             rotation -0.11960298072285644 0.009999636485096178 0.992771441104333 -2.925
@@ -111,8 +115,8 @@ DEF EXCAVATOR Robot {
             height 128
             antiAliasing TRUE
             recognition Recognition {
-              frameColor 0 0 1
-              frameThickness 3
+              frameColor 0 0.333333 1
+              frameThickness 2
               segmentation TRUE
             }
           }
@@ -147,7 +151,7 @@ DEF EXCAVATOR Robot {
                       }
                       geometry DEF PART1_MESH Mesh {
                         url [
-                          "../protos/wheeledExcavator/part01_pin_1.stl"
+                          "../assets/wheeledExcavator/part01_pin_1.stl"
                         ]
                       }
                     }
@@ -155,6 +159,7 @@ DEF EXCAVATOR Robot {
                 }
                 DEF LOWER_ARM HingeJoint {
                   jointParameters HingeJointParameters {
+                    position -0.1
                     axis 0 1 0
                     anchor 0.7 0 -0.5
                     minStop -0.27
@@ -169,8 +174,8 @@ DEF EXCAVATOR Robot {
                     }
                   ]
                   endPoint DEF LOWER_ARM_SOLID Solid {
-                    translation 0.8199999999999998 0 -0.45
-                    rotation -0.9364796564485361 0.2608452037189367 0.2344475053287155 1.62
+                    translation 0.8144088290010215 0 -0.43826978173847936
+                    rotation -0.9579603645335718 0.215399062971302 0.18951301710909216 1.5961700619693866
                     children [
                       DEF LOWER_ARM_POSE Pose {
                         children [
@@ -182,7 +187,7 @@ DEF EXCAVATOR Robot {
                             }
                             geometry DEF LOWER_ARM_MESH Mesh {
                               url [
-                                "../protos/WheeledExcavator/part02.stl"
+                                "../assets/wheeledExcavator/part02.stl"
                               ]
                             }
                           }
@@ -190,6 +195,7 @@ DEF EXCAVATOR Robot {
                       }
                       DEF UPPERTOLOW HingeJoint {
                         jointParameters HingeJointParameters {
+                          position 0.2
                           axis 0 0 1
                           anchor -0.84 2.35 0
                         }
@@ -202,8 +208,8 @@ DEF EXCAVATOR Robot {
                           }
                         ]
                         endPoint DEF UPPERTOLOW_SOLID Solid {
-                          translation -0.836322 2.3541 0
-                          rotation 0 0 1 1.8326
+                          translation -0.8372098593829597 2.3547489787678133 0
+                          rotation 0 0 1 2.0326
                           children [
                             DEF SCOOP HingeJoint {
                               jointParameters HingeJointParameters {
@@ -232,7 +238,7 @@ DEF EXCAVATOR Robot {
                                         }
                                         geometry Mesh {
                                           url [
-                                            "../protos/wheeledExcavator/part04.stl"
+                                            "../assets/wheeledExcavator/part04.stl"
                                           ]
                                         }
                                       }
@@ -250,7 +256,7 @@ DEF EXCAVATOR Robot {
                                         }
                                         geometry Mesh {
                                           url [
-                                            "../protos/wheeledExcavator/bucket_mount.stl"
+                                            "../assets/wheeledExcavator/bucket_mount.stl"
                                           ]
                                         }
                                       }
@@ -268,7 +274,7 @@ DEF EXCAVATOR Robot {
                                         }
                                         geometry DEF BUCKET Mesh {
                                           url [
-                                            "../protos/WheeledExcavator/bucket.stl"
+                                            "../assets/wheeledExcavator/bucket.stl"
                                           ]
                                         }
                                       }
@@ -295,7 +301,7 @@ DEF EXCAVATOR Robot {
                                   }
                                   geometry Mesh {
                                     url [
-                                      "../protos/wheeledExcavator/part03.stl"
+                                      "../assets/wheeledExcavator/part03.stl"
                                     ]
                                   }
                                 }
@@ -330,7 +336,7 @@ DEF EXCAVATOR Robot {
                 }
                 geometry DEF compact_excavator_cabin_body Mesh {
                   url [
-                    "../protos/wheeledExcavator/compact_excavator_cabin_body.stl"
+                    "../assets/wheeledExcavator/compact_excavator_cabin_body.stl"
                   ]
                 }
               }
@@ -348,7 +354,7 @@ DEF EXCAVATOR Robot {
                 }
                 geometry DEF compact_excavator_turret_cabin_roller Mesh {
                   url [
-                    "../protos/wheeledExcavator/compact_excavator_turret_cabin_roller.stl"
+                    "../assets/wheeledExcavator/compact_excavator_turret_cabin_roller.stl"
                   ]
                 }
               }
@@ -380,8 +386,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499999927956584 0.9000000069437967 6.072752061063889e-06
-        rotation -0.14402531047756711 0.9895740037780081 -3.1442061553626265e-05 4.2146848510894035e-08
+        translation 0.8499999927957301 0.9000000069437967 6.0727520611512455e-06
+        rotation -0.10756920741806994 0.9941975986010082 -2.3482686659249395e-05 4.2146848510894035e-08
         children [
           DEF WHEEL Pose {
             rotation -1 0 0 1.57
@@ -420,8 +426,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499999927074314 -0.8999999932661558 9.272111955131387e-06
-        rotation -0.075527615667891 0.9971437103010841 -1.6688653113278378e-05 4.2146848510894035e-08
+        translation 0.8499999927075707 -0.8999999932661558 9.272111955242369e-06
+        rotation -0.05226917216754827 0.998633032453633 -1.1549037331654675e-05 4.2146848510894035e-08
         children [
           USE WHEEL
         ]
@@ -442,8 +448,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation -0.8500000062701446 0.9000000065073429 2.4998850201186162e-06
-        rotation -0.47136682845641015 0.8819372439382684 -0.00010385334144244052 8.940696716308595e-08
+        translation -0.8500000062701446 0.9000000065073429 2.499885020118625e-06
+        rotation -0.47136682845641015 0.8819372439382684 -0.0001038533414424409 8.940696716308595e-08
         children [
           USE WHEEL
         ]
@@ -465,7 +471,7 @@ DEF EXCAVATOR Robot {
       ]
       endPoint Solid {
         translation -0.8500000063601736 -0.8999999937026129 5.699244916341664e-06
-        rotation -0.4713747935005441 0.8819329867060517 -0.0001049383748867594 8.940696716308595e-08
+        rotation -0.4713747935005441 0.8819329867060517 -0.00010493837488675902 8.940696716308595e-08
         children [
           USE WHEEL
         ]
@@ -481,58 +487,43 @@ DEF EXCAVATOR Robot {
     density -1
     mass 1
   }
-  controller "obs_controller"
+  controller "conventional_color_control"
   supervisor TRUE
 }
-DEF TREE_1 SimpleTree {
-  translation -7 6 0
-}
-DEF WOODEN_PALLET WoodenPalletStack {
-  translation 4.29203 0.706337 4.44089e-14
-  rotation 0 0 1 -2.094395307179586
-}
-DEF TREE_2 SimpleTree {
-  translation 6 5 0
-  name "tree(1)"
-}
-DEF TREE_3 SimpleTree {
-  translation 6 -5 0
-  name "tree(2)"
-}
-DEF TREE_3 SimpleTree {
-  translation -8 -8 0
-  name "tree(3)"
-}
 DEF WOODEN_BOX WoodenBox {
-  translation 2.25583 2.91381 0.3
+  translation 3.57932 2.68803 0.3
   rotation 0 0 1 0.261799
 }
 DEF STORAGE_BOX MetalStorageBox {
-  translation 0.187659 4.38444 0
+  translation 1.57868 4.45764 5.32907e-15
 }
 DEF BIG_ROCK Rock {
-  translation -0.982672 -3.15542 -1.19904e-13
+  translation -1.65723 -3.82758 -1.23457e-13
   scale 6
 }
 DEF SMALL_ROCK Rock {
-  translation -1.01117 -2.58642 -2.65565e-13
+  translation -1.70572 -3.31039 -2.90434e-13
   name "rock(7)"
   scale 4
 }
 DEF FRUIT_BOX PlasticFruitBox {
-  translation -1.97537 2.84267 -7.10543e-15
+  translation -1.15082 3.44705 -7.10543e-15
   rotation 0 0 1 0.523599
 }
 DEF CARDBOARD CardboardBox {
-  translation 0.841852 -3.19137 0.3
+  translation 1.48817 -4.21395 0.3
 }
 DEF TARGET Ball {
-  translation 3.24319 -2.77057 0.393653
+  translation 3.76374 -2.46302 0.393653
   color 1 0 0
   radius 0.4
 }
 DEF FRUIT_BALL FruitBowl {
-  translation 0.524415 1.83755 0
+  translation 0.573823 2.35458 0
   rotation 0 0 1 0.785398
   name "fruit_bowl"
+}
+DEF WOODEN_PALLET_STACK WoodenPalletStack {
+  translation 6.01173 0.757877 6.39488e-14
+  rotation 0 0 1 2.0944
 }
