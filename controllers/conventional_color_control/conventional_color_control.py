@@ -85,12 +85,13 @@ class ConventionalControl(Supervisor):
         # self.motors["turret"].setVelocity(initial_move)
 
         while self.step(self.timestep) != -1:
-            self.state, target_area = self.get_and_display_obs(
+            self.state, target_area, centroid = self.get_and_display_obs(
                 width, height, frame_area
             )
-            done = self.is_done(target_area, self.target_threshold)
+            done = self.is_done(target_area, self.target_threshold, centroid)
 
             if done:
+                print("sip.")
                 exit(1)
 
     def get_and_display_obs(self, width, height, frame_area):
@@ -133,13 +134,13 @@ class ConventionalControl(Supervisor):
                 self.display_segmented_image(data, width, height)
 
                 # calculate the target area
-                target_area = self.recognition_process(
+                target_area, centroid = self.recognition_process(
                     self.state, width, height, frame_area
                 )
 
             # self.objects_recognition(objects, width, target_area)
 
-        return self.state, target_area
+        return self.state, target_area, centroid
 
     def display_segmented_image(self, data, width, height):
         segmented_image = self.display.imageNew(data, Display.BGRA, width, height)
@@ -150,6 +151,10 @@ class ConventionalControl(Supervisor):
         target_px = 0
         x_sum = 0
         y_sum = 0
+
+        # Initialize min and max values for x and y
+        x_min, x_max = width, 0
+        y_min, y_max = height, 0
 
         # Define color range for red
         lower_red = np.array([200, 0, 0])
@@ -172,32 +177,55 @@ class ConventionalControl(Supervisor):
                     x_sum += x
                     y_sum += y
 
+                    # Update min and max x and y
+                    x_min = min(x_min, x)
+                    x_max = max(x_max, x)
+                    y_min = min(y_min, y)
+                    y_max = max(y_max, y)
+
         if target_px == 0:
-            # No target found, stop the robot or continue searching
+            # No target found, stop the turret motor
             print("No target found.")
-            return 0
+            self.motors["turret"].setVelocity(0.0)
+            return 0, [None, None]
 
         target_area = target_px / frame_area
 
         # Calculate the centroid of the target
-        target_x = x_sum / target_px
-        target_y = y_sum / target_px
+        centroid_x = x_sum / target_px
+        centroid_y = y_sum / target_px
+        centroid = [centroid_x, centroid_y]
 
-        # Move the robot to center the target in the frame
-        if target_x < width / 3:
+        # Calculate the current width and height of the target
+        target_width = x_max - x_min
+        target_height = y_max - y_min
+
+        print(
+            f"Centroid of X: {centroid_x} Target width: {target_width}, Target height: {target_height}"
+        )
+
+        # set the boundaries of the target: x-coordinate
+        self.center_x = width / 2
+        self.tolerance_x = 1.0
+
+        # set the boundaries of the target: y-coordinate
+        self.moiety = 2 * height / 3 + 5
+
+        # Move the robot to center_x the target in the frame
+        if centroid_x < self.center_x - self.tolerance_x:
             self.motors["turret"].setVelocity(self.max_motor_speed - 0.3)
-        elif target_x > 2 * width / 3:
+        elif centroid_x > self.center_x + self.tolerance_x:
             self.motors["turret"].setVelocity(-self.max_motor_speed + 0.3)
         else:
             self.motors["turret"].setVelocity(0.0)
 
         # Move the robot forward if the target is not at the bottom of the frame
-        if target_y < 2 * height / 3:
+        if centroid_y < self.moiety:
             self.run_wheels(self.max_wheel_speed, "all")
         else:
             self.stop_robot()
 
-        return target_area
+        return target_area, centroid
 
     def objects_recognition(self, objects, width, target_area):
         for obj in objects:
@@ -221,9 +249,23 @@ class ConventionalControl(Supervisor):
                     else:
                         self.turn_right()
 
-    def is_done(self, target_area, threshold=0.25):
-        if target_area >= threshold:
-            print(f"Target area meets or exceeds {threshold * 100:.2f}% of the frame.")
+    def is_done(self, target_area, threshold=0.25, centroid=[None, None]):
+        x_threshold = [
+            self.center_x - self.tolerance_x,
+            self.center_x + self.tolerance_x,
+        ]
+
+        if centroid == [None, None]:
+            return False  # No valid centroid found, so not done
+
+        if (target_area >= threshold) or (
+            centroid[0] > x_threshold[0]
+            and centroid[0] < x_threshold[1]
+            and centroid[1] > self.moiety
+        ):
+            print(
+                f"Target area meets or exceeds {threshold * 100:.2f}% of the frame or the centroid is in {centroid}."
+            )
             self.run_wheels(0.0, "all")
             self.motors["turret"].setVelocity(0.0)
             return True
@@ -251,7 +293,6 @@ class ConventionalControl(Supervisor):
 
     def stop_robot(self):
         self.run_wheels(0.0, "all")
-        print("Robot stopped.")
 
 
 if __name__ == "__main__":
