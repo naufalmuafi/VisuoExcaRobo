@@ -25,15 +25,15 @@ class ConventionalControl(Supervisor):
         self.timestep = int(self.getBasicTimeStep())
         random.seed(42)
 
+        # get the robot node
+        self.robot = self.getFromDef("EXCAVATOR")
+
         # set the speed of the motors
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = 7.0
 
         # set the threshold of the target area
-        self.target_threshold = 0.35
-
-        # get the robot node
-        self.robot = self.getFromDef("EXCAVATOR")
+        self.target_threshold = 0.1
 
         # get the floor node
         arena_tolerance = 1.0
@@ -79,6 +79,13 @@ class ConventionalControl(Supervisor):
         width = self.camera.getWidth()
         height = self.camera.getHeight()
         frame_area = width * height
+
+        # set the boundaries of the target: x-coordinate
+        self.center_x = width / 2
+        self.tolerance_x = 1.0
+
+        # set the boundaries of the target: y-coordinate
+        self.moiety = 2 * height / 3 + 5
 
         # SOON TO BE DEVELOPED
         # self.step(self.timestep)
@@ -186,9 +193,13 @@ class ConventionalControl(Supervisor):
                     y_max = max(y_max, y)
 
         if target_px == 0:
-            # No target found, stop the turret motor
+            # No target found, turn over the turret motor
             print("No target found.")
-            self.motors["turret"].setVelocity(0.0)
+
+            # set the initial velocity of the turret motor randomly
+            initial_move = random.choice([-1, 1]) * self.max_motor_speed
+            self.motors["turret"].setVelocity(initial_move)
+
             return 0, [None, None]
 
         target_area = target_px / frame_area
@@ -203,29 +214,40 @@ class ConventionalControl(Supervisor):
         target_height = y_max - y_min
 
         print(
-            f"Centroid of X: {centroid_x} Target width: {target_width}, Target height: {target_height}"
+            f"Centroid: ({centroid_x:.2f}, {centroid_y:.2f}); Target size: {target_width:.1f}x{target_height:.1f}; Target area: {target_area * 100:.2f}%"
         )
-
-        # set the boundaries of the target: x-coordinate
-        self.center_x = width / 2
-        self.tolerance_x = 1.0
-
-        # set the boundaries of the target: y-coordinate
-        self.moiety = 2 * height / 3 + 5
-
-        # Move the robot to center_x the target in the frame
-        if centroid_x < self.center_x - self.tolerance_x:
-            self.motors["turret"].setVelocity(self.max_motor_speed - 0.3)
-        elif centroid_x > self.center_x + self.tolerance_x:
-            self.motors["turret"].setVelocity(-self.max_motor_speed + 0.3)
-        else:
-            self.motors["turret"].setVelocity(0.0)
 
         # Move the robot forward if the target is not at the bottom of the frame
         if centroid_y < self.moiety:
-            self.run_wheels(self.max_wheel_speed, "all")
+            # Move the robot to center_x the target in the frame
+            if centroid_x < self.center_x - self.tolerance_x:  # Target is on the left
+                if target_area < 0.01:
+                    self.turn_left()
+                    print("Turning left")
+                else:
+                    self.motors["turret"].setVelocity(self.max_motor_speed - 0.3)
+            elif (
+                centroid_x > self.center_x + self.tolerance_x
+            ):  # Target is on the right
+                if target_area > 0.01:
+                    self.turn_right()
+                    print("Turning right")
+                else:
+                    self.motors["turret"].setVelocity(-self.max_motor_speed + 0.3)
+            else:
+                self.motors["turret"].setVelocity(0.0)
+                self.run_wheels(self.max_wheel_speed, "all")
+
+            if target_area < 0.1:
+                self.run_wheels(self.max_wheel_speed, "all")
         else:
             self.stop_robot()
+
+        # Move the robot forward if the target is not at the bottom of the frame
+        # if centroid_y < self.moiety:
+        #     self.run_wheels(self.max_wheel_speed, "all")
+        # else:
+        #     self.stop_robot()
 
         return target_area, centroid
 
