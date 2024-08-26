@@ -249,27 +249,27 @@ start_time = robot.getTime()
 
 while robot.step(timestep) != -1:
     # Set velocity for the first 3 seconds, then stop
-    duration = robot.getTime() - start_time
+    # duration = robot.getTime() - start_time
 
-    if duration <= 5.0:
-        move_turret_to_angle(90, initial_turret_position)
-    #     move_arm_connector(1)
-    # run_all_wheels(1.0)
-    # motors["turret"].setVelocity(0.2)
-    elif duration > 5.0 and duration <= 20.0:
-        move_turret_to_angle(-10)
-    #     move_arm_connector(0, toCenter=True)
-    # run_all_wheels(0.0)
-    # motors["turret"].setVelocity(0.0)
-    # elif duration >= 5.0 and duration <= 8.0:
-    # run_all_wheels(-1.0)
+    # if duration <= 5.0:
+    #     move_turret_to_angle(90, initial_turret_position)
+    # #     move_arm_connector(1)
+    # # run_all_wheels(1.0)
+    # # motors["turret"].setVelocity(0.2)
+    # elif duration > 5.0 and duration <= 20.0:
+    #     move_turret_to_angle(-10)
+    # #     move_arm_connector(0, toCenter=True)
+    # # run_all_wheels(0.0)
+    # # motors["turret"].setVelocity(0.0)
+    # # elif duration >= 5.0 and duration <= 8.0:
+    # # run_all_wheels(-1.0)
 
-    elif duration > 20.0:
-        motors["turret"].setVelocity(0.0)
+    # elif duration > 20.0:
+    #     motors["turret"].setVelocity(0.0)
 
-    run_all_wheels(5.0)
+    # run_all_wheels(5.0)
     # move_turret_to_angle(90)
-    # step_position = digging_operation()
-    # print(step_position)
-    # exit(1)
+    step_position = digging_operation()
+    print(step_position)
+    exit(1)
     # print(f"turret: {math.degrees(sensors['turret'].getValue())}")
