@@ -35,6 +35,10 @@ class ConventionalControl(Supervisor):
         self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
         self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
+        
+        # Set color range for target detection
+        self.lower_color = np.array([35, 42, 44])
+        self.upper_color = np.array([55, 62, 64])
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
@@ -79,7 +83,7 @@ class ConventionalControl(Supervisor):
             self.state, target_area, centroid = self.get_and_display_obs(width, height, frame_area)
             if self.is_done(target_area, centroid):
                 print("sip.")
-                self.digging_operation()
+                # self.digging_operation()
                 exit(1)
 
     def get_and_display_obs(self, width, height, frame_area):
@@ -119,12 +123,12 @@ class ConventionalControl(Supervisor):
         target_px, x_sum, y_sum = 0, 0, 0
         x_min, x_max, y_min, y_max = width, 0, height, 0
 
-        lower_red, upper_red = np.array([200, 0, 0]), np.array([255, 50, 50])
-
         for y in range(height):
             for x in range(width):
                 r, g, b = image[0][y][x], image[1][y][x], image[2][y][x]
-                if lower_red[0] <= r <= upper_red[0] and lower_red[1] <= g <= upper_red[1] and lower_red[2] <= b <= upper_red[2]:
+                if (self.lower_color[0] <= r <= self.upper_color[0] and
+                    self.lower_color[1] <= g <= self.upper_color[1] and
+                    self.lower_color[2] <= b <= self.upper_color[2]):
                     target_px += 1
                     x_sum += x
                     y_sum += y
