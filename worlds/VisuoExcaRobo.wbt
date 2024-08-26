@@ -16,8 +16,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.2582849136639906 -0.4316433505872649 -0.8642759520357977 5.072036758057918
-  position -11.334883091594644 -16.84556920214225 13.588177455049847
+  orientation 0.2656392482358809 -0.5372053019163563 -0.800528733643979 5.176514669729574
+  position -15.54143238162082 -17.48483718454391 17.286420019399554
 }
 TexturedBackground {
 }
@@ -59,8 +59,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF YELLOW_TURRET_SOLID Solid {
-        translation 1.9999990145790654 1.4026200447928713e-05 0.29996746313036393
-        rotation 4.2101097586865835e-06 -5.033511027180622e-07 0.999999999991011 3.1416015426782633
+        translation 1.999999014579069 1.4026200447928734e-05 0.29996746313036393
+        rotation 4.210109758686604e-06 -5.033511027180631e-07 0.999999999991011 3.1416015426782633
         children [
           DEF SEGMENTED_IMAGE_DISPLAY Display {
             name "segmented_image_display"
@@ -374,7 +374,7 @@ DEF EXCAVATOR Robot {
         }
       }
     }
-    DEF WHEEL1 HingeJoint {
+    DEF WHEEL_LF HingeJoint {
       jointParameters HingeJointParameters {
         position 3.1910491150680494e-10
         axis 0 1 0
@@ -382,12 +382,12 @@ DEF EXCAVATOR Robot {
       }
       device [
         RotationalMotor {
-          name "wheel1_motor"
+          name "wheel_lf"
         }
       ]
       endPoint Solid {
-        translation 0.8499999927957301 0.9000000069437967 6.0727520611512455e-06
-        rotation -0.10756920741806994 0.9941975986010082 -2.3482686659249395e-05 4.2146848510894035e-08
+        translation 0.8499999927957849 0.9000000069437967 6.072752061217912e-06
+        rotation -0.08717641522733956 0.9961928890862207 -1.903048835549446e-05 4.2146848510894035e-08
         children [
           DEF WHEEL Pose {
             rotation -1 0 0 1.57
@@ -406,7 +406,7 @@ DEF EXCAVATOR Robot {
             ]
           }
         ]
-        name "wheel1"
+        name "wheel_lf"
         boundingObject USE WHEEL
         physics DEF PHYSICS_WHEEL Physics {
           density -1
@@ -414,7 +414,7 @@ DEF EXCAVATOR Robot {
         }
       }
     }
-    DEF WHEEL2 HingeJoint {
+    DEF WHEEL_RF HingeJoint {
       jointParameters HingeJointParameters {
         position 4.004848858339176e-10
         axis 0 1 0
@@ -422,21 +422,21 @@ DEF EXCAVATOR Robot {
       }
       device [
         RotationalMotor {
-          name "wheel2_motor"
+          name "wheel_rf"
         }
       ]
       endPoint Solid {
-        translation 0.8499999927075707 -0.8999999932661558 9.272111955242369e-06
-        rotation -0.05226917216754827 0.998633032453633 -1.1549037331654675e-05 4.2146848510894035e-08
+        translation 0.8499999927076769 -0.8999999932661558 9.272111955327066e-06
+        rotation -0.04012031969871647 0.9991948558057602 -8.86448537436003e-06 4.2146848510894035e-08
         children [
           USE WHEEL
         ]
-        name "wheel2"
+        name "wheel_rf"
         boundingObject USE WHEEL
         physics USE PHYSICS_WHEEL
       }
     }
-    DEF WHEEL3 HingeJoint {
+    DEF WHEEL_LB HingeJoint {
       jointParameters HingeJointParameters {
         position 7.938422124160806e-08
         axis 0 1 0
@@ -444,21 +444,21 @@ DEF EXCAVATOR Robot {
       }
       device [
         RotationalMotor {
-          name "wheel3_motor"
+          name "wheel_lb"
         }
       ]
       endPoint Solid {
-        translation -0.8500000062701446 0.9000000065073429 2.499885020118625e-06
-        rotation -0.47136682845641015 0.8819372439382684 -0.0001038533414424409 8.940696716308595e-08
+        translation -0.8500000062701446 0.9000000065073429 2.499885020118632e-06
+        rotation -0.47136682845641015 0.8819372439382684 -0.00010385334144244118 8.940696716308595e-08
         children [
           USE WHEEL
         ]
-        name "wheel3"
+        name "wheel_lb"
         boundingObject USE WHEEL
         physics USE PHYSICS_WHEEL
       }
     }
-    DEF WHEEL4 HingeJoint {
+    DEF WHEEL_RB HingeJoint {
       jointParameters HingeJointParameters {
         position 7.932417970601617e-08
         axis 0 1 0
@@ -466,16 +466,16 @@ DEF EXCAVATOR Robot {
       }
       device [
         RotationalMotor {
-          name "wheel4_motor"
+          name "wheel_rb"
         }
       ]
       endPoint Solid {
         translation -0.8500000063601736 -0.8999999937026129 5.699244916341664e-06
-        rotation -0.4713747935005441 0.8819329867060517 -0.00010493837488675902 8.940696716308595e-08
+        rotation -0.4713747935005441 0.8819329867060517 -0.00010493837488675874 8.940696716308595e-08
         children [
           USE WHEEL
         ]
-        name "wheel4"
+        name "wheel_rb"
         boundingObject USE WHEEL
         physics USE PHYSICS_WHEEL
       }

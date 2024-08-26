@@ -9,14 +9,15 @@ timestep = int(robot.getBasicTimeStep())
 
 # List of names of the motors and sensors
 names = ["turret", "arm_connector", "lower_arm", "uppertolow", "scoop"]
+wheel = ["lf", "rf", "lb", "rb"]
 
 # Initialize motors and sensors
-wheel_motors = [robot.getDevice(f"wheel{i}_motor") for i in range(1, 5)]
+wheel_motors = {side: robot.getDevice(f"wheel_{side}") for side in wheel}
 motors = {name: robot.getDevice(f"{name}_motor") for name in names}
 sensors = {name: robot.getDevice(f"{name}_sensor") for name in names}
 
 # Configure motor modes
-for motor in wheel_motors + list(motors.values()):
+for motor in list(wheel_motors.values()) + list(motors.values()):
     motor.setPosition(float("inf"))
     motor.setVelocity(0.0)
 
@@ -37,7 +38,7 @@ target_memory = []
 
 
 def run_all_wheels(velocity):
-    for motor in wheel_motors:
+    for motor in wheel_motors.values():
         motor.setVelocity(velocity)
 
 
@@ -266,6 +267,7 @@ while robot.step(timestep) != -1:
     elif duration > 20.0:
         motors["turret"].setVelocity(0.0)
 
+    run_all_wheels(5.0)
     # move_turret_to_angle(90)
     # step_position = digging_operation()
     # print(step_position)
