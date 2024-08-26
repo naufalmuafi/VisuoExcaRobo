@@ -9,147 +9,106 @@ by: Naufal Mu'afi
 
 """
 
-import math
 import random
 import numpy as np
 from controller import Supervisor, Display
 
-
 MAX_MOTOR_SPEED = 0.7
-
 
 class ConventionalControl(Supervisor):
     def __init__(self):
-        # Initialize the robot instance and timestep
-        super(ConventionalControl, self).__init__()
+        super().__init__()
         self.timestep = int(self.getBasicTimeStep())
         random.seed(42)
 
-        # get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
-
-        # set the speed of the motors
         self.max_motor_speed = MAX_MOTOR_SPEED
-        self.max_wheel_speed = 7.0
-
-        # set the threshold of the target area
+        self.max_wheel_speed = 3.0
         self.target_threshold = 0.1
 
-        # get the floor node
-        arena_tolerance = 1.0
         self.floor = self.getFromDef("FLOOR")
-        size_field = self.floor.getField("floorSize").getSFVec3f()
+        self.set_arena_boundaries()
 
-        # set the boundaries of the arena
+        self.camera = self.init_camera()
+        self.display = self.getDevice("segmented_image_display")
+
+        self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
+        self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
+        self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
+
+    def set_arena_boundaries(self):
+        arena_tolerance = 1.0
+        size_field = self.floor.getField("floorSize").getSFVec3f()
         x, y = size_field
         self.x_max, self.y_max = x / 2 - arena_tolerance, y / 2 - arena_tolerance
         self.x_min, self.y_min = -self.x_max, -self.y_max
 
-        # initialize camera and display device
-        self.camera = self.getDevice("cabin_camera")
-        self.camera.enable(self.timestep)
-        self.camera.recognitionEnable(self.timestep)
-        self.camera.enableRecognitionSegmentation()
-        self.display = self.getDevice("segmented_image_display")
+    def init_camera(self):
+        camera = self.getDevice("cabin_camera")
+        camera.enable(self.timestep)
+        camera.recognitionEnable(self.timestep)
+        camera.enableRecognitionSegmentation()
+        return camera
 
-        # List of names of the motors and sensors
+    def init_motors_and_sensors(self):
         names = ["turret", "arm_connector", "lower_arm", "uppertolow", "scoop"]
         wheel = ["lf", "rf", "lb", "rb"]
 
-        # Initialize motors and sensors
-        self.wheel_motors = {side: self.getDevice(f"wheel_{side}") for side in wheel}
-        self.motors = {name: self.getDevice(f"{name}_motor") for name in names}
-        self.sensors = {name: self.getDevice(f"{name}_sensor") for name in names}
+        wheel_motors = {side: self.getDevice(f"wheel_{side}") for side in wheel}
+        motors = {name: self.getDevice(f"{name}_motor") for name in names}
+        sensors = {name: self.getDevice(f"{name}_sensor") for name in names}
 
-        # Configure motor modes
-        for motor in list(self.wheel_motors.values()) + list(self.motors.values()):
+        for motor in list(wheel_motors.values()) + list(motors.values()):
             motor.setPosition(float("inf"))
             motor.setVelocity(0.0)
 
-        # Enable sensors
-        for sensor in self.sensors.values():
+        for sensor in sensors.values():
             sensor.enable(self.timestep)
 
-        # Get the left and right wheel motors
-        self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
-        self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
+        return wheel_motors, motors, sensors
 
     def run(self):
-        # Get the camera width and height
-        width = self.camera.getWidth()
-        height = self.camera.getHeight()
+        width, height = self.camera.getWidth(), self.camera.getHeight()
         frame_area = width * height
 
-        # set the boundaries of the target: x-coordinate
         self.center_x = width / 2
         self.tolerance_x = 1.0
-
-        # set the boundaries of the target: y-coordinate
         self.moiety = 2 * height / 3 + 5
 
-        # SOON TO BE DEVELOPED
-        # self.step(self.timestep)
-
-        # # set the initial velocity of the turret motor randomly
-        # initial_move = random.choice([-1, 1]) * self.max_motor_speed
-        # self.motors["turret"].setVelocity(initial_move)
-
         while self.step(self.timestep) != -1:
-            self.state, target_area, centroid = self.get_and_display_obs(
-                width, height, frame_area
-            )
-            done = self.is_done(target_area, self.target_threshold, centroid)
-
-            if done:
+            self.state, target_area, centroid = self.get_and_display_obs(width, height, frame_area)
+            if self.is_done(target_area, centroid):
                 print("sip.")
-                # self.digging_operation()
+                self.digging_operation()
                 exit(1)
 
     def get_and_display_obs(self, width, height, frame_area):
+        if not self.camera.isRecognitionSegmentationEnabled():
+            return None, 0, [None, None]
+
+        image = self.camera.getImage()
+        data = self.camera.getRecognitionSegmentationImage()
+        if not data:
+            return None, 0, [None, None]
+
+        red_channel, green_channel, blue_channel = self.extract_rgb_channels(image, width, height)
+        self.state = np.array([red_channel, green_channel, blue_channel], dtype=np.uint8)
+
+        self.display_segmented_image(data, width, height)
+        return self.state, *self.recognition_process(self.state, width, height, frame_area)
+
+    def extract_rgb_channels(self, image, width, height):
         red_channel, green_channel, blue_channel = [], [], []
-
-        if (
-            self.camera.isRecognitionSegmentationEnabled()
-            and self.camera.getRecognitionSamplingPeriod() > 0
-        ):
-            image = self.camera.getImage()
-            objects = self.camera.getRecognitionObjects()
-            data = self.camera.getRecognitionSegmentationImage()
-
-            if data:
-                # Loop through each pixel in the image
-                for j in range(height):
-                    red_row, green_row, blue_row = [], [], []
-
-                    for i in range(width):
-                        # Get the RGB values for the pixel (i, j)
-                        red = self.camera.imageGetRed(image, width, i, j)
-                        green = self.camera.imageGetGreen(image, width, i, j)
-                        blue = self.camera.imageGetBlue(image, width, i, j)
-
-                        # Append the RGB values as a tuple to the row
-                        red_row.append(red)
-                        green_row.append(green)
-                        blue_row.append(blue)
-
-                    # Append the row to the pixels list
-                    red_channel.append(red_row)
-                    green_channel.append(green_row)
-                    blue_channel.append(blue_row)
-
-                # new state
-                self.state = np.array(
-                    [red_channel, green_channel, blue_channel], dtype=np.uint8
-                )
-
-                self.display_segmented_image(data, width, height)
-
-                # calculate the target area
-                target_area, centroid = self.recognition_process(
-                    self.state, width, height, frame_area
-                )
-
-        return self.state, target_area, centroid
+        for j in range(height):
+            red_row, green_row, blue_row = [], [], []
+            for i in range(width):
+                red_row.append(self.camera.imageGetRed(image, width, i, j))
+                green_row.append(self.camera.imageGetGreen(image, width, i, j))
+                blue_row.append(self.camera.imageGetBlue(image, width, i, j))
+            red_channel.append(red_row)
+            green_channel.append(green_row)
+            blue_channel.append(blue_row)
+        return red_channel, green_channel, blue_channel
 
     def display_segmented_image(self, data, width, height):
         segmented_image = self.display.imageNew(data, Display.BGRA, width, height)
@@ -157,133 +116,77 @@ class ConventionalControl(Supervisor):
         self.display.imageDelete(segmented_image)
 
     def recognition_process(self, image, width, height, frame_area):
-        target_px = 0
-        x_sum = 0
-        y_sum = 0
+        target_px, x_sum, y_sum = 0, 0, 0
+        x_min, x_max, y_min, y_max = width, 0, height, 0
 
-        # Initialize min and max values for x and y
-        x_min, x_max = width, 0
-        y_min, y_max = height, 0
-
-        # Define color range for red
-        lower_red = np.array([200, 0, 0])
-        upper_red = np.array([255, 50, 50])
+        lower_red, upper_red = np.array([200, 0, 0]), np.array([255, 50, 50])
 
         for y in range(height):
             for x in range(width):
-                # get the RGB values for the pixel (x, y)
-                r = image[0][y][x]  # Red channel
-                g = image[1][y][x]  # Green channel
-                b = image[2][y][x]  # Blue channel
-
-                # check if the pixel matches the target color i.e. red color
-                if (
-                    lower_red[0] <= r <= upper_red[0]
-                    and lower_red[1] <= g <= upper_red[1]
-                    and lower_red[2] <= b <= upper_red[2]
-                ):
+                r, g, b = image[0][y][x], image[1][y][x], image[2][y][x]
+                if lower_red[0] <= r <= upper_red[0] and lower_red[1] <= g <= upper_red[1] and lower_red[2] <= b <= upper_red[2]:
                     target_px += 1
                     x_sum += x
                     y_sum += y
-
-                    # Update min and max x and y
-                    x_min = min(x_min, x)
-                    x_max = max(x_max, x)
-                    y_min = min(y_min, y)
-                    y_max = max(y_max, y)
+                    x_min, x_max = min(x_min, x), max(x_max, x)
+                    y_min, y_max = min(y_min, y), max(y_max, y)
 
         if target_px == 0:
-            # No target found, turn over the turret motor
-            print("No target found.")
-
-            # set the initial velocity of the turret motor randomly
-            initial_move = random.choice([-1, 1]) * self.max_motor_speed
-            self.motors["turret"].setVelocity(initial_move)
-
+            self.search_target()
             return 0, [None, None]
 
         target_area = target_px / frame_area
+        centroid = [x_sum / target_px, y_sum / target_px]
 
-        # Calculate the centroid of the target
-        centroid_x = x_sum / target_px
-        centroid_y = y_sum / target_px
-        centroid = [centroid_x, centroid_y]
+        print(f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}; Target area: {target_area * 100:.2f}%")
+        self.move_towards_target(centroid, target_area)
+        return target_area, centroid
 
-        # Calculate the current width and height of the target
-        target_width = x_max - x_min
-        target_height = y_max - y_min
+    def search_target(self):
+        print("No target found.")
+        self.stop_robot()
+        initial_move = random.choice([-1, 1]) * self.max_motor_speed
+        self.motors["turret"].setVelocity(initial_move)
 
-        print(
-            f"Centroid: ({centroid_x:.2f}, {centroid_y:.2f}); Target size: {target_width:.1f}x{target_height:.1f}; Target area: {target_area * 100:.2f}%"
-        )
-
-        # Move the robot forward if the target is not at the bottom of the frame
-        if centroid_y < self.moiety:
-            # Move the robot to center_x the target in the frame
-            if centroid_x < self.center_x - self.tolerance_x:  # Target is on the left
-                if target_area < 0.01:
-                    self.turn_left()
-                    print("Turning left")
-                else:
-                    self.motors["turret"].setVelocity(self.max_motor_speed - 0.3)
-            elif (
-                centroid_x > self.center_x + self.tolerance_x
-            ):  # Target is on the right
-                if target_area > 0.01:
-                    self.turn_right()
-                    print("Turning right")
-                else:
-                    self.motors["turret"].setVelocity(-self.max_motor_speed + 0.3)
+    def move_towards_target(self, centroid, target_area):
+        if centroid[1] < self.moiety or target_area < 0.01:
+            if centroid[0] < self.center_x - self.tolerance_x:
+                self.adjust_turret_and_wheels(target_area, direction="left")
+            elif centroid[0] > self.center_x + self.tolerance_x:
+                self.adjust_turret_and_wheels(target_area, direction="right")
             else:
                 self.motors["turret"].setVelocity(0.0)
-                self.run_wheels(self.max_wheel_speed, "all")
-
-            if target_area < 0.1:
                 self.run_wheels(self.max_wheel_speed, "all")
         else:
             self.stop_robot()
 
-        # Move the robot forward if the target is not at the bottom of the frame
-        # if centroid_y < self.moiety:
-        #     self.run_wheels(self.max_wheel_speed, "all")
-        # else:
-        #     self.stop_robot()
+    def adjust_turret_and_wheels(self, target_area, direction):
+        self.motors["turret"].setVelocity(0.0)
+        if target_area < 0.01:
+            if direction == "left":
+                self.turn_left()
+            elif direction == "right":
+                self.turn_right()
+        else:
+            turret_speed = self.max_motor_speed - 0.3 if direction == "left" else -self.max_motor_speed + 0.3
+            self.motors["turret"].setVelocity(turret_speed)
+            self.run_wheels(self.max_wheel_speed, "all")
 
-        return target_area, centroid
-
-    def is_done(self, target_area, threshold=0.25, centroid=[None, None]):
-        x_threshold = [
-            self.center_x - self.tolerance_x,
-            self.center_x + self.tolerance_x,
-        ]
-
+    def is_done(self, target_area, centroid):
         if centroid == [None, None]:
-            return False  # No valid centroid found, so not done
+            return False
 
-        if (target_area >= threshold) or (
-            centroid[0] > x_threshold[0]
-            and centroid[0] < x_threshold[1]
-            and centroid[1] > self.moiety
-        ):
-            print(
-                f"Target area meets or exceeds {threshold * 100:.2f}% of the frame or the centroid is in {centroid}."
-            )
-            self.run_wheels(0.0, "all")
-            self.motors["turret"].setVelocity(0.0)
+        x_threshold = [self.center_x - self.tolerance_x, self.center_x + self.tolerance_x]
+        if target_area >= self.target_threshold or (x_threshold[0] < centroid[0] < x_threshold[1] and centroid[1] > self.moiety):
+            print(f"Target area meets or exceeds {self.target_threshold * 100:.2f}% of the frame or the centroid is in {centroid}.")
+            self.stop_robot()
             return True
-
         return False
 
     def run_wheels(self, velocity, wheel="all"):
-        if wheel == "all":
-            for motor in self.wheel_motors.values():
-                motor.setVelocity(velocity)
-        elif wheel == "left":
-            for motor in self.left_wheels:
-                motor.setVelocity(velocity)
-        elif wheel == "right":
-            for motor in self.right_wheels:
-                motor.setVelocity(velocity)
+        wheels = self.left_wheels + self.right_wheels if wheel == "all" else self.left_wheels if wheel == "left" else self.right_wheels
+        for motor in wheels:
+            motor.setVelocity(velocity)
 
     def turn_left(self):
         self.run_wheels(-self.max_wheel_speed, "left")
