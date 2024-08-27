@@ -23,7 +23,7 @@ class ConventionalControl(Supervisor):
 
         self.robot = self.getFromDef("EXCAVATOR")
         self.max_motor_speed = MAX_MOTOR_SPEED
-        self.max_wheel_speed = 3.0
+        self.max_wheel_speed = 4.0
         self.target_threshold = 0.1
 
         self.floor = self.getFromDef("FLOOR")
@@ -75,18 +75,18 @@ class ConventionalControl(Supervisor):
         width, height = self.camera.getWidth(), self.camera.getHeight()
         frame_area = width * height
 
-        self.center_x = width / 2
+        self.center_x = width / 2.0
         self.tolerance_x = 1.0
-        self.moiety = 2 * height / 3 + 5
+        self.moiety = 2.0 * height / 3.0 + 5
 
         while self.step(self.timestep) != -1:
-            self.state, target_area, centroid = self.get_and_display_obs(width, height, frame_area)
+            self.state, target_area, centroid = self.get_observation(width, height, frame_area)
             if self.is_done(target_area, centroid):
                 print("sip.")
                 # self.digging_operation()
                 exit(1)
 
-    def get_and_display_obs(self, width, height, frame_area):
+    def get_observation(self, width, height, frame_area):
         if not self.camera.isRecognitionSegmentationEnabled():
             return None, 0, [None, None]
 
@@ -153,10 +153,10 @@ class ConventionalControl(Supervisor):
         self.motors["turret"].setVelocity(initial_move)
 
     def move_towards_target(self, centroid, target_area):
-        if centroid[1] < self.moiety or target_area < 0.01:
-            if centroid[0] < self.center_x - self.tolerance_x:
+        if (centroid[1] < self.moiety or target_area < 0.01) or (self.center_x - self.tolerance_x <= centroid[0] <= self.center_x + self.tolerance_x):
+            if centroid[0] <= self.center_x - self.tolerance_x:
                 self.adjust_turret_and_wheels(target_area, direction="left")
-            elif centroid[0] > self.center_x + self.tolerance_x:
+            elif centroid[0] >= self.center_x + self.tolerance_x:
                 self.adjust_turret_and_wheels(target_area, direction="right")
             else:
                 self.motors["turret"].setVelocity(0.0)
@@ -181,7 +181,7 @@ class ConventionalControl(Supervisor):
             return False
 
         x_threshold = [self.center_x - self.tolerance_x, self.center_x + self.tolerance_x]
-        if target_area >= self.target_threshold or (x_threshold[0] < centroid[0] < x_threshold[1] and centroid[1] > self.moiety):
+        if target_area >= self.target_threshold or (x_threshold[0] <= centroid[0] <= x_threshold[1] and centroid[1] > self.moiety):
             print(f"Target area meets or exceeds {self.target_threshold * 100:.2f}% of the frame or the centroid is in {centroid}.")
             self.stop_robot()
             return True
