@@ -1,61 +1,18 @@
-# import Color_VisuoExcaRobo
-# import Object_VisuoExcaRobo
+import Color_VisuoExcaRobo
+import Object_VisuoExcaRobo
 
 import os
 import datetime
-import argparse
 import gymnasium as gym
 from typing import Tuple
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 
 
-TIMESTEPS = 1000
-BATCH_SIZE = 1024
-LEARNING_RATE = 1e-4
-
-# Create the parser
-parser = argparse.ArgumentParser(
-    description="Train and test the model with 2 options env: Color or Object"
-)
-
-# Add the arguments
-parser.add_argument(
-    "-e",
-    "--env",
-    type=str,
-    default="Color",
-    help="Choose the environment to train and test the model: Color or Object",
-    choices=["Color", "Object"],
-    required=True,
-)
-parser.add_argument(
-    "-t",
-    "--timesteps",
-    type=int,
-    default=TIMESTEPS,
-    help="Number of timesteps to train the model",
-)
-parser.add_argument(
-    "-m",
-    "--model_dir",
-    type=str,
-    default="models",
-    help="Directory to store the trained model",
-)
-parser.add_argument(
-    "-l",
-    "--log_dir",
-    type=str,
-    default="logs",
-    help="Directory to store the logs",
-)
-
-
 class VisuoExcaRobo:
-    def __init__(self) -> None:
+    def __init__(self, args) -> None:
         self.env_type, self.timesteps, self.model_name, self.log_name = (
-            self.extract_args()
+            self.extract_args(args)
         )
 
         # Define the environment
@@ -67,10 +24,7 @@ class VisuoExcaRobo:
         # Create the directories
         self.model_dir, self.log_dir = self.create_dir(self.model_name, self.log_name)
 
-    def extract_args(self) -> Tuple[str, int, str, str]:
-        # parse the arguments
-        args = parser.parse_args()
-
+    def extract_args(self, args) -> Tuple[str, int, str, str]:
         # extract the arguments
         env_type = args.env
         timesteps = args.timesteps
@@ -99,7 +53,7 @@ class VisuoExcaRobo:
             print("Please check the environment and try again.")
             return False
 
-    def train_PPO(self) -> None:
+    def train_PPO(self, batch_size=64, learning_rate=0.0003) -> None:
         # use Proximal Policy Optimization (PPO) algorithm
         print("Training the model with PPO...")
         model = PPO(
@@ -107,15 +61,15 @@ class VisuoExcaRobo:
             self.env,
             verbose=1,
             tensorboard_log=self.log_dir,
-            batch_size=BATCH_SIZE,
-            learning_rate=LEARNING_RATE,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
         )
 
         # Get the current date in YYYYMMDD format
         today_date = datetime.datetime.now().strftime("%Y%m%d")
 
         # Construct the model filename
-        model_filename = f"{self.model_dir}/{today_date}_ppo_{self.timesteps}_bs_{BATCH_SIZE}_lr_{LEARNING_RATE:.0e}"
+        model_filename = f"{self.model_dir}/{today_date}_ppo_{self.timesteps}_bs_{batch_size}_lr_{learning_rate:.0e}"
 
         # Train and save the model
         model.learn(total_timesteps=self.timesteps)
@@ -124,7 +78,7 @@ class VisuoExcaRobo:
 
         return model_filename
 
-    def test_PPO(self, steps: int = 500, model_file: str = "models") -> None:
+    def test_PPO(self, steps: int = 500, model_file: str = None) -> None:
         # load the model
         try:
             model = PPO.load(model_file, env=self.env)
@@ -159,25 +113,3 @@ class VisuoExcaRobo:
                 break
             else:
                 print("Invalid input. Please press 'Y'.")
-
-
-# main program
-if __name__ == "__main__":
-    # Instantiate the VisuoExcaRobo class
-    ver = VisuoExcaRobo()
-
-    # Check the environment
-    ready = ver.check_environment()
-
-    if ready:
-        print(f"Environment is ready: {ver.env}")
-
-        # Train the model
-        model_file = ver.train_PPO()
-
-        print("Training is finished, press `Y` for replay...")
-        ver.wait_for_y()
-
-        # Test the environment
-        print("Testing the Environment with Predicted Value")
-        ver.test_PPO(model_file=model_file)
