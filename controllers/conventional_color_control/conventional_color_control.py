@@ -15,6 +15,7 @@ from controller import Supervisor, Display
 
 MAX_MOTOR_SPEED = 0.7
 
+
 class ConventionalControl(Supervisor):
     def __init__(self):
         super().__init__()
@@ -35,7 +36,7 @@ class ConventionalControl(Supervisor):
         self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
         self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
-        
+
         # Set color range for target detection
         self.lower_color = np.array([35, 42, 44])
         self.upper_color = np.array([55, 62, 64])
@@ -80,7 +81,9 @@ class ConventionalControl(Supervisor):
         self.moiety = 2.0 * height / 3.0 + 5
 
         while self.step(self.timestep) != -1:
-            self.state, target_area, centroid = self.get_observation(width, height, frame_area)
+            self.state, target_area, centroid = self.get_observation(
+                width, height, frame_area
+            )
             if self.is_done(target_area, centroid):
                 print("sip.")
                 # self.digging_operation()
@@ -95,11 +98,17 @@ class ConventionalControl(Supervisor):
         if not data:
             return None, 0, [None, None]
 
-        red_channel, green_channel, blue_channel = self.extract_rgb_channels(image, width, height)
-        self.state = np.array([red_channel, green_channel, blue_channel], dtype=np.uint8)
+        red_channel, green_channel, blue_channel = self.extract_rgb_channels(
+            image, width, height
+        )
+        self.state = np.array(
+            [red_channel, green_channel, blue_channel], dtype=np.uint8
+        )
 
         self.display_segmented_image(data, width, height)
-        return self.state, *self.recognition_process(self.state, width, height, frame_area)
+        return self.state, *self.recognition_process(
+            self.state, width, height, frame_area
+        )
 
     def extract_rgb_channels(self, image, width, height):
         red_channel, green_channel, blue_channel = [], [], []
@@ -126,9 +135,11 @@ class ConventionalControl(Supervisor):
         for y in range(height):
             for x in range(width):
                 r, g, b = image[0][y][x], image[1][y][x], image[2][y][x]
-                if (self.lower_color[0] <= r <= self.upper_color[0] and
-                    self.lower_color[1] <= g <= self.upper_color[1] and
-                    self.lower_color[2] <= b <= self.upper_color[2]):
+                if (
+                    self.lower_color[0] <= r <= self.upper_color[0]
+                    and self.lower_color[1] <= g <= self.upper_color[1]
+                    and self.lower_color[2] <= b <= self.upper_color[2]
+                ):
                     target_px += 1
                     x_sum += x
                     y_sum += y
@@ -142,7 +153,9 @@ class ConventionalControl(Supervisor):
         target_area = target_px / frame_area
         centroid = [x_sum / target_px, y_sum / target_px]
 
-        print(f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}; Target area: {target_area * 100:.2f}%")
+        print(
+            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}; Target area: {target_area * 100:.2f}%"
+        )
         self.move_towards_target(centroid, target_area)
         return target_area, centroid
 
@@ -153,7 +166,11 @@ class ConventionalControl(Supervisor):
         self.motors["turret"].setVelocity(initial_move)
 
     def move_towards_target(self, centroid, target_area):
-        if (centroid[1] < self.moiety or target_area < 0.01) or (self.center_x - self.tolerance_x <= centroid[0] <= self.center_x + self.tolerance_x):
+        if (centroid[1] < self.moiety or target_area < 0.01) or (
+            self.center_x - self.tolerance_x
+            <= centroid[0]
+            <= self.center_x + self.tolerance_x
+        ):
             if centroid[0] <= self.center_x - self.tolerance_x:
                 self.adjust_turret_and_wheels(target_area, direction="left")
             elif centroid[0] >= self.center_x + self.tolerance_x:
@@ -172,7 +189,11 @@ class ConventionalControl(Supervisor):
             elif direction == "right":
                 self.turn_right()
         else:
-            turret_speed = self.max_motor_speed - 0.3 if direction == "left" else -self.max_motor_speed + 0.3
+            turret_speed = (
+                self.max_motor_speed - 0.3
+                if direction == "left"
+                else -self.max_motor_speed + 0.3
+            )
             self.motors["turret"].setVelocity(turret_speed)
             self.run_wheels(self.max_wheel_speed, "all")
 
@@ -180,15 +201,27 @@ class ConventionalControl(Supervisor):
         if centroid == [None, None]:
             return False
 
-        x_threshold = [self.center_x - self.tolerance_x, self.center_x + self.tolerance_x]
-        if target_area >= self.target_threshold or (x_threshold[0] <= centroid[0] <= x_threshold[1] and centroid[1] > self.moiety):
-            print(f"Target area meets or exceeds {self.target_threshold * 100:.2f}% of the frame or the centroid is in {centroid}.")
+        x_threshold = [
+            self.center_x - self.tolerance_x,
+            self.center_x + self.tolerance_x,
+        ]
+        if target_area >= self.target_threshold or (
+            x_threshold[0] <= centroid[0] <= x_threshold[1]
+            and centroid[1] > self.moiety
+        ):
+            print(
+                f"Target area meets or exceeds {self.target_threshold * 100:.2f}% of the frame or the centroid is in {centroid}."
+            )
             self.stop_robot()
             return True
         return False
 
     def run_wheels(self, velocity, wheel="all"):
-        wheels = self.left_wheels + self.right_wheels if wheel == "all" else self.left_wheels if wheel == "left" else self.right_wheels
+        wheels = (
+            self.left_wheels + self.right_wheels
+            if wheel == "all"
+            else self.left_wheels if wheel == "left" else self.right_wheels
+        )
         for motor in wheels:
             motor.setVelocity(velocity)
 
