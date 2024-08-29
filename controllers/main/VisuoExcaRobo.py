@@ -54,22 +54,23 @@ class VisuoExcaRobo:
             return False
 
     def train_PPO(self, batch_size=64, learning_rate=0.0003) -> None:
+        # Get the current date in YYYYMMDD format
+        today_date = datetime.datetime.now().strftime("%Y%m%d")
+
+        # Construct the model filename
+        model_filename = f"{self.model_dir}/{today_date}_ppo_{self.timesteps}_bs_{batch_size}_lr_{learning_rate:.0e}"
+        log_filename = f"{self.log_dir}/{today_date}_ppo_{self.timesteps}_bs_{batch_size}_lr_{learning_rate:.0e}"
+
         # use Proximal Policy Optimization (PPO) algorithm
         print("Training the model with PPO...")
         model = PPO(
             "CnnPolicy",
             self.env,
             verbose=1,
-            tensorboard_log=self.log_dir,
+            tensorboard_log=log_filename,
             batch_size=batch_size,
             learning_rate=learning_rate,
         )
-
-        # Get the current date in YYYYMMDD format
-        today_date = datetime.datetime.now().strftime("%Y%m%d")
-
-        # Construct the model filename
-        model_filename = f"{self.model_dir}/{today_date}_ppo_{self.timesteps}_bs_{batch_size}_lr_{learning_rate:.0e}"
 
         # Train and save the model
         model.learn(total_timesteps=self.timesteps)
