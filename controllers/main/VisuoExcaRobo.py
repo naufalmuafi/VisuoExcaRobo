@@ -17,9 +17,9 @@ class VisuoExcaRobo:
 
         # Define the environment
         if self.env_type == "Color":
-            self.env = gym.make("Color_VisuoExcaRobo-v1")
+            self.env = gym.make("Color_VisuoExcaRobo")
         elif self.env_type == "Object":
-            self.env = gym.make("Object_VisuoExcaRobo-v1")
+            self.env = gym.make("Object_VisuoExcaRobo")
 
         # Create the directories
         self.model_dir, self.log_dir = self.create_dir(self.model_name, self.log_name)
