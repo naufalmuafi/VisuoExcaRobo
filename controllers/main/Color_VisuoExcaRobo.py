@@ -147,8 +147,11 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         arena_tolerance = 1.5
         size_field = self.floor.getField("floorSize").getSFVec3f()
         x, y = size_field
-        self.x_max, self.y_max = x / 2 - arena_tolerance, y / 2 - arena_tolerance
-        self.x_min, self.y_min = -self.x_max, -self.y_max
+        self.arena_x_max, self.arena_y_max = (
+            x / 2 - arena_tolerance,
+            y / 2 - arena_tolerance,
+        )
+        self.arena_x_min, self.arena_y_min = -self.arena_x_max, -self.arena_y_max
 
     def init_camera(self):
         camera = self.getDevice("cabin_camera")
@@ -215,7 +218,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
     def recognition_process(self, image, width, height, frame_area):
         target_px, x_sum, y_sum = 0, 0, 0
-        x_min, x_max, y_min, y_max = width, 0, height, 0
+        target_x_min, target_x_max, target_y_min, target_y_max = width, 0, height, 0
 
         for y in range(height):
             for x in range(width):
@@ -228,8 +231,12 @@ class Color_VisuoExcaRobo(Supervisor, Env):
                     target_px += 1
                     x_sum += x
                     y_sum += y
-                    x_min, x_max = min(x_min, x), max(x_max, x)
-                    y_min, y_max = min(y_min, y), max(y_max, y)
+                    target_x_min, target_x_max = min(target_x_min, x), max(
+                        target_x_max, x
+                    )
+                    target_y_min, target_y_max = min(target_y_min, y), max(
+                        target_y_max, y
+                    )
 
         if target_px == 0:
             return 0, [None, None]
@@ -250,83 +257,85 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         # Reward or punishment based on the change in target area
         previous_target_area = getattr(self, "previous_target_area", 0)
         area_increase = target_area - previous_target_area
-
-        if area_increase > 0:
-            reward += 50  # Reward for progress
-        else:
-            reward -= 50  # Penalty for stagnation or moving away from target
+        reward += 50 if area_increase > 0 else -50
 
         # Update previous target area for the next step
         self.previous_target_area = target_area
 
-        # Reward based on pixel position (x and y alignment)
+        # Penalty if the target is not visible
         if centroid == [None, None]:
-            reward -= 100  # Penalty if the target is not visible
-        else:
-            x_error = abs(centroid[0] - self.center_x)
-            reward -= x_error * 10  # Penalize for being far from center
+            return reward - 100  # Immediate return if target is not visible
 
-            # Additional reward if the target is within the x-coordinate threshold
-            x_threshold = [
-                self.center_x - self.tolerance_x,
-                self.center_x + self.tolerance_x,
-            ]
+        # Reward based on pixel position (x and y alignment)
+        x_error = abs(centroid[0] - self.center_x)
+        reward -= x_error * 10  # Penalize for x-axis deviation
 
-            if x_threshold[0] <= centroid[0] <= x_threshold[1]:
-                reward += 10000  # Big reward for x-coordinate alignment
+        # Check x-coordinate alignment
+        if (
+            self.center_x - self.tolerance_x
+            <= centroid[0]
+            <= self.center_x + self.tolerance_x
+        ):
+            reward += 10000  # Reward for good x-coordinate alignment
 
-            if centroid[1] >= self.moiety:
-                reward += 10000  # Reward for being below the moiety
-            else:
-                reward -= (
-                    self.moiety - centroid[1]
-                ) * 10  # Penalize for being too high
+        # Check y-coordinate alignment
+        reward += (
+            10000 if centroid[1] >= self.moiety else -10 * (self.moiety - centroid[1])
+        )
 
-        # Additional reward for reaching or exceeding the target area threshold
+        # Reward for reaching or exceeding the target area threshold
         if target_area >= self.target_threshold:
-            reward += 10000  # Big reward for reaching the target area threshold
+            reward += 10000
 
-        # Penalty if the robot is too far from the starting position
+        # Check distance from initial position
         pos = self.robot.getPosition()
         distance = (
             (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
         ) ** 0.5
         if distance > MAX_ROBOT_DISTANCE:
-            reward -= 10000  # Significant penalty for being too far
+            reward -= 10000
 
         # Penalty for hitting arena boundaries
-        if (
-            pos[0] <= self.x_min
-            or pos[0] >= self.x_max
-            or pos[1] <= self.y_min
-            or pos[1] >= self.y_max
+        if not (
+            self.arena_x_min <= pos[0] <= self.arena_x_max
+            and self.arena_y_min <= pos[1] <= self.arena_y_max
         ):
-            reward -= 10000  # Significant penalty for hitting the boundary
-            return reward  # Mark episode as done
+            reward -= 10000
 
-        # Apply a small time penalty to encourage quicker completion
+        # Apply a small time penalty
         reward -= 1
 
         return reward
 
     def check_done(self, target_area, centroid):
-        # End episode if the target area is reached
+        if centroid == [None, None]:
+            return False
+
+        # End episode if the target area is reached or the target is in the correct position
         if target_area >= self.target_threshold:
             return True
 
+        # End episode if robot hitting arena boundaries
+        if (
+            self.center_x - self.tolerance_x
+            <= centroid[0]
+            <= self.center_x + self.tolerance_x
+            and centroid[1] > self.moiety
+        ):
+            return True
+
+        # End episode if the robot is too far from the initial position
+        pos = self.robot.getPosition()
         distance = (
             (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
         ) ** 0.5
         if distance > MAX_ROBOT_DISTANCE:
             return True
 
-        # End episode if the robot has hit the arena boundaries
-        pos = self.robot.getPosition()
-        if (
-            pos[0] <= self.x_min
-            or pos[0] >= self.x_max
-            or pos[1] <= self.y_min
-            or pos[1] >= self.y_max
+        # End episode if the robot hits arena boundaries
+        if not (
+            self.arena_x_min <= pos[0] <= self.arena_x_max
+            and self.arena_y_min <= pos[1] <= self.arena_y_max
         ):
             return True
 
