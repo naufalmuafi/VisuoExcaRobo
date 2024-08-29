@@ -15,10 +15,11 @@ except ImportError:
     )
 
 
+ENV_ID = "Color_VisuoExcaRobo"
 MAX_EPISODE_STEPS = 1500
 MAX_WHEEL_SPEED = 4.0
 MAX_MOTOR_SPEED = 0.7
-MAX_ROBOT_DISTANCE = 0.7
+MAX_ROBOT_DISTANCE = 13.0
 
 
 class Color_VisuoExcaRobo(Supervisor, Env):
@@ -29,9 +30,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         random.seed(42)
 
         # register the Environment
-        self.spec: EnvSpec = EnvSpec(
-            id="Color_VisuoExcaRobo", max_episode_steps=max_episode_steps
-        )
+        self.spec: EnvSpec = EnvSpec(id=ENV_ID, max_episode_steps=max_episode_steps)
 
         # get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
@@ -145,7 +144,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         pass
 
     def set_arena_boundaries(self):
-        arena_tolerance = 1.0
+        arena_tolerance = 1.5
         size_field = self.floor.getField("floorSize").getSFVec3f()
         x, y = size_field
         self.x_max, self.y_max = x / 2 - arena_tolerance, y / 2 - arena_tolerance
@@ -332,3 +331,11 @@ class Color_VisuoExcaRobo(Supervisor, Env):
             return True
 
         return False
+
+
+# register the environment
+register(
+    id=ENV_ID,
+    entry_point=lambda: Color_VisuoExcaRobo(),
+    max_episode_steps=MAX_EPISODE_STEPS,
+)
