@@ -133,7 +133,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         self.state, target_area, centroid = self.get_observation(
             self.width, self.height, self.frame_area
         )
-        reward = self.compute_reward(target_area, centroid)
+        reward = self.cal_reward(target_area, centroid)
 
         # Determine if the episode is done
         done = self.check_done(target_area, centroid)
@@ -251,7 +251,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         for motor in wheels:
             motor.setVelocity(velocity)
 
-    def compute_reward(self, target_area, centroid):
+    def cal_reward(self, target_area, centroid):
         reward = 0
 
         # Reward or punishment based on the change in target area

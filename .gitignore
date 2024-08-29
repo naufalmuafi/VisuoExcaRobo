@@ -1,3 +1,4 @@
 .env
 .idea
 models_mini/
+controllers/main/models

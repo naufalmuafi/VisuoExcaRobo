@@ -23,6 +23,7 @@ def parse_arguments(timesteps) -> argparse.Namespace:
         type=int,
         default=timesteps,
         help="Number of timesteps to train the model",
+        required=True,
     )
     parser.add_argument(
         "-m",
