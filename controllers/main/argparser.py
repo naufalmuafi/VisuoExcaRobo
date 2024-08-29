@@ -1,11 +1,7 @@
 import argparse
 
 
-def parse_arguments():
-    TIMESTEPS = 1000
-    BATCH_SIZE = 1024
-    LEARNING_RATE = 1e-4
-
+def parse_arguments(timesteps) -> argparse.Namespace:
     # Create the parser
     parser = argparse.ArgumentParser(
         description="Train and test the model with 2 options for environment: Color or Object"
@@ -25,7 +21,7 @@ def parse_arguments():
         "-t",
         "--timesteps",
         type=int,
-        default=TIMESTEPS,
+        default=timesteps,
         help="Number of timesteps to train the model",
     )
     parser.add_argument(

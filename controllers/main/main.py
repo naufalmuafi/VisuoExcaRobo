@@ -1,10 +1,14 @@
 import VisuoExcaRobo as ver
 from argparser import parse_arguments
 
+TIMESTEPS = 1000
+BATCH_SIZE = 1024
+LEARNING_RATE = 1e-4
+
 # main program
 if __name__ == "__main__":
     # Get the parsed arguments from parser.py
-    args = parse_arguments()
+    args = parse_arguments(TIMESTEPS)
 
     # Instantiate the VisuoExcaRobo class
     robot = ver.VisuoExcaRobo(args)
@@ -16,7 +20,7 @@ if __name__ == "__main__":
         print(f"Environment is ready: {robot.env}")
 
         # Train the model
-        model_file = robot.train_PPO(batch_size=args.timesteps, learning_rate=1e-4)
+        model_file = robot.train_PPO(batch_size=BATCH_SIZE, learning_rate=LEARNING_RATE)
 
         print("Training is finished, press `Y` for replay...")
         robot.wait_for_y()
