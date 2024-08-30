@@ -38,8 +38,8 @@ class ConventionalControl(Supervisor):
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
 
         # Set color range for target detection
-        self.lower_color = np.array([35, 42, 44])
-        self.upper_color = np.array([55, 62, 64])
+        self.lower_color = np.array([45, 51, 53])
+        self.upper_color = np.array([47, 53, 55])
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
