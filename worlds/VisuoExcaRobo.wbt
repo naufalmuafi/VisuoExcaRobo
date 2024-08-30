@@ -3,19 +3,14 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/WoodenBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/rocks/protos/Rock.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/PlasticFruitBox.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/CardboardBox.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/pallet/protos/WoodenPalletStack.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/PlasticCrate.proto"
 
 WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.15173752901544993 -0.687105423185516 -0.710536318366161 5.6804928885113775
-  position -19.614348474285016 -8.091816342717191 9.963374344476899
+  orientation 0.20349997613998566 -0.39646212859682645 -0.8952125671031985 5.241951538151904
+  position -13.477075536083685 -20.178491431412798 10.637692803487113
 }
 TexturedBackground {
 }
@@ -489,31 +484,7 @@ DEF EXCAVATOR Robot {
   controller "<extern>"
   supervisor TRUE
 }
-DEF WOODEN_BOX WoodenBox {
-  translation 3.57932 2.68803 0.3
-  rotation 0 0 1 0.261799
-}
-DEF BIG_ROCK Rock {
-  translation 5.69546 -4.75146 -1.16352e-13
-  scale 9
-  color 0.180392 0.203922 0.211765
-}
-DEF FRUIT_BOX PlasticFruitBox {
-  translation -1.41306 3.48827 -2.30926e-14
-  rotation 0 0 1 0.523599
-}
-DEF CARDBOARD CardboardBox {
-  translation 1.445 4.21048 0.3
-}
-DEF CARDBOARD CardboardBox {
-  translation 0.904451 -5.08033 0.3
-  name "cardboard box(1)"
-}
-DEF WOODEN_PALLET_STACK WoodenPalletStack {
-  translation 5.92859 0.154764 6.39488e-14
-  rotation 0 0 1 2.0944
-}
-DEF PLASTIC_CRATE PlasticCrate {
-  translation -2.48849 -4.368 0
-  size 0.8 0.8 0.6
+DEF ROCK Rock {
+  translation 5 -4 0.25
+  scale 5
 }
