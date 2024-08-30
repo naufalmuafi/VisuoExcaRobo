@@ -118,22 +118,26 @@ class YOLOControl(Supervisor):
             [red_channel, green_channel, blue_channel], dtype=np.uint8
         )
 
-        # Display the detection results on Webots display (optional)
-        for detection in results:
-            bbox = detection.boxes.xyxy[0]  # Bounding box coordinates
-            class_name = detection.names[0]  # Class name of detected object
+        # Check if any detections were made
+        if not results or not results.boxes:
+            print("No objects detected.")
+        else:
+            # Display the detection results on Webots display (optional)
+            for detection in results:
+                bbox = detection.boxes.xyxy[0]  # Bounding box coordinates
+                class_name = detection.names[0]  # Class name of detected object
 
-            x1, y1, x2, y2 = map(int, bbox)
-            cv2.rectangle(bgr_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(
-                bgr_image,
-                class_name,
-                (x1, y1 - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.9,
-                (36, 255, 12),
-                2,
-            )
+                x1, y1, x2, y2 = map(int, bbox)
+                cv2.rectangle(bgr_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(
+                    bgr_image,
+                    class_name,
+                    (x1, y1 - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.9,
+                    (36, 255, 12),
+                    2,
+                )
 
         # Update the Webots display with the detection result
         segmented_image = self.display.imageNew(
