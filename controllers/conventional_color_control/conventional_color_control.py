@@ -25,7 +25,7 @@ class ConventionalControl(Supervisor):
         self.robot = self.getFromDef("EXCAVATOR")
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = 4.0
-        self.target_threshold = 0.1
+        self.target_threshold = 0.01
 
         self.floor = self.getFromDef("FLOOR")
         self.set_arena_boundaries()
@@ -38,8 +38,13 @@ class ConventionalControl(Supervisor):
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
 
         # Set color range for target detection
-        self.lower_color = np.array([45, 51, 53])
-        self.upper_color = np.array([47, 53, 55])
+        self.color_target = np.array([46, 52, 54])
+        color_tolerance = 5
+        self.lower_color = self.color_target - color_tolerance
+        self.upper_color = self.color_target + color_tolerance
+        
+        # Set initial move
+        self.initial_move = random.choice([0, 1])
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
@@ -86,7 +91,7 @@ class ConventionalControl(Supervisor):
             )
             if self.is_done(target_area, centroid):
                 print("sip.")
-                # self.digging_operation()
+                # self.digging_operation()  
                 exit(1)
 
     def get_observation(self, width, height, frame_area):
@@ -129,7 +134,7 @@ class ConventionalControl(Supervisor):
         self.display.imageDelete(segmented_image)
 
     def recognition_process(self, image, width, height, frame_area):
-        target_px, x_sum, y_sum = 0, 0, 0
+        target_px, target_area = 0, 0        
         x_min, x_max, y_min, y_max = width, 0, height, 0
 
         for y in range(height):
@@ -140,9 +145,7 @@ class ConventionalControl(Supervisor):
                     and self.lower_color[1] <= g <= self.upper_color[1]
                     and self.lower_color[2] <= b <= self.upper_color[2]
                 ):
-                    target_px += 1
-                    x_sum += x
-                    y_sum += y
+                    target_px += 1                    
                     x_min, x_max = min(x_min, x), max(x_max, x)
                     y_min, y_max = min(y_min, y), max(y_max, y)
 
@@ -151,7 +154,7 @@ class ConventionalControl(Supervisor):
             return 0, [None, None]
 
         target_area = target_px / frame_area
-        centroid = [x_sum / target_px, y_sum / target_px]
+        centroid = [(x_max + x_min) / 2, (y_max + y_min) / 2]
 
         print(
             f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}; Target area: {target_area * 100:.2f}%"
@@ -161,9 +164,11 @@ class ConventionalControl(Supervisor):
 
     def search_target(self):
         print("No target found.")
-        self.stop_robot()
-        initial_move = random.choice([-1, 1]) * self.max_motor_speed
-        self.motors["turret"].setVelocity(initial_move)
+        
+        if self.initial_move == 0:
+            self.run_wheels(self.initial_move, "left")
+        elif self.initial_move == 1:
+            self.run_wheels(-self.initial_move, "right")        
 
     def move_towards_target(self, centroid, target_area):
         if (centroid[1] < self.moiety or target_area < 0.01) or (
@@ -173,17 +178,20 @@ class ConventionalControl(Supervisor):
         ):
             if centroid[0] <= self.center_x - self.tolerance_x:
                 self.adjust_turret_and_wheels(target_area, direction="left")
+                print("Adjusting turret and wheels to the left.")                
             elif centroid[0] >= self.center_x + self.tolerance_x:
                 self.adjust_turret_and_wheels(target_area, direction="right")
+                print("Adjusting turret and wheels to the right.")                
             else:
                 self.motors["turret"].setVelocity(0.0)
                 self.run_wheels(self.max_wheel_speed, "all")
+                print("Moving forward.")                
         else:
-            self.stop_robot()
+            self.stop_robot()        
 
     def adjust_turret_and_wheels(self, target_area, direction):
         self.motors["turret"].setVelocity(0.0)
-        if target_area < 0.01:
+        if target_area < 0.009:
             if direction == "left":
                 self.turn_left()
             elif direction == "right":
@@ -205,7 +213,7 @@ class ConventionalControl(Supervisor):
             self.center_x - self.tolerance_x,
             self.center_x + self.tolerance_x,
         ]
-        if target_area >= self.target_threshold or (
+        if target_area >= self.target_threshold and (
             x_threshold[0] <= centroid[0] <= x_threshold[1]
             and centroid[1] > self.moiety
         ):

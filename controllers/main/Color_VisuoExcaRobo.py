@@ -58,8 +58,8 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         self.moiety = 2.0 * self.height / 3.0 + 5
 
         # Set color range for target detection
-        self.lower_color = np.array([35, 42, 44])
-        self.upper_color = np.array([55, 62, 64])
+        self.lower_color = np.array([250, 250, 250])
+        self.upper_color = np.array([255, 255, 255])
 
         # set the action spaces: 0 = left, 1 = right
         self.action_space = spaces.Box(low=-1, high=1, shape=(3,), dtype=np.float32)
