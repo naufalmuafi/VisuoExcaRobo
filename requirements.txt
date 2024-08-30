@@ -81,6 +81,7 @@ markupsafe==2.1.5
     #   werkzeug
 matplotlib==3.9.1.post1
     # via
+    #   -r requirements.in
     #   seaborn
     #   stable-baselines3
     #   ultralytics
@@ -149,7 +150,9 @@ nvidia-nvjitlink-cu12==12.6.20
 nvidia-nvtx-cu12==12.1.105
     # via torch
 opencv-python==4.10.0.84
-    # via ultralytics
+    # via
+    #   -r requirements.in
+    #   ultralytics
 opt-einsum==3.3.0
     # via tensorflow
 optree==0.12.1

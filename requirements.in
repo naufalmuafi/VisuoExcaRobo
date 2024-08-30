@@ -6,3 +6,5 @@ tensorboard
 urdf2webots
 tensorflow
 ultralytics
+opencv-python
+matplotlib

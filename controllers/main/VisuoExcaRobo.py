@@ -4,6 +4,7 @@ import Object_VisuoExcaRobo
 import os
 import datetime
 import gymnasium as gym
+import matplotlib.pyplot as plt
 from typing import Tuple
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
@@ -90,6 +91,8 @@ class VisuoExcaRobo:
             return
 
         print("Load Model Successful")
+        
+        step_list, reward_list = [], []
 
         # run a test
         obs, _ = self.env.reset()
@@ -97,6 +100,8 @@ class VisuoExcaRobo:
             action, _states = model.predict(obs)
             obs, reward, done, _, _ = self.env.step(action)
             print(reward, done)
+            step_list.append(i)
+            reward_list.append(reward)
 
             if done:
                 obs, _ = self.env.reset()
@@ -104,6 +109,15 @@ class VisuoExcaRobo:
 
             if i == steps - 1:
                 print("Test Successful")
+        
+        # plot the reward
+        plt.plot(step_list, reward_list)
+        
+        # save the plot
+        plt.savefig(f"{self.log_dir}/reward_plot.png")
+        
+        # show the plot
+        plt.show()
 
     # helper function to wait for user input
     def wait_for_y(self) -> None:

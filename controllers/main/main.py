@@ -26,5 +26,6 @@ if __name__ == "__main__":
         robot.wait_for_y()
 
         # Test the environment
+        # model_file = "models/20240829_ppo_1000000_bs_1024_lr_1e-04"
         print("Testing the Environment with Predicted Value")
         robot.test_PPO(model_file=model_file)
