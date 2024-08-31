@@ -13,43 +13,51 @@ import random
 import numpy as np
 from controller import Supervisor, Display
 
+
 MAX_MOTOR_SPEED = 0.7
 
 
 class ColorControl(Supervisor):
     def __init__(self):
+        # Initialize the supervisor class
         super().__init__()
         self.timestep = int(self.getBasicTimeStep())
         random.seed(42)
 
+        # Get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
+
+        # Set the maximum speed for the motors and wheels
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = 4.0
         self.target_threshold = 0.01
 
+        # Get the floor node and set the arena boundaries
         self.floor = self.getFromDef("FLOOR")
         self.set_arena_boundaries()
 
+        # Initialize the camera, motors, and sensors
         self.camera = self.init_camera()
         self.display = self.getDevice("segmented_image_display")
-
         self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
         self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
 
+        # Set the camera properties
         self.camera_width, self.camera_height = (
             self.camera.getWidth(),
             self.camera.getHeight(),
         )
         self.frame_area = self.camera_width * self.camera_height
 
-        self.center_x = self.camera_width / 2.0
-        self.tolerance_x = 1.0
-        self.moiety = 2.0 * self.camera_height / 3.0 + 5
+        # Set the target properties
+        self.center_x = self.camera_width / 2
+        self.lower_y = self.camera_height
+        self.lower_center = [self.center_x, self.lower_y]
 
         # Set color range for target detection
-        self.color_target = np.array([46, 52, 54])
         color_tolerance = 5
+        self.color_target = np.array([46, 52, 54])
         self.lower_color = self.color_target - color_tolerance
         self.upper_color = self.color_target + color_tolerance
 
