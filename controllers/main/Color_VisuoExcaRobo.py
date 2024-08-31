@@ -85,6 +85,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         # Set the initial state
         self.state = np.zeros(4, dtype=np.uint16)
+        self.seed()
 
     def reset(self, seed: Any = None, options: Any = None) -> Any:
         # Reset the simulation
@@ -168,6 +169,11 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
     def render(self, mode: str = "human") -> Any:
         pass
+
+    def seed(self, seed=None):
+        # Seeding for reproducibility
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
+        return [seed]
 
     def f(
         self,

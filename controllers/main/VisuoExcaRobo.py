@@ -29,9 +29,9 @@ class VisuoExcaRobo:
 
         # Create the environment (Multiple process)
         num_cpu = 4
-        self.env = SubprocVecEnv(
-            [self.make_env(self.env_id, i) for i in range(num_cpu)]
-        )
+        self.env = DummyVecEnv([self.make_env(self.env_id, i) for i in range(num_cpu)])
+
+        self.env.seed(42)
 
         # Create the directories
         self.model_dir, self.log_dir = self.create_dir(self.model_name, self.log_name)
