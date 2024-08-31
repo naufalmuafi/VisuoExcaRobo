@@ -82,7 +82,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         )
 
         # Set the initial state
-        self.state = np.zeros(4, dtype=np.int16)
+        self.state = np.zeros(4, dtype=np.uint16)
 
     def reset(self, seed: Any = None, options: Any = None) -> Any:
         # Reset the simulation
@@ -102,7 +102,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         super().step(self.timestep)
 
         # Initialize the state
-        self.state = np.zeros(4, dtype=np.int16)
+        self.state = np.zeros(4, dtype=np.uint16)
 
         # info dictionary
         info: dict = {}
@@ -122,16 +122,16 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         super().step(self.timestep)
 
         # Get the new observation
-        self.state, target_distance = self.get_observation(self.width, self.height)
+        self.state, target_distance = self.get_observation(self.camera_width, self.camera_height)
 
         # Calculate the reward
         reward = 0
 
         # Reward based on the distance from the target
         norm_target_distance = 1 / (
-            1 + (10 ^ (4 * target_distance - self.distance_threshold))
+            1 + (10 ** (4 * target_distance - self.distance_threshold))
         )
-        reward_color = norm_target_distance * (10 ^ -3)
+        reward_color = norm_target_distance * (10 ** -3)
 
         # Robot reach target
         reach_target = target_distance <= self.distance_threshold
@@ -217,11 +217,11 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         # If the target is not detected
         if target_px == 0:
-            return np.zeros(4, dtype=np.int16), None, [None, None]
+            return np.zeros(4, dtype=np.uint16), None
 
         # Set the new state
         self.state = np.array(
-            [target_x_min, target_x_max, target_y_min, target_y_max], dtype=np.int16
+            [target_x_min, target_x_max, target_y_min, target_y_max], dtype=np.uint16
         )
 
         # Calculate the centroid and distance from the target

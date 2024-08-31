@@ -52,8 +52,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF YELLOW_TURRET_SOLID Solid {
-        translation 1.9999990144787219 -2.4404483959889303e-05 0.29996746313027645
-        rotation 4.210104922521673e-06 -5.033915520721513e-07 0.999999999991011 3.1415823273265517
+        translation 1.9999990144787216 -2.44044839598893e-05 0.29996746313027645
+        rotation 4.210104922521672e-06 -5.033915520721514e-07 0.9999999999910109 3.1415823273265517
         children [
           DEF DISPLAY_1 Display {
             translation 1.33 0 0.93
@@ -134,8 +134,8 @@ DEF EXCAVATOR Robot {
               }
             ]
             endPoint DEF ALL_ARM_SOLID Solid {
-              translation 5.418998583195389e-13 1.0060263445881007e-06 2.042810365310288e-14
-              rotation 0.9999999999998438 -5.589035247700593e-07 -7.415067627748974e-13 3.14159
+              translation 5.420108806220014e-13 1.0060263445881007e-06 2.0650148258027912e-14
+              rotation 0.9999999999998438 -5.589035247700593e-07 -7.415067627747816e-13 3.14159
               children [
                 DEF BLUE_ARM_CONNECTOR_POSE Pose {
                   translation 0.82 0 -0.47
@@ -487,7 +487,7 @@ DEF EXCAVATOR Robot {
     density -1
     mass 1
   }
-  controller "color_target_control"
+  controller "<extern>"
   supervisor TRUE
 }
 DEF ROCK Rock {

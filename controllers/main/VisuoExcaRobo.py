@@ -65,7 +65,7 @@ class VisuoExcaRobo:
         # use Proximal Policy Optimization (PPO) algorithm
         print("Training the model with PPO...")
         model = PPO(
-            "CnnPolicy",
+            "MlpPolicy",
             self.env,
             verbose=1,
             tensorboard_log=log_filename,
