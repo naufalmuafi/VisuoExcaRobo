@@ -26,16 +26,16 @@ class VisuoExcaRobo:
             self.env_id = "Object_VisuoExcaRobo"
 
         # Create the environment (Single process)
-        # self.env = gym.make(self.env_id)
+        self.env = gym.make(self.env_id)
 
         # Create the environment (Multiple process)
-        num_cpu = os.cpu_count()
-        self.env = SubprocVecEnv(
-            [self.make_env(self.env_id, i) for i in range(num_cpu)]
-        )
+        # num_cpu = os.cpu_count()
+        # self.env = SubprocVecEnv(
+        #     [self.make_env(self.env_id, i) for i in range(num_cpu)]
+        # )
 
-        # Create Vectorized Environment
-        self.vec_env = make_vec_env(self.env_id, n_envs=num_cpu)
+        # # Create Vectorized Environment
+        # self.vec_env = make_vec_env(self.env_id, n_envs=num_cpu)
 
         # Create the directories
         self.model_dir, self.log_dir = self.create_dir(self.model_name, self.log_name)
@@ -100,7 +100,7 @@ class VisuoExcaRobo:
         print("Training the model with PPO...")
         model = PPO(
             "MlpPolicy",
-            self.vec_env,
+            self.env,
             verbose=1,
             tensorboard_log=log_filename,
             batch_size=batch_size,
