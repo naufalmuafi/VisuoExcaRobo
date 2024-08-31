@@ -29,8 +29,8 @@ class ColorControl(Supervisor):
 
         # Set the maximum speed for the motors and wheels
         self.max_motor_speed = MAX_MOTOR_SPEED
-        self.max_wheel_speed = 4.0
-        self.target_threshold = 0.01
+        self.max_wheel_speed = 5.0
+        self.distance_threshold = 10
 
         # Get the floor node and set the arena boundaries
         self.floor = self.getFromDef("FLOOR")
@@ -64,22 +64,28 @@ class ColorControl(Supervisor):
         # Set initial move
         self.initial_move = random.choice([0, 1])
 
+        self.state = np.zeros(4, dtype=np.int8)
+
     def run(self):
         while self.step(self.timestep) != -1:
-            self.state, target_area, centroid = self.get_observation(
+            self.state, distance, centroid = self.get_observation(
                 self.camera_width, self.camera_height, self.frame_area
             )
-            if self.is_done(target_area, centroid):
+            if self.is_done(distance, centroid):
                 print("sip.")
                 # self.digging_operation()
+
                 exit(1)
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
         size_field = self.floor.getField("floorSize").getSFVec3f()
         x, y = size_field
-        self.x_max, self.y_max = x / 2 - arena_tolerance, y / 2 - arena_tolerance
-        self.x_min, self.y_min = -self.x_max, -self.y_max
+        self.arena_x_max, self.arena_y_max = (
+            x / 2 - arena_tolerance,
+            y / 2 - arena_tolerance,
+        )
+        self.arena_x_min, self.arena_y_min = -self.arena_x_max, -self.arena_y_max
 
     def init_camera(self):
         camera = self.getDevice("cabin_camera")
@@ -107,24 +113,29 @@ class ColorControl(Supervisor):
 
     def get_observation(self, width, height, frame_area):
         if not self.camera.isRecognitionSegmentationEnabled():
-            return None, 0, [None, None]
+            return np.zeros(4, dtype=np.int8), None, [None, None]
 
         image = self.camera.getImage()
         data = self.camera.getRecognitionSegmentationImage()
-        if not data:
-            return None, 0, [None, None]
 
+        if not data:
+            return np.zeros(4, dtype=np.int8), None, [None, None]
+
+        # Extract RGB channels from the image
         red_channel, green_channel, blue_channel = self.extract_rgb_channels(
             image, width, height
         )
-        self.state = np.array(
-            [red_channel, green_channel, blue_channel], dtype=np.uint8
+        self.img_rgb = [red_channel, green_channel, blue_channel]
+
+        # Perform the recognition process
+        self.state, distance, centroid = self.recognition_process(
+            self.img_rgb, width, height
         )
 
+        # Display the segmented image (optional)
         self.display_segmented_image(data, width, height)
-        return self.state, *self.recognition_process(
-            self.state, width, height, frame_area
-        )
+
+        return self.state, distance, centroid
 
     def extract_rgb_channels(self, image, width, height):
         red_channel, green_channel, blue_channel = [], [], []
@@ -144,10 +155,11 @@ class ColorControl(Supervisor):
         self.display.imagePaste(segmented_image, 0, 0, False)
         self.display.imageDelete(segmented_image)
 
-    def recognition_process(self, image, width, height, frame_area):
-        target_px, target_area = 0, 0
+    def recognition_process(self, image, width, height):
+        target_px, distance, centroid = 0, None, [None, None]
         x_min, x_max, y_min, y_max = width, 0, height, 0
 
+        # Count the number of pixels that match the target color
         for y in range(height):
             for x in range(width):
                 r, g, b = image[0][y][x], image[1][y][x], image[2][y][x]
@@ -160,18 +172,29 @@ class ColorControl(Supervisor):
                     x_min, x_max = min(x_min, x), max(x_max, x)
                     y_min, y_max = min(y_min, y), max(y_max, y)
 
+        # Calculate the target area and centroid
         if target_px == 0:
             self.search_target()
-            return 0, [None, None]
+            self.state = np.zeros(4, dtype=np.int8)
 
-        target_area = target_px / frame_area
+            return np.zeros(4, dtype=np.int8), None, [None, None]
+
+        # Set the new state
+        self.state = np.array([x_min, x_max, y_min, y_max], dtype=np.int8)
+
+        # Calculate the centroid and distance from the target
         centroid = [(x_max + x_min) / 2, (y_max + y_min) / 2]
+        distance = np.sqrt(
+            (centroid[0] - self.lower_center[0]) ** 2
+            + (centroid[1] - self.lower_center[1]) ** 2
+        )
 
         print(
-            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}; Target area: {target_area * 100:.2f}%"
+            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance};Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}"
         )
-        self.move_towards_target(centroid, target_area)
-        return target_area, centroid
+        self.move_towards_target(centroid, distance)
+
+        return self.state, distance, centroid
 
     def search_target(self):
         print("No target found.")
@@ -181,17 +204,13 @@ class ColorControl(Supervisor):
         elif self.initial_move == 1:
             self.run_wheels(-self.initial_move, "right")
 
-    def move_towards_target(self, centroid, target_area):
-        if (centroid[1] < self.moiety or target_area < 0.01) or (
-            self.center_x - self.tolerance_x
-            <= centroid[0]
-            <= self.center_x + self.tolerance_x
-        ):
+    def move_towards_target(self, centroid, distance):
+        if (distance < self.distance_threshold) or (centroid == [None, None]):
             if centroid[0] <= self.center_x - self.tolerance_x:
-                self.adjust_turret_and_wheels(target_area, direction="left")
+                self.adjust_turret_and_wheels(direction="left")
                 print("Adjusting turret and wheels to the left.")
             elif centroid[0] >= self.center_x + self.tolerance_x:
-                self.adjust_turret_and_wheels(target_area, direction="right")
+                self.adjust_turret_and_wheels(direction="right")
                 print("Adjusting turret and wheels to the right.")
             else:
                 self.motors["turret"].setVelocity(0.0)
@@ -200,23 +219,14 @@ class ColorControl(Supervisor):
         else:
             self.stop_robot()
 
-    def adjust_turret_and_wheels(self, target_area, direction):
+    def adjust_turret_and_wheels(self, direction):
         self.motors["turret"].setVelocity(0.0)
-        if target_area < 0.009:
-            if direction == "left":
-                self.turn_left()
-            elif direction == "right":
-                self.turn_right()
-        else:
-            turret_speed = (
-                self.max_motor_speed - 0.3
-                if direction == "left"
-                else -self.max_motor_speed + 0.3
-            )
-            self.motors["turret"].setVelocity(turret_speed)
-            self.run_wheels(self.max_wheel_speed, "all")
+        if direction == "left":
+            self.turn_left()
+        elif direction == "right":
+            self.turn_right()
 
-    def is_done(self, target_area, centroid):
+    def is_done(self, distance, centroid):
         if centroid == [None, None]:
             return False
 
@@ -224,15 +234,16 @@ class ColorControl(Supervisor):
             self.center_x - self.tolerance_x,
             self.center_x + self.tolerance_x,
         ]
-        if target_area >= self.target_threshold and (
-            x_threshold[0] <= centroid[0] <= x_threshold[1]
-            and centroid[1] > self.moiety
-        ):
+        done_center_x = x_threshold[0] <= centroid[0] <= x_threshold[1]
+        done_distance = distance <= self.distance_threshold
+
+        if done_distance and done_center_x:
             print(
-                f"Target area meets or exceeds {self.target_threshold * 100:.2f}% of the frame or the centroid is in {centroid}."
+                f"Target achieved. Distance: {distance}; Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f})"
             )
             self.stop_robot()
             return True
+
         return False
 
     def run_wheels(self, velocity, wheel="all"):
