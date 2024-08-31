@@ -10,10 +10,8 @@ WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF Y
 WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF CABIN Pose > DEF BLUE_CABIN_BODY Shape > DEF compact_excavator_cabin_body Mesh: Too many triangles (43480) in mesh: unable to cast shadows, please reduce the number of triangles below 21845 or set Shape.castShadows to FALSE to disable this warning.
 WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > Group  > USE CABIN > DEF BLUE_CABIN_BODY Shape > DEF compact_excavator_cabin_body Mesh: Too many triangles (43480) in mesh: unable to cast shadows, please reduce the number of triangles below 21845 or set Shape.castShadows to FALSE to disable this warning.
 INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
 INFO: "wheeledExcavator" extern controller: stopped.
 INFO: 'wheeledExcavator' extern controller: disconnected.
 INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
-INFO: "wheeledExcavator" extern controller: stopped.
-INFO: 'wheeledExcavator' extern controller: disconnected.
-INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
-INFO: 'wheeledExcavator' extern controller: disconnected.

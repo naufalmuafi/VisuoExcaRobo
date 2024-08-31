@@ -126,7 +126,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         # Calculate the reward
         reward = 0
-
+        
         # Reward based on the distance from the target
         norm_target_distance = 1 / (
             1 + (10 ** (4 * target_distance - self.distance_threshold))
@@ -196,7 +196,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         return red_channel, green_channel, blue_channel
 
     def recognition_process(self, image, width, height):
-        target_px, distance, centroid = 0, None, [None, None]
+        target_px, distance, centroid = 0, 1000, [None, None]
         target_x_min, target_x_max, target_y_min, target_y_max = width, 0, height, 0
 
         for y in range(height):
@@ -217,7 +217,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         # If the target is not detected
         if target_px == 0:
-            return np.zeros(4, dtype=np.uint16), None
+            return np.zeros(4, dtype=np.uint16), 1000
 
         # Set the new state
         self.state = np.array(
