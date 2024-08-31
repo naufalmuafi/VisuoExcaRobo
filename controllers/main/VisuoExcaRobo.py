@@ -5,9 +5,12 @@ import os
 import datetime
 import gymnasium as gym
 import matplotlib.pyplot as plt
-from typing import Tuple
 from stable_baselines3 import PPO
+from typing import Tuple, Callable
+from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.utils import set_random_seed
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 
 class VisuoExcaRobo:
@@ -18,9 +21,21 @@ class VisuoExcaRobo:
 
         # Define the environment
         if self.env_type == "Color":
-            self.env = gym.make("Color_VisuoExcaRobo")
+            self.env_id = "Color_VisuoExcaRobo"
         elif self.env_type == "Object":
-            self.env = gym.make("Object_VisuoExcaRobo")
+            self.env_id = "Object_VisuoExcaRobo"
+
+        # Create the environment (Single process)
+        # self.env = gym.make(self.env_id)
+
+        # Create the environment (Multiple process)
+        num_cpu = os.cpu_count()
+        self.env = SubprocVecEnv(
+            [self.make_env(self.env_id, i) for i in range(num_cpu)]
+        )
+
+        # Create Vectorized Environment
+        self.vec_env = make_vec_env(self.env_id, n_envs=num_cpu)
 
         # Create the directories
         self.model_dir, self.log_dir = self.create_dir(self.model_name, self.log_name)
@@ -42,6 +57,25 @@ class VisuoExcaRobo:
         os.makedirs(log_name, exist_ok=True)
 
         return model_name, log_name
+
+    def make_env(self, env_id: str, rank: int, seed: int = 0) -> Callable:
+        """
+        Utility function for multiprocessed env.
+
+        :param env_id: (str) the environment ID
+        :param num_env: (int) the number of environment you wish to have in subprocesses
+        :param seed: (int) the inital seed for RNG
+        :param rank: (int) index of the subprocess
+        :return: (Callable)
+        """
+
+        def _init() -> gym.Env:
+            env = gym.make(env_id)
+            env.reset(seed=seed + rank)
+            return env
+
+        set_random_seed(seed)
+        return _init
 
     def check_environment(self) -> None:
         # check the environment
@@ -66,7 +100,7 @@ class VisuoExcaRobo:
         print("Training the model with PPO...")
         model = PPO(
             "MlpPolicy",
-            self.env,
+            self.vec_env,
             verbose=1,
             tensorboard_log=log_filename,
             batch_size=batch_size,
@@ -91,7 +125,7 @@ class VisuoExcaRobo:
             return
 
         print("Load Model Successful")
-        
+
         step_list, reward_list = [], []
 
         # run a test
@@ -109,13 +143,13 @@ class VisuoExcaRobo:
 
             if i == steps - 1:
                 print("Test Successful")
-        
+
         # plot the reward
         plt.plot(step_list, reward_list)
-        
+
         # save the plot
         plt.savefig(f"{self.log_dir}/reward_plot.png")
-        
+
         # show the plot
         plt.show()
 
