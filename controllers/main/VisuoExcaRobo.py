@@ -71,7 +71,7 @@ class VisuoExcaRobo:
 
         def _init() -> gym.Env:
             env = gym.make(env_id)
-            env.reset(seed=seed + rank)
+            env.seed(seed + rank)
             return env
 
         set_random_seed(seed)
