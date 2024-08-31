@@ -65,6 +65,7 @@ class ColorControl(Supervisor):
         # Set initial move
         self.initial_move = random.choice([0, 1])
 
+        # Set the initial state
         self.state = np.zeros(4, dtype=np.int16)
 
     def run(self):
@@ -191,7 +192,7 @@ class ColorControl(Supervisor):
             self.run_wheels(-self.initial_move, "right")
 
     def move_towards_target(self, centroid, distance):
-        if (distance > self.distance_threshold) or (centroid == [None, None]):
+        if (distance >= self.distance_threshold) or (centroid == [None, None]):
             if centroid[0] <= self.center_x - self.tolerance_x:
                 self.adjust_turret_and_wheels(direction="left")
                 print("Adjusting turret and wheels to the left.")
