@@ -196,7 +196,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         return red_channel, green_channel, blue_channel
 
     def recognition_process(self, image, width, height):
-        target_px, distance, centroid = 0, 1000, [None, None]
+        target_px, distance, centroid = 0, 300, [None, None]
         target_x_min, target_x_max, target_y_min, target_y_max = width, 0, height, 0
 
         for y in range(height):
@@ -217,7 +217,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         # If the target is not detected
         if target_px == 0:
-            return np.zeros(4, dtype=np.uint16), 1000
+            return np.zeros(4, dtype=np.uint16), distance
 
         # Set the new state
         self.state = np.array(
