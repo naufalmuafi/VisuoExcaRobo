@@ -30,7 +30,7 @@ class ColorControl(Supervisor):
         # Set the maximum speed for the motors and wheels
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = 5.0
-        self.distance_threshold = 10
+        self.distance_threshold = 20
 
         # Get the floor node and set the arena boundaries
         self.floor = self.getFromDef("FLOOR")
@@ -54,6 +54,7 @@ class ColorControl(Supervisor):
         self.center_x = self.camera_width / 2
         self.lower_y = self.camera_height
         self.lower_center = [self.center_x, self.lower_y]
+        self.tolerance_x = 1
 
         # Set color range for target detection
         color_tolerance = 5
@@ -64,7 +65,7 @@ class ColorControl(Supervisor):
         # Set initial move
         self.initial_move = random.choice([0, 1])
 
-        self.state = np.zeros(4, dtype=np.int8)
+        self.state = np.zeros(4, dtype=np.int16)
 
     def run(self):
         while self.step(self.timestep) != -1:
@@ -113,13 +114,13 @@ class ColorControl(Supervisor):
 
     def get_observation(self, width, height, frame_area):
         if not self.camera.isRecognitionSegmentationEnabled():
-            return np.zeros(4, dtype=np.int8), None, [None, None]
+            return np.zeros(4, dtype=np.int16), None, [None, None]
 
         image = self.camera.getImage()
         data = self.camera.getRecognitionSegmentationImage()
 
         if not data:
-            return np.zeros(4, dtype=np.int8), None, [None, None]
+            return np.zeros(4, dtype=np.int16), None, [None, None]
 
         # Extract RGB channels from the image
         red_channel, green_channel, blue_channel = self.extract_rgb_channels(
@@ -175,12 +176,12 @@ class ColorControl(Supervisor):
         # Calculate the target area and centroid
         if target_px == 0:
             self.search_target()
-            self.state = np.zeros(4, dtype=np.int8)
+            self.state = np.zeros(4, dtype=np.int16)
 
-            return np.zeros(4, dtype=np.int8), None, [None, None]
+            return np.zeros(4, dtype=np.int16), None, [None, None]
 
         # Set the new state
-        self.state = np.array([x_min, x_max, y_min, y_max], dtype=np.int8)
+        self.state = np.array([x_min, x_max, y_min, y_max], dtype=np.int16)
 
         # Calculate the centroid and distance from the target
         centroid = [(x_max + x_min) / 2, (y_max + y_min) / 2]
@@ -190,7 +191,7 @@ class ColorControl(Supervisor):
         )
 
         print(
-            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance};Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}"
+            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}; Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}"
         )
         self.move_towards_target(centroid, distance)
 
@@ -205,7 +206,7 @@ class ColorControl(Supervisor):
             self.run_wheels(-self.initial_move, "right")
 
     def move_towards_target(self, centroid, distance):
-        if (distance < self.distance_threshold) or (centroid == [None, None]):
+        if (distance > self.distance_threshold) or (centroid == [None, None]):
             if centroid[0] <= self.center_x - self.tolerance_x:
                 self.adjust_turret_and_wheels(direction="left")
                 print("Adjusting turret and wheels to the left.")
