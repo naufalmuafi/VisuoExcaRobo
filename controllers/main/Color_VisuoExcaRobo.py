@@ -3,6 +3,7 @@ from typing import Any, Tuple, List
 from controller import Supervisor, Display
 
 try:
+    import math
     import random
     import numpy as np
     import gymnasium as gym
@@ -20,8 +21,9 @@ MAX_EPISODE_STEPS = 3000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 13.0
-DISTANCE_THRESHOLD = 1.0
 LOWER_Y = -19
+SHARPNESS = 4
+DISTANCE_THRESHOLD = 1
 
 
 class Color_VisuoExcaRobo(Supervisor, Env):
@@ -122,16 +124,15 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         super().step(self.timestep)
 
         # Get the new observation
-        self.state, target_distance = self.get_observation(self.camera_width, self.camera_height)
+        self.state, target_distance = self.get_observation(
+            self.camera_width, self.camera_height
+        )
 
         # Calculate the reward
         reward = 0
-        
+
         # Reward based on the distance from the target
-        norm_target_distance = 1 / (
-            1 + (10 ** (4 * target_distance - self.distance_threshold))
-        )
-        reward_color = norm_target_distance * (10 ** -3)
+        reward_color = self.f(target_distance) * (10**-3)
 
         # Robot reach target
         reach_target = target_distance <= self.distance_threshold
@@ -167,6 +168,20 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
     def render(self, mode: str = "human") -> Any:
         pass
+
+    def f(
+        self,
+        target_distance,
+        sharpness=SHARPNESS,
+        distance_threshold=DISTANCE_THRESHOLD,
+    ):
+        exponent = sharpness * (target_distance - distance_threshold) * math.log(10)
+        try:
+            result = 1 / (1 + math.exp(exponent))
+        except OverflowError:
+            # When exponent is too large, the value approaches zero
+            result = 0
+        return result
 
     def get_observation(self, width, height):
         image = self.camera.getImage()
