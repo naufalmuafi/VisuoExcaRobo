@@ -9,8 +9,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation -0.16758516967494003 0.4475970521559978 0.8783917632846308 0.8058676254855066
-  position -17.334619601551466 -16.1887885141565 9.452173445630809
+  orientation -0.16570578866999264 0.43185941170949843 0.88658842769302 0.8169109781748322
+  position -19.65770068015464 -13.614731434721559 9.174072769124308
 }
 TexturedBackground {
 }
@@ -52,11 +52,15 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF YELLOW_TURRET_SOLID Solid {
-        translation 1.9999990144787223 -2.4404483959889313e-05 0.29996746313027645
-        rotation 4.210104922521674e-06 -5.03391552072151e-07 0.999999999991011 3.1415823273265517
+        translation 1.9999990144787219 -2.4404483959889303e-05 0.29996746313027645
+        rotation 4.210104922521673e-06 -5.033915520721513e-07 0.999999999991011 3.1415823273265517
         children [
-          DEF SEGMENTED_IMAGE_DISPLAY Display {
-            name "segmented_image_display"
+          DEF DISPLAY_1 Display {
+            translation 1.33 0 0.93
+            name "display_1"
+            recognitionColors [
+              1 1 1
+            ]
             width 256
             height 128
           }
@@ -130,8 +134,8 @@ DEF EXCAVATOR Robot {
               }
             ]
             endPoint DEF ALL_ARM_SOLID Solid {
-              translation 5.416778137146139e-13 1.006026344588101e-06 1.9984014443252818e-14
-              rotation 0.9999999999998438 -5.589035247700593e-07 -7.41506762775129e-13 3.14159
+              translation 5.418998583195389e-13 1.0060263445881007e-06 2.042810365310288e-14
+              rotation 0.9999999999998438 -5.589035247700593e-07 -7.415067627748974e-13 3.14159
               children [
                 DEF BLUE_ARM_CONNECTOR_POSE Pose {
                   translation 0.82 0 -0.47
@@ -483,7 +487,7 @@ DEF EXCAVATOR Robot {
     density -1
     mass 1
   }
-  controller "conventional_color_control"
+  controller "color_target_control"
   supervisor TRUE
 }
 DEF ROCK Rock {

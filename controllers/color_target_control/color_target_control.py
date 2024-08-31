@@ -38,7 +38,7 @@ class ColorControl(Supervisor):
 
         # Initialize the camera, motors, and sensors
         self.camera = self.init_camera()
-        self.display = self.getDevice("segmented_image_display")
+        self.display = self.getDevice("display_1")
         self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
         self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
@@ -70,7 +70,7 @@ class ColorControl(Supervisor):
     def run(self):
         while self.step(self.timestep) != -1:
             self.state, distance, centroid = self.get_observation(
-                self.camera_width, self.camera_height, self.frame_area
+                self.camera_width, self.camera_height
             )
             if self.is_done(distance, centroid):
                 print("sip.")
@@ -92,7 +92,7 @@ class ColorControl(Supervisor):
         camera = self.getDevice("cabin_camera")
         camera.enable(self.timestep)
         camera.recognitionEnable(self.timestep)
-        camera.enableRecognitionSegmentation()
+
         return camera
 
     def init_motors_and_sensors(self):
@@ -112,15 +112,8 @@ class ColorControl(Supervisor):
 
         return wheel_motors, motors, sensors
 
-    def get_observation(self, width, height, frame_area):
-        if not self.camera.isRecognitionSegmentationEnabled():
-            return np.zeros(4, dtype=np.int16), None, [None, None]
-
+    def get_observation(self, width, height):
         image = self.camera.getImage()
-        data = self.camera.getRecognitionSegmentationImage()
-
-        if not data:
-            return np.zeros(4, dtype=np.int16), None, [None, None]
 
         # Extract RGB channels from the image
         red_channel, green_channel, blue_channel = self.extract_rgb_channels(
@@ -132,9 +125,6 @@ class ColorControl(Supervisor):
         self.state, distance, centroid = self.recognition_process(
             self.img_rgb, width, height
         )
-
-        # Display the segmented image (optional)
-        self.display_segmented_image(data, width, height)
 
         return self.state, distance, centroid
 
@@ -150,11 +140,6 @@ class ColorControl(Supervisor):
             green_channel.append(green_row)
             blue_channel.append(blue_row)
         return red_channel, green_channel, blue_channel
-
-    def display_segmented_image(self, data, width, height):
-        segmented_image = self.display.imageNew(data, Display.BGRA, width, height)
-        self.display.imagePaste(segmented_image, 0, 0, False)
-        self.display.imageDelete(segmented_image)
 
     def recognition_process(self, image, width, height):
         target_px, distance, centroid = 0, None, [None, None]
