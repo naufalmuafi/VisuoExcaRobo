@@ -25,11 +25,11 @@ class VisuoExcaRobo:
             self.env_id = "Object_VisuoExcaRobo"
 
         # Create the environment (Single process)
-        # self.env = gym.make(self.env_id)
+        self.env = gym.make(self.env_id)
 
         # Create the environment (Multiple process)
-        num_cpu = 4
-        self.env = DummyVecEnv([self.make_env(self.env_id, i) for i in range(num_cpu)])
+        # num_cpu = 4
+        # self.env = DummyVecEnv([self.make_env(self.env_id, i) for i in range(num_cpu)])
 
         self.env.seed(42)
 
