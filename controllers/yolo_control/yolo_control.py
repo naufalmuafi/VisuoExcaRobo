@@ -9,10 +9,11 @@ by: Naufal Mu'afi
 
 """
 
+import cv2
 import random
 import numpy as np
 from ultralytics import YOLO
-from controller import Supervisor, Display
+from controller import Supervisor
 
 
 MAX_MOTOR_SPEED = 0.7
@@ -62,6 +63,9 @@ class YOLOControl(Supervisor):
         # Load the YOLO model
         self.model = YOLO("yolo_model/yolov8m.pt")
         self.model = YOLO("runs/detect/train_m_100/weights/best.pt")
+
+        # Initialize the display window for visualizing bounding boxes
+        cv2.namedWindow("YOLO Detection", cv2.WINDOW_AUTOSIZE)
 
         # Set initial move
         self.initial_move = random.choice([0, 1])
@@ -114,34 +118,54 @@ class YOLOControl(Supervisor):
         image = np.array(self.camera.getImageArray())
 
         # Perform object detection with YOLO
-        results = self.model(image)
+        results = self.model.predict(image)
 
-        # Extract detection results
-        detected_objects = results[0].boxes
-        if len(detected_objects) > 0:
-            for obj in detected_objects:
-                label = obj.cls  # class index
-                confidence = obj.conf  # confidence score
-                bbox = obj.xyxy  # bounding box coordinates
+        if len(results) > 0:
+            detected_objects = results[0]  # Accessing the first result
+            if detected_objects.boxes is not None:
+                for obj in detected_objects.boxes:
+                    label = int(obj.cls.item())  # class index (as an integer)
+                    confidence = obj.conf.item()  # confidence score
+                    bbox = obj.xyxy[0].numpy()  # bounding box coordinates
 
-                # Check if the detected object is a rock
-                if label == 0:  # assuming 'rock' is class 0 in your YOLO model
-                    x_min, y_min, x_max, y_max = bbox
-                    centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
-                    distance = np.sqrt(
-                        (centroid[0] - self.lower_center[0]) ** 2
-                        + (centroid[1] - self.lower_center[1]) ** 2
-                    )
+                    if label == 0:  # assuming 'rock' is class 0 in your YOLO model
+                        x_min, y_min, x_max, y_max = bbox
+                        centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
+                        distance = np.sqrt(
+                            (centroid[0] - self.lower_center[0]) ** 2
+                            + (centroid[1] - self.lower_center[1]) ** 2
+                        )
 
-                    print(
-                        f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}; Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}; Confidence: {confidence:.2f}"
-                    )
-                    self.move_towards_target(centroid, distance)
-                    return [x_min, x_max, y_min, y_max], distance, centroid
+                        print(
+                            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}; Confidence: {confidence:.2f}"
+                        )
 
-        # If no rock is detected, search for the target
+                        # Draw bounding box and centroid on the image
+                        self.draw_bounding_box(image, bbox, label, confidence)
+                        self.move_towards_target(centroid, distance)
+                        return [x_min, x_max, y_min, y_max], distance, centroid
+
         self.search_target()
         return np.zeros(4, dtype=np.int16), None, [None, None]
+
+    def draw_bounding_box(self, image, bbox, label, confidence):
+        x_min, y_min, x_max, y_max = [int(i) for i in bbox]
+        color = (0, 0, 255)
+        cv2.rectangle(image, (x_min, y_min), (x_max, y_max), color, 2)
+
+        text = f"{self.model.names[label]}: {confidence:.2f}"
+        cv2.putText(
+            image, text, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2
+        )
+
+        # Draw the centroid
+        centroid_x, centroid_y = (x_min + x_max) // 2, (y_min + y_max) // 2
+        cv2.circle(
+            image, (centroid_x, centroid_y), 5, (255, 0, 0), -1
+        )  # Blue dot for centroid
+
+        cv2.imshow("YOLO Detection", image)
+        cv2.waitKey(1)
 
     def search_target(self):
         print("No target found.")
