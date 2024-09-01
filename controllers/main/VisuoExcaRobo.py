@@ -5,7 +5,6 @@ import os
 import datetime
 import gymnasium as gym
 import matplotlib.pyplot as plt
-from controller import Supervisor
 from stable_baselines3 import PPO
 from typing import Tuple, Callable
 from stable_baselines3.common.env_checker import check_env
@@ -13,19 +12,17 @@ from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 
-class VisuoExcaRobo(Supervisor):
+class VisuoExcaRobo:
     def __init__(self, args) -> None:
-        super().__init__()
         self.env_type, self.timesteps, self.model_name, self.log_name = (
             self.extract_args(args)
         )
 
         # Define the environment
-        self.env_id = (
-            "Color_VisuoExcaRobo"
-            if self.env_type == "Color"
-            else "Object_VisuoExcaRobo"
-        )
+        if self.env_type == "Color":
+            self.env_id = "Color_VisuoExcaRobo"
+        elif self.env_type == "Object":
+            self.env_id = "Object_VisuoExcaRobo"
 
         # Create the environment (Single process)
         self.env = gym.make(self.env_id)
@@ -33,7 +30,8 @@ class VisuoExcaRobo(Supervisor):
         # Create the environment (Multiple process)
         # num_cpu = 4
         # self.env = DummyVecEnv([self.make_env(self.env_id, i) for i in range(num_cpu)])
-        # self.env.seed(42)
+
+        self.env.seed(42)
 
         # Create the directories
         self.model_dir, self.log_dir = self.create_dir(self.model_name, self.log_name)
@@ -123,11 +121,6 @@ class VisuoExcaRobo(Supervisor):
             return
 
         print("Load Model Successful")
-
-        # Reset the simulation
-        self.simulationReset()
-        self.simulationResetPhysics()
-        super().step(self.timestep)
 
         step_list, reward_list = [], []
 
