@@ -7,7 +7,7 @@ from controller import Supervisor, Display
 MAX_MOTOR_SPEED = 0.7
 LOWER_Y = -20
 DISTANCE_THRESHOLD = 1.0
-IMAGE_SAVE_INTERVAL = 0.5  # Interval in seconds
+IMAGE_SAVE_INTERVAL = 0.35  # Interval in seconds
 
 
 class ColorControl(Supervisor):
@@ -63,13 +63,16 @@ class ColorControl(Supervisor):
 
         # Variables for saving images
         self.last_save_time = 0.0  # Tracks the last time an image was saved
-        self.image_directory = "../../datasets/raw_data_collection/capture_2/"
+        self.image_directory = "../../datasets/raw_data_collection/capture_3/"
         self.image_counter = 0  # Counter for image filenames
 
         # Ensure the directory exists
         os.makedirs(self.image_directory, exist_ok=True)
 
     def run(self):
+        self.step(self.timestep)
+        self.save_image()
+
         while self.step(self.timestep) != -1:
             current_time = self.getTime()
 
@@ -121,9 +124,9 @@ class ColorControl(Supervisor):
 
         return wheel_motors, motors, sensors
 
-    def save_image(self, current_time):
+    def save_image(self, current_time=0):
         # quality of the image
-        qualities = [50, 60, 70, 80, 90, 100]
+        qualities = [50, 75, 100]
 
         # Create the image filename
         # image_filename = f"{self.image_directory}pc0_rock_{self.image_counter:05d}.jpeg"
