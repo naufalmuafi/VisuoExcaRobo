@@ -135,7 +135,7 @@ class ColorControl(Supervisor):
         # self.camera.saveImage(image_filename, quality=quality)
 
         for quality in qualities:
-            image_filename = f"{self.image_directory}pc0_rock_{self.image_counter:05d}_{quality}.jpeg"
+            image_filename = f"{self.image_directory}pc1_rock_{self.image_counter:05d}_{quality}.jpeg"
             self.camera.saveImage(image_filename, quality=quality)
 
         print(f"Saved image: at time {current_time:.2f} seconds")
