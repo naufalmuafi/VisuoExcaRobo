@@ -1,0 +1,497 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/rocks/protos/Rock.proto"
+
+WorldInfo {
+  basicTimeStep 16
+}
+Viewpoint {
+  orientation -0.2186333147621049 0.4539016749979638 0.8638129097843913 1.0173554569642635
+  position -15.63322141199886 -15.416219462971139 11.243616240057591
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+DEF FLOOR RectangleArena {
+  floorSize 15 15
+}
+DEF EXCAVATOR Robot {
+  translation -4 0 0.199654
+  rotation -0.00044730363017830876 0.002040335877952647 0.9999978184721043 0.040406367326455375
+  children [
+    DEF WHITE_UNDERCARRIAGE Pose {
+      translation 0 0 0.09
+      children [
+        DEF BODY Shape {
+          appearance PBRAppearance {
+            baseColor 0.917647 0.917647 0.917647
+            roughness 1
+            metalness 0
+          }
+          geometry Box {
+            size 1.7 1.7 0.3
+          }
+        }
+      ]
+    }
+    DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint {
+      jointParameters HingeJointParameters {
+        position -1.0672725003324501e-05
+        axis 0 0 1
+      }
+      device [
+        RotationalMotor {
+          name "turret_motor"
+        }
+        PositionSensor {
+          name "turret_sensor"
+        }
+      ]
+      endPoint DEF YELLOW_TURRET_SOLID Solid {
+        translation 1.999999014478721 -2.440448395989089e-05 0.29996746313027645
+        rotation 4.210104922521672e-06 -5.033915520721524e-07 0.9999999999910109 3.1415823273265513
+        children [
+          DEF DISPLAY_1 Display {
+            translation 1.33 0 0.93
+            name "display_1"
+            recognitionColors [
+              1 1 1
+            ]
+            width 256
+            height 128
+          }
+          DEF CABIN_CAMERA Camera {
+            translation 1.33 0.46 0.93
+            rotation -0.11960298072285644 0.009999636485096178 0.992771441104333 -2.925
+            children [
+              DEF CAMERA_POSE Pose {
+                children [
+                  DEF CAMERA_STICK Pose {
+                    translation 0.013 0 -0.121423
+                    rotation 0 -1 0 0.1382003061004253
+                    children [
+                      DEF CAMERA_STICK_MATERIAL Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.109804 0.109804 0.109804
+                          roughness 1
+                          metalness 0
+                        }
+                        geometry Cylinder {
+                          height 0.17
+                          radius 0.02
+                        }
+                      }
+                    ]
+                  }
+                  DEF CAMERA_SHAPE Shape {
+                    appearance PBRAppearance {
+                      baseColor 0.917647 0.917647 0.917647
+                      roughness 1
+                      metalness 0
+                    }
+                    geometry Box {
+                      size 0.1 0.2 0.1
+                    }
+                  }
+                ]
+              }
+            ]
+            name "cabin_camera"
+            boundingObject Group {
+              children [
+                USE CAMERA_SHAPE
+                USE CAMERA_STICK
+              ]
+            }
+            fieldOfView 1.1
+            width 256
+            height 128
+            antiAliasing TRUE
+            recognition Recognition {
+              frameColor 0 0.333333 1
+              frameThickness 2
+              segmentation TRUE
+            }
+          }
+          DEF ARM HingeJoint {
+            jointParameters HingeJointParameters {
+              position -1.1178070495887482e-06
+              axis 0 0 1
+              anchor 0.9 0 1
+            }
+            device [
+              RotationalMotor {
+                name "arm_connector_motor"
+                minPosition -1.1
+                maxPosition 1.1
+              }
+              PositionSensor {
+                name "arm_connector_sensor"
+              }
+            ]
+            endPoint DEF ALL_ARM_SOLID Solid {
+              translation 5.428990590417015e-13 1.0060263445880997e-06 2.2426505097428162e-14
+              rotation 0.9999999999998438 -5.589035247700597e-07 -7.415067627727216e-13 3.14159
+              children [
+                DEF BLUE_ARM_CONNECTOR_POSE Pose {
+                  translation 0.82 0 -0.47
+                  rotation 0.5802380124028778 0.5715310122167613 -0.5802380124028778 -2.1031453071795863
+                  children [
+                    DEF BLUE_ARM_CONNECTOR_MATERIAL Shape {
+                      appearance DEF PART1_MATERIAL PBRAppearance {
+                        baseColor 0.615686 0.811765 0.929412
+                        roughness 1
+                        metalness 0
+                      }
+                      geometry DEF PART1_MESH Mesh {
+                        url [
+                          "../assets/wheeledExcavator/part01_pin_1.stl"
+                        ]
+                      }
+                    }
+                  ]
+                }
+                DEF LOWER_ARM HingeJoint {
+                  jointParameters HingeJointParameters {
+                    position -0.15
+                    axis 0 1 0
+                    anchor 0.7 0 -0.5
+                    minStop -0.27
+                    maxStop 0.27
+                  }
+                  device [
+                    RotationalMotor {
+                      name "lower_arm_motor"
+                    }
+                    PositionSensor {
+                      name "lower_arm_sensor"
+                    }
+                  ]
+                  endPoint DEF LOWER_ARM_SOLID Solid {
+                    translation 0.8111806227286453 0 -0.43262887020636587
+                    rotation -0.9672129113488362 0.19191603625532183 0.16633526128922327 1.5859852112221575
+                    children [
+                      DEF LOWER_ARM_POSE Pose {
+                        children [
+                          DEF LOWER_ARM_SHAPE Shape {
+                            appearance DEF LOWER_ARM_MATERIAL PBRAppearance {
+                              baseColor 0.776471 0.756863 0.737255
+                              roughness 1
+                              metalness 0
+                            }
+                            geometry DEF LOWER_ARM_MESH Mesh {
+                              url [
+                                "../assets/wheeledExcavator/part02.stl"
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                      DEF UPPERTOLOW HingeJoint {
+                        jointParameters HingeJointParameters {
+                          axis 0 0 1
+                          anchor -0.84 2.35 0
+                        }
+                        device [
+                          RotationalMotor {
+                            name "uppertolow_motor"
+                          }
+                          PositionSensor {
+                            name "uppertolow_sensor"
+                          }
+                        ]
+                        endPoint DEF UPPERTOLOW_SOLID Solid {
+                          translation -0.836322 2.3541 0
+                          rotation 0 0 1 1.8325999999999998
+                          children [
+                            DEF SCOOP HingeJoint {
+                              jointParameters HingeJointParameters {
+                                position -1.7
+                                axis 0 0 1
+                                anchor 0.135 1.53 0
+                              }
+                              device [
+                                RotationalMotor {
+                                  name "scoop_motor"
+                                }
+                                PositionSensor {
+                                  name "scoop_sensor"
+                                }
+                              ]
+                              endPoint DEF SCOOP Solid {
+                                translation -1.3648531532623815 1.8610068256832362 0
+                                rotation 0 0 -1 1.7
+                                children [
+                                  DEF SCOOP_CONNECTOR Pose {
+                                    translation -0.01 1.6 1.0195e-08
+                                    rotation 0 1 0 -1.5707953071795862
+                                    children [
+                                      Shape {
+                                        appearance PBRAppearance {
+                                          baseColor 0.768627 0.886275 0.952941
+                                          roughness 1
+                                          metalness 0
+                                        }
+                                        geometry Mesh {
+                                          url [
+                                            "../assets/wheeledExcavator/part04.stl"
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                  DEF BUCKET_MOUNT Pose {
+                                    translation -0.19 1.71 2.97583e-07
+                                    rotation 0.577349935856137 0.577349935856137 0.5773509358560258 -2.094395307179586
+                                    children [
+                                      DEF BUCKET_MOUNT_SHAPE Shape {
+                                        appearance PBRAppearance {
+                                          baseColor 0.498039 0.498039 0.498039
+                                          roughness 1
+                                          metalness 0
+                                        }
+                                        geometry Mesh {
+                                          url [
+                                            "../assets/wheeledExcavator/bucket_mount.stl"
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                  DEF BUCKET_POSE Pose {
+                                    translation -0.85194 1.52726 0
+                                    rotation 0 0 1 -1.5707953071795862
+                                    children [
+                                      DEF BUCKET_SHAPE Shape {
+                                        appearance DEF BUCKET_MATERIAL PBRAppearance {
+                                          baseColor 0.615686 0.811765 0.929412
+                                          roughness 1
+                                          metalness 0
+                                        }
+                                        geometry DEF BUCKET Mesh {
+                                          url [
+                                            "../assets/wheeledExcavator/bucket.stl"
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                                name "scoop"
+                                boundingObject Group {
+                                  children [
+                                    USE BUCKET_POSE
+                                    USE BUCKET_MOUNT
+                                    USE SCOOP_CONNECTOR
+                                  ]
+                                }
+                              }
+                            }
+                            DEF UPPERTOLOW_POSE Pose {
+                              children [
+                                DEF UPPERTOLOW_SHAPE Shape {
+                                  appearance PBRAppearance {
+                                    baseColor 0.980392 0.713725 0.003922
+                                    roughness 1
+                                    metalness 0
+                                  }
+                                  geometry Mesh {
+                                    url [
+                                      "../assets/wheeledExcavator/part03.stl"
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                          boundingObject USE UPPERTOLOW_SHAPE
+                        }
+                      }
+                    ]
+                    boundingObject USE LOWER_ARM_POSE
+                  }
+                }
+              ]
+              name "ARM_SOLID"
+              boundingObject USE BLUE_ARM_CONNECTOR_POSE
+              physics Physics {
+                density -1
+                mass 1
+              }
+            }
+          }
+          DEF CABIN Pose {
+            translation 1.45 -0.2 0.28
+            rotation -0.5773502691896258 0.5773502691896258 0.5773502691896258 -2.094395307179586
+            children [
+              DEF BLUE_CABIN_BODY Shape {
+                appearance DEF compact_excavator_cabin_body_material PBRAppearance {
+                  baseColor 0.231373 0.380392 0.705882
+                  roughness 1
+                  metalness 0
+                }
+                geometry DEF compact_excavator_cabin_body Mesh {
+                  url [
+                    "../assets/wheeledExcavator/compact_excavator_cabin_body.stl"
+                  ]
+                }
+              }
+            ]
+          }
+          DEF TURRET Pose {
+            translation 2 0 0
+            rotation -1 0 0 1.570796
+            children [
+              DEF TURRET_MATERIAL Shape {
+                appearance DEF compact_excavator_turret_cabin_roller_material PBRAppearance {
+                  baseColor 0.980392 0.713725 0.003922
+                  roughness 1
+                  metalness 0
+                }
+                geometry DEF compact_excavator_turret_cabin_roller Mesh {
+                  url [
+                    "../assets/wheeledExcavator/compact_excavator_turret_cabin_roller.stl"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+        name "yelow_turret_solid"
+        boundingObject Group {
+          children [
+            USE CABIN
+            USE TURRET
+          ]
+        }
+        physics Physics {
+          density -1
+          mass 1
+        }
+      }
+    }
+    DEF WHEEL_LF HingeJoint {
+      jointParameters HingeJointParameters {
+        position -0.6397774093923159
+        axis 0 1 0
+        anchor 0.85 0.9000000000000001 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel_lf"
+        }
+      ]
+      endPoint Solid {
+        translation 0.849996368687179 0.9000000069437967 4.867436358491659e-06
+        rotation 0 -1 0 0.6397774093923156
+        children [
+          DEF WHEEL Pose {
+            rotation -1 0 0 1.57
+            children [
+              Shape {
+                appearance PBRAppearance {
+                  baseColor 0.980392 0.713725 0.003922
+                  roughness 1
+                  metalness 0
+                }
+                geometry Cylinder {
+                  height 0.1
+                  radius 0.2
+                }
+              }
+            ]
+          }
+        ]
+        name "wheel_lf"
+        boundingObject USE WHEEL
+        physics DEF PHYSICS_WHEEL Physics {
+          density -1
+          mass 0.05
+        }
+      }
+    }
+    DEF WHEEL_RF HingeJoint {
+      jointParameters HingeJointParameters {
+        position 0.6397758174017341
+        axis 0 1 0
+        anchor 0.85 -0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel_rf"
+        }
+      ]
+      endPoint Solid {
+        translation 0.8500055297496232 -0.8999999932661558 7.442713376425531e-06
+        rotation 0 1 0 0.6397758174017341
+        children [
+          USE WHEEL
+        ]
+        name "wheel_rf"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+    DEF WHEEL_LB HingeJoint {
+      jointParameters HingeJointParameters {
+        position -0.6397793028763148
+        axis 0 1 0
+        anchor -0.85 0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel_lb"
+        }
+      ]
+      endPoint Solid {
+        translation -0.8500014975076139 0.9000000065073429 2.001733094849711e-06
+        rotation 0 -1 0 0.6397793028763147
+        children [
+          USE WHEEL
+        ]
+        name "wheel_lb"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+    DEF WHEEL_RB HingeJoint {
+      jointParameters HingeJointParameters {
+        position 0.6397776037321808
+        axis 0 1 0
+        anchor -0.85 -0.9 0
+      }
+      device [
+        RotationalMotor {
+          name "wheel_rb"
+        }
+      ]
+      endPoint Solid {
+        translation -0.8499966025563259 -0.8999999937026129 4.575894398501553e-06
+        rotation 0 1 0 0.6397776037321812
+        children [
+          USE WHEEL
+        ]
+        name "wheel_rb"
+        boundingObject USE WHEEL
+        physics USE PHYSICS_WHEEL
+      }
+    }
+  ]
+  name "playground_robot"
+  boundingObject USE BODY
+  physics Physics {
+    density -1
+    mass 1
+  }
+  controller "playground"
+  supervisor TRUE
+}
+DEF ROCK Rock {
+  translation 3.5 -2 0.25
+  scale 5
+  color 0.180392 0.203922 0.211765
+}
