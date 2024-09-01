@@ -20,10 +20,10 @@ ENV_ID = "Color_VisuoExcaRobo"
 MAX_EPISODE_STEPS = 3000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
-MAX_ROBOT_DISTANCE = 13.0
-LOWER_Y = -19
-SHARPNESS = 4
-DISTANCE_THRESHOLD = 1
+MAX_ROBOT_DISTANCE = 8.0
+LOWER_Y = -20
+SHARPNESS = 3
+DISTANCE_THRESHOLD = 20
 
 
 class Color_VisuoExcaRobo(Supervisor, Env):
@@ -136,7 +136,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         reward_color = self.f(target_distance) * (10**-3)
 
         # Robot reach target
-        reach_target = target_distance <= self.distance_threshold
+        reach_target = target_distance <= self.distance_threshold - 10
         reward_reach_target = 10 if reach_target else 0
 
         # Robot move too far from the initial position

@@ -15,6 +15,8 @@ from controller import Supervisor, Display
 
 
 MAX_MOTOR_SPEED = 0.7
+LOWER_Y = -20
+DISTANCE_THRESHOLD = 1.0
 
 
 class ColorControl(Supervisor):
@@ -30,7 +32,7 @@ class ColorControl(Supervisor):
         # Set the maximum speed for the motors and wheels
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = 5.0
-        self.distance_threshold = 20
+        self.distance_threshold = DISTANCE_THRESHOLD
 
         # Get the floor node and set the arena boundaries
         self.floor = self.getFromDef("FLOOR")
@@ -52,7 +54,7 @@ class ColorControl(Supervisor):
 
         # Set the target properties
         self.center_x = self.camera_width / 2
-        self.lower_y = self.camera_height
+        self.lower_y = self.camera_height + LOWER_Y
         self.lower_center = [self.center_x, self.lower_y]
         self.tolerance_x = 1
 

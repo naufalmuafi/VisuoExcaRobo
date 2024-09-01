@@ -5,6 +5,7 @@ import os
 import datetime
 import gymnasium as gym
 import matplotlib.pyplot as plt
+from controller import Supervisor
 from stable_baselines3 import PPO
 from typing import Tuple, Callable
 from stable_baselines3.common.env_checker import check_env
@@ -12,8 +13,9 @@ from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 
-class VisuoExcaRobo:
+class VisuoExcaRobo(Supervisor):
     def __init__(self, args) -> None:
+        super().__init__()
         self.env_type, self.timesteps, self.model_name, self.log_name = (
             self.extract_args(args)
         )
@@ -121,6 +123,11 @@ class VisuoExcaRobo:
             return
 
         print("Load Model Successful")
+        
+        # Reset the simulation
+        self.simulationReset()
+        self.simulationResetPhysics()
+        super().step(self.timestep)
 
         step_list, reward_list = [], []
 
