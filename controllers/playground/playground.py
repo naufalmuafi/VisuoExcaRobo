@@ -126,7 +126,7 @@ class ColorControl(Supervisor):
 
     def save_image(self, current_time=0):
         # quality of the image
-        qualities = [50, 75, 100]
+        qualities = [50, 100]
 
         # Create the image filename
         # image_filename = f"{self.image_directory}pc0_rock_{self.image_counter:05d}.jpeg"
