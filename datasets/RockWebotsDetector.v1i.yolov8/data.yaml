@@ -1,0 +1,12 @@
+train: ../train/images
+val: ../valid/images
+
+nc: 1
+names: ['rock']
+
+roboflow:
+  workspace: naufal-mu-afi
+  project: rockwebotsdetector
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/naufal-mu-afi/rockwebotsdetector/dataset/1
