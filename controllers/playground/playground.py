@@ -70,16 +70,13 @@ class ColorControl(Supervisor):
         os.makedirs(self.image_directory, exist_ok=True)
 
     def run(self):
-        self.step(self.timestep)
-        self.save_image()
-
         while self.step(self.timestep) != -1:
-            current_time = self.getTime()
+            # current_time = self.getTime()
 
-            # Capture and save an image every 500 ms
-            if current_time - self.last_save_time >= IMAGE_SAVE_INTERVAL:
-                self.save_image(current_time)
-                self.last_save_time = current_time
+            # # Capture and save an image every 500 ms
+            # if current_time - self.last_save_time >= IMAGE_SAVE_INTERVAL:
+            #     self.save_image(current_time)
+            #     self.last_save_time = current_time
 
             self.state, distance, centroid = self.get_observation(
                 self.camera_width, self.camera_height
