@@ -17,7 +17,7 @@ except ImportError:
 
 
 ENV_ID = "Color_VisuoExcaRobo"
-MAX_EPISODE_STEPS = 7000
+MAX_EPISODE_STEPS = 5000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
@@ -129,9 +129,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
             self.camera_width, self.camera_height
         )
 
-        # Calculate the reward
-        reward = 0
-
+        # Calculate the reward        
         # Reward based on the distance from the target
         reward_color = self.f(target_distance) * (10**-3)
 
@@ -145,14 +143,15 @@ class Color_VisuoExcaRobo(Supervisor, Env):
             (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
         ) ** 0.5
         robot_far_away = robot_distance > self.max_robot_distance
-        robot_distance_punishment = -5 if robot_far_away else 0
+        robot_distance_punishment = -3 if robot_far_away else 0
 
         # Robot hitting the arena boundaries
+        arena_th = 1.5
         hit_arena = not (
-            self.arena_x_min <= pos[0] <= self.arena_x_max
-            and self.arena_y_min <= pos[1] <= self.arena_y_max
+            self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
+            and self.arena_y_min + arena_th <= pos[1] <= self.arena_y_max - arena_th
         )
-        hit_arena_punishment = -5 if hit_arena else 0
+        hit_arena_punishment = -3 if hit_arena else 0
 
         # Calculate the final reward
         reward = (
