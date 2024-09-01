@@ -60,7 +60,7 @@ class YOLOControl(Supervisor):
         self.tolerance_x = 1
 
         # Load the YOLO model
-        self.model = YOLO("yolov8m.pt")
+        self.model = YOLO("yolo_model/yolov8m.pt")
         self.model = YOLO("runs/detect/train_m_100/weights/best.pt")
 
         # Set initial move
