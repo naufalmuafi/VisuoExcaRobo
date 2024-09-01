@@ -21,10 +21,11 @@ class VisuoExcaRobo(Supervisor):
         )
 
         # Define the environment
-        if self.env_type == "Color":
-            self.env_id = "Color_VisuoExcaRobo"
-        elif self.env_type == "Object":
-            self.env_id = "Object_VisuoExcaRobo"
+        self.env_id = (
+            "Color_VisuoExcaRobo"
+            if self.env_type == "Color"
+            else "Object_VisuoExcaRobo"
+        )
 
         # Create the environment (Single process)
         self.env = gym.make(self.env_id)
@@ -32,8 +33,7 @@ class VisuoExcaRobo(Supervisor):
         # Create the environment (Multiple process)
         # num_cpu = 4
         # self.env = DummyVecEnv([self.make_env(self.env_id, i) for i in range(num_cpu)])
-
-        self.env.seed(42)
+        # self.env.seed(42)
 
         # Create the directories
         self.model_dir, self.log_dir = self.create_dir(self.model_name, self.log_name)
@@ -123,7 +123,7 @@ class VisuoExcaRobo(Supervisor):
             return
 
         print("Load Model Successful")
-        
+
         # Reset the simulation
         self.simulationReset()
         self.simulationResetPhysics()
