@@ -61,8 +61,8 @@ class YOLOControl(Supervisor):
         self.tolerance_x = 1
 
         # Load the YOLO model
-        self.model = YOLO("yolo_model/yolov8m.pt")
-        self.model = YOLO("runs/detect/train_m_100/weights/best.pt")
+        self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
+        self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
 
         # Initialize the display window for visualizing bounding boxes
         cv2.namedWindow("YOLO Detection", cv2.WINDOW_AUTOSIZE)
@@ -115,10 +115,14 @@ class YOLOControl(Supervisor):
         return wheel_motors, motors, sensors
 
     def get_observation(self):
-        image = np.array(self.camera.getImageArray())
+        # Get the image from Webots camera (BGRA format)
+        image = np.array(self.camera.getImageArray(), dtype=np.uint8)
+        
+        # Convert BGRA to BGR
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
 
         # Perform object detection with YOLO
-        results = self.model.predict(image)
+        results = self.yolo_model.predict(image)
 
         if len(results) > 0:
             detected_objects = results[0]  # Accessing the first result
@@ -132,8 +136,8 @@ class YOLOControl(Supervisor):
                         x_min, y_min, x_max, y_max = bbox
                         centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
                         distance = np.sqrt(
-                            (centroid[0] - self.lower_center[0]) ** 2
-                            + (centroid[1] - self.lower_center[1]) ** 2
+                            (centroid[0] - self.lower_center[0]) ** 2 +
+                            (centroid[1] - self.lower_center[1]) ** 2
                         )
 
                         print(
@@ -153,7 +157,7 @@ class YOLOControl(Supervisor):
         color = (0, 0, 255)
         cv2.rectangle(image, (x_min, y_min), (x_max, y_max), color, 2)
 
-        text = f"{self.model.names[label]}: {confidence:.2f}"
+        text = f"{self.yolo_model.names[label]}: {confidence:.2f}"
         cv2.putText(
             image, text, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2
         )
