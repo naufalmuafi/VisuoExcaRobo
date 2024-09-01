@@ -1,63 +1,96 @@
 """
 
-YOLO Control
+YOLO Target Control
 for Excavator Robot
 
-This controller is used to control the excavator robot to find the target object using YOLOv8.
+This controller is used to control the excavator robot to find the target object using YOLO control method.
 
 by: Naufal Mu'afi
 
 """
 
-import cv2
 import random
 import numpy as np
 from ultralytics import YOLO
 from controller import Supervisor, Display
 
+
 MAX_MOTOR_SPEED = 0.7
+LOWER_Y = -20
+DISTANCE_THRESHOLD = 1.0
 
 
 class YOLOControl(Supervisor):
     def __init__(self):
+        # Initialize the supervisor class
         super().__init__()
         self.timestep = int(self.getBasicTimeStep())
         random.seed(42)
 
+        # Get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
-        self.max_motor_speed = MAX_MOTOR_SPEED
-        self.max_wheel_speed = 4.0
-        self.target_threshold = 0.1
 
+        # Set the maximum speed for the motors and wheels
+        self.max_motor_speed = MAX_MOTOR_SPEED
+        self.max_wheel_speed = 5.0
+        self.distance_threshold = DISTANCE_THRESHOLD
+
+        # Get the floor node and set the arena boundaries
         self.floor = self.getFromDef("FLOOR")
         self.set_arena_boundaries()
 
+        # Initialize the camera, motors, and sensors
         self.camera = self.init_camera()
-        self.display = self.getDevice("segmented_image_display")
-
+        self.display = self.getDevice("display_1")
         self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
         self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
 
-        # Set color range for target detection
-        self.lower_color = np.array([35, 42, 44])
-        self.upper_color = np.array([55, 62, 64])
+        # Set the camera properties
+        self.camera_width, self.camera_height = (
+            self.camera.getWidth(),
+            self.camera.getHeight(),
+        )
+        self.frame_area = self.camera_width * self.camera_height
 
-        # Load the fine-tuned YOLO model
-        self.yolo_model = YOLO("yolov8n.pt")
+        # Set the target properties
+        self.center_x = self.camera_width / 2
+        self.lower_y = self.camera_height + LOWER_Y
+        self.lower_center = [self.center_x, self.lower_y]
+        self.tolerance_x = 1
+
+        # Load the YOLO model
+        self.model = YOLO("yolov8m.pt")
+        self.model = YOLO("runs/detect/train_m_100/weights/best.pt")
+
+        # Set initial move
+        self.initial_move = random.choice([0, 1])
+
+        # Set the initial state
+        self.state = np.zeros(4, dtype=np.int16)
+
+    def run(self):
+        while self.step(self.timestep) != -1:
+            self.state, distance, centroid = self.get_observation()
+            if self.is_done(distance, centroid):
+                print("sip.")
+                # self.digging_operation()
+                exit(1)
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
         size_field = self.floor.getField("floorSize").getSFVec3f()
         x, y = size_field
-        self.x_max, self.y_max = x / 2 - arena_tolerance, y / 2 - arena_tolerance
-        self.x_min, self.y_min = -self.x_max, -self.y_max
+        self.arena_x_max, self.arena_y_max = (
+            x / 2 - arena_tolerance,
+            y / 2 - arena_tolerance,
+        )
+        self.arena_x_min, self.arena_y_min = -self.arena_x_max, -self.arena_y_max
 
     def init_camera(self):
         camera = self.getDevice("cabin_camera")
         camera.enable(self.timestep)
-        camera.recognitionEnable(self.timestep)
-        camera.enableRecognitionSegmentation()
+
         return camera
 
     def init_motors_and_sensors(self):
@@ -77,168 +110,70 @@ class YOLOControl(Supervisor):
 
         return wheel_motors, motors, sensors
 
-    def run(self):
-        width, height = self.camera.getWidth(), self.camera.getHeight()
-        frame_area = width * height
+    def get_observation(self):
+        image = np.array(self.camera.getImageArray())
 
-        self.center_x = width / 2.0
-        self.tolerance_x = 1.0
-        self.moiety = 2.0 * height / 3.0 + 5
+        # Perform object detection with YOLO
+        results = self.model(image)
 
-        while self.step(self.timestep) != -1:
-            self.state, target_area, centroid = self.get_observation(
-                width, height, frame_area
-            )
-            if self.is_done(target_area, centroid):
-                print("sip.")
-                # self.digging_operation()
-                exit(1)
+        # Extract detection results
+        detected_objects = results[0].boxes
+        if len(detected_objects) > 0:
+            for obj in detected_objects:
+                label = obj.cls  # class index
+                confidence = obj.conf  # confidence score
+                bbox = obj.xyxy  # bounding box coordinates
 
-    def get_observation(self, width, height, frame_area):
-        if not self.camera.isRecognitionSegmentationEnabled():
-            return None, 0, [None, None]
+                # Check if the detected object is a rock
+                if label == 0:  # assuming 'rock' is class 0 in your YOLO model
+                    x_min, y_min, x_max, y_max = bbox
+                    centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
+                    distance = np.sqrt(
+                        (centroid[0] - self.lower_center[0]) ** 2
+                        + (centroid[1] - self.lower_center[1]) ** 2
+                    )
 
-        image = self.camera.getImage()
-        np_image = np.frombuffer(image, dtype=np.uint8).reshape((height, width, 4))
-        data = self.camera.getRecognitionSegmentationImage()
-        if not data:
-            return None, 0, [None, None]
+                    print(
+                        f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}; Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}; Confidence: {confidence:.2f}"
+                    )
+                    self.move_towards_target(centroid, distance)
+                    return [x_min, x_max, y_min, y_max], distance, centroid
 
-        red_channel, green_channel, blue_channel = self.extract_rgb_channels(
-            image, width, height
-        )
-
-        # Convert to BGR format for OpenCV
-        bgr_image = cv2.cvtColor(np_image, cv2.COLOR_BGRA2BGR)
-
-        # Perform object detection using YOLO
-        results = self.yolo_model(bgr_image)
-
-        self.state = np.array(
-            [red_channel, green_channel, blue_channel], dtype=np.uint8
-        )
-
-        # Check if any detections were made
-        if not results or not results.boxes:
-            print("No objects detected.")
-        else:
-            # Display the detection results on Webots display (optional)
-            for detection in results:
-                bbox = detection.boxes.xyxy[0]  # Bounding box coordinates
-                class_name = detection.names[0]  # Class name of detected object
-
-                x1, y1, x2, y2 = map(int, bbox)
-                cv2.rectangle(bgr_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(
-                    bgr_image,
-                    class_name,
-                    (x1, y1 - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.9,
-                    (36, 255, 12),
-                    2,
-                )
-
-        # Update the Webots display with the detection result
-        segmented_image = self.display.imageNew(
-            bgr_image.tobytes(), Display.RGB, width, height
-        )
-        self.display.imagePaste(segmented_image, 0, 0, False)
-        self.display.imageDelete(segmented_image)
-
-        # self.display_segmented_image(data, width, height)
-        return self.state, *self.recognition_process(
-            self.state, width, height, frame_area
-        )
-
-    def extract_rgb_channels(self, image, width, height):
-        red_channel, green_channel, blue_channel = [], [], []
-        for j in range(height):
-            red_row, green_row, blue_row = [], [], []
-            for i in range(width):
-                red_row.append(self.camera.imageGetRed(image, width, i, j))
-                green_row.append(self.camera.imageGetGreen(image, width, i, j))
-                blue_row.append(self.camera.imageGetBlue(image, width, i, j))
-            red_channel.append(red_row)
-            green_channel.append(green_row)
-            blue_channel.append(blue_row)
-        return red_channel, green_channel, blue_channel
-
-    def display_segmented_image(self, data, width, height):
-        segmented_image = self.display.imageNew(data, Display.BGRA, width, height)
-        self.display.imagePaste(segmented_image, 0, 0, False)
-        self.display.imageDelete(segmented_image)
-
-    def recognition_process(self, image, width, height, frame_area):
-        target_px, x_sum, y_sum = 0, 0, 0
-        x_min, x_max, y_min, y_max = width, 0, height, 0
-
-        for y in range(height):
-            for x in range(width):
-                r, g, b = image[0][y][x], image[1][y][x], image[2][y][x]
-                if (
-                    self.lower_color[0] <= r <= self.upper_color[0]
-                    and self.lower_color[1] <= g <= self.upper_color[1]
-                    and self.lower_color[2] <= b <= self.upper_color[2]
-                ):
-                    target_px += 1
-                    x_sum += x
-                    y_sum += y
-                    x_min, x_max = min(x_min, x), max(x_max, x)
-                    y_min, y_max = min(y_min, y), max(y_max, y)
-
-        if target_px == 0:
-            self.search_target()
-            return 0, [None, None]
-
-        target_area = target_px / frame_area
-        centroid = [x_sum / target_px, y_sum / target_px]
-
-        print(
-            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}; Target area: {target_area * 100:.2f}%"
-        )
-        self.move_towards_target(centroid, target_area)
-        return target_area, centroid
+        # If no rock is detected, search for the target
+        self.search_target()
+        return np.zeros(4, dtype=np.int16), None, [None, None]
 
     def search_target(self):
         print("No target found.")
-        self.stop_robot()
-        initial_move = random.choice([-1, 1]) * self.max_motor_speed
-        self.motors["turret"].setVelocity(initial_move)
 
-    def move_towards_target(self, centroid, target_area):
-        if (centroid[1] < self.moiety or target_area < 0.01) or (
-            self.center_x - self.tolerance_x
-            <= centroid[0]
-            <= self.center_x + self.tolerance_x
-        ):
+        if self.initial_move == 0:
+            self.run_wheels(self.initial_move, "left")
+        elif self.initial_move == 1:
+            self.run_wheels(-self.initial_move, "right")
+
+    def move_towards_target(self, centroid, distance):
+        if (distance >= self.distance_threshold) or (centroid == [None, None]):
             if centroid[0] <= self.center_x - self.tolerance_x:
-                self.adjust_turret_and_wheels(target_area, direction="left")
+                self.adjust_turret_and_wheels(direction="left")
+                print("Adjusting turret and wheels to the left.")
             elif centroid[0] >= self.center_x + self.tolerance_x:
-                self.adjust_turret_and_wheels(target_area, direction="right")
+                self.adjust_turret_and_wheels(direction="right")
+                print("Adjusting turret and wheels to the right.")
             else:
                 self.motors["turret"].setVelocity(0.0)
                 self.run_wheels(self.max_wheel_speed, "all")
+                print("Moving forward.")
         else:
             self.stop_robot()
 
-    def adjust_turret_and_wheels(self, target_area, direction):
+    def adjust_turret_and_wheels(self, direction):
         self.motors["turret"].setVelocity(0.0)
-        if target_area < 0.01:
-            if direction == "left":
-                self.turn_left()
-            elif direction == "right":
-                self.turn_right()
-        else:
-            turret_speed = (
-                self.max_motor_speed - 0.3
-                if direction == "left"
-                else -self.max_motor_speed + 0.3
-            )
-            self.motors["turret"].setVelocity(turret_speed)
-            self.run_wheels(self.max_wheel_speed, "all")
+        if direction == "left":
+            self.turn_left()
+        elif direction == "right":
+            self.turn_right()
 
-    def is_done(self, target_area, centroid):
+    def is_done(self, distance, centroid):
         if centroid == [None, None]:
             return False
 
@@ -246,15 +181,16 @@ class YOLOControl(Supervisor):
             self.center_x - self.tolerance_x,
             self.center_x + self.tolerance_x,
         ]
-        if target_area >= self.target_threshold or (
-            x_threshold[0] <= centroid[0] <= x_threshold[1]
-            and centroid[1] > self.moiety
-        ):
+        done_center_x = x_threshold[0] <= centroid[0] <= x_threshold[1]
+        done_distance = distance <= self.distance_threshold
+
+        if done_distance and done_center_x:
             print(
-                f"Target area meets or exceeds {self.target_threshold * 100:.2f}% of the frame or the centroid is in {centroid}."
+                f"Target achieved. Distance: {distance}; Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f})"
             )
             self.stop_robot()
             return True
+
         return False
 
     def run_wheels(self, velocity, wheel="all"):
