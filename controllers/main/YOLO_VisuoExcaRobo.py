@@ -128,6 +128,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Initialize state and return it
         self.state = np.zeros(4, dtype=np.uint16)
+        self.cords = []
         info: dict = {}
 
         return self.state, info
@@ -248,8 +249,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        distance, centroid = 300, [None, None]
-        self.cords = []
+        distance, centroid = 300, [None, None]        
 
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
@@ -305,6 +305,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Display the image in the OpenCV window
         cv2.imshow("Webots YOLO Display", img_bgr)
+        cv2.waitKey(1)
 
         return img_bgr
 
