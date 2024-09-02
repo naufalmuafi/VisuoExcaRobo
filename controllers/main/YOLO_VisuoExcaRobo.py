@@ -15,7 +15,7 @@ except ImportError:
         "Run: `pip install -r requirements.txt`"
     )
 
-
+# Constants used in the environment
 ENV_ID = "YOLO_VisuoExcaRobo"
 MAX_EPISODE_STEPS = 5000
 MAX_WHEEL_SPEED = 5.0
@@ -27,93 +27,115 @@ DISTANCE_THRESHOLD = 20
 
 
 class YOLO_VisuoExcaRobo(Supervisor, Env):
+    """
+    A custom Gym environment for controlling an excavator robot in Webots using color-based target detection.
+
+    This class integrates the Webots Supervisor with Gymnasium's Env, enabling reinforcement learning tasks.
+    """
+
     def __init__(self, max_episode_steps: int = MAX_EPISODE_STEPS) -> None:
-        # Initialize the Robot class
+        """
+        Initialize the YOLO_VisuoExcaRobo environment.
+
+        Args:
+            max_episode_steps (int): The maximum number of steps per episode.
+        """
         super().__init__()
         self.timestep = int(self.getBasicTimeStep())
         random.seed(42)
 
-        # register the Environment
+        # Register the environment with Gym
         self.spec: EnvSpec = EnvSpec(id=ENV_ID, max_episode_steps=max_episode_steps)
 
-        # get the robot node
+        # Get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
 
-        # set the max_speed of the motors
+        # Set motor and wheel speeds
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = MAX_WHEEL_SPEED
         self.max_robot_distance = MAX_ROBOT_DISTANCE
         self.distance_threshold = DISTANCE_THRESHOLD
 
-        # Get the floor node and set the arena boundaries
+        # Get the floor node and set arena boundaries
         self.floor = self.getFromDef("FLOOR")
         self.set_arena_boundaries()
 
-        # Initialize the camera, and displays (optional)
+        # Initialize camera and display
         self.camera = self.init_camera()
         self.display = self.getDevice("display_1")
 
-        # Set the camera properties
+        # Set camera properties
         self.camera_width, self.camera_height = (
             self.camera.getWidth(),
             self.camera.getHeight(),
         )
         self.frame_area = self.camera_width * self.camera_height
 
-        # Set the target properties
+        # Target properties
         self.center_x = self.camera_width / 2
         self.lower_y = self.camera_height + LOWER_Y
         self.lower_center = [self.center_x, self.lower_y]
         self.tolerance_x = 1
 
-        # Set color range for target detection
+        # Color range for target detection
         color_tolerance = 5
         self.color_target = np.array([46, 52, 54])
         self.lower_color = self.color_target - color_tolerance
         self.upper_color = self.color_target + color_tolerance
 
-        # set the action spaces: 0 = left, 1 = right
+        # Define action space and observation space
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
-
-        # set the observation space: (channels, camera_height, camera_width)
         self.observation_space = spaces.Box(
-            low=0,
-            high=255,
-            shape=(4,),
-            dtype=np.uint16,
+            low=0, high=255, shape=(4,), dtype=np.uint16
         )
 
-        # Set the initial state
+        # Initialize the robot state
         self.state = np.zeros(4, dtype=np.uint16)
         self.seed()
 
     def reset(self, seed: Any = None, options: Any = None) -> Any:
+        """
+        Reset the environment to the initial state.
+
+        Args:
+            seed (Any): Seed for random number generation.
+            options (Any): Additional options for reset.
+
+        Returns:
+            Tuple: Initial observation and info dictionary.
+        """
         # Reset the simulation
         self.simulationReset()
         self.simulationResetPhysics()
         super().step(self.timestep)
 
-        # Set the robot to the initial position
+        # Set robot to initial position
         self.init_pos = self.robot.getPosition()
 
-        # Initialize the motors and sensors
+        # Initialize motors and sensors
         self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
         self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
 
-        # Step of the robot in simulation world
         super().step(self.timestep)
 
-        # Initialize the state
+        # Initialize state and return it
         self.state = np.zeros(4, dtype=np.uint16)
-
-        # info dictionary
         info: dict = {}
 
         return self.state, info
 
-    def step(self, action):
-        # Set the action for the left and right wheels
+    def step(self, action) -> Tuple[np.ndarray, float, bool, bool, dict]:
+        """
+        Execute one step in the environment.
+
+        Args:
+            action (np.ndarray): The action to be taken by the robot.
+
+        Returns:
+            Tuple: Observation, reward, done flag, truncation flag, and info dictionary.
+        """
+        # Set the action for left and right wheels
         left_wheels_action = action[0] * self.max_wheel_speed
         right_wheels_action = action[1] * self.max_wheel_speed
 
@@ -121,23 +143,20 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.run_wheels(left_wheels_action, "left")
         self.run_wheels(right_wheels_action, "right")
 
-        # Go to the next step
+        # Proceed to the next simulation step
         super().step(self.timestep)
 
-        # Get the new observation
+        # Get new observation and target distance
         self.state, target_distance = self.get_observation(
             self.camera_width, self.camera_height
         )
 
         # Calculate the reward
-        # Reward based on the distance from the target
         reward_color = self.f(target_distance) * (10**-3)
-
-        # Robot reach target
         reach_target = target_distance <= self.distance_threshold - 10
         reward_reach_target = 10 if reach_target else 0
 
-        # Robot move too far from the initial position
+        # Check robot position relative to its initial position
         pos = self.robot.getPosition()
         robot_distance = (
             (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
@@ -145,7 +164,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         robot_far_away = robot_distance > self.max_robot_distance
         robot_distance_punishment = -3 if robot_far_away else 0
 
-        # Robot hitting the arena boundaries
+        # Check if the robot hits the arena boundaries
         arena_th = 1.5
         hit_arena = not (
             self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
@@ -153,7 +172,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
         hit_arena_punishment = -3 if hit_arena else 0
 
-        # Calculate the final reward
+        # Final reward calculation
         reward = (
             reward_color
             + reward_reach_target
@@ -167,10 +186,27 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         return self.state, reward, done, False, {}
 
     def render(self, mode: str = "human") -> Any:
+        """
+        Render the environment (not implemented).
+
+        Args:
+            mode (str): The mode for rendering.
+
+        Returns:
+            Any: Not used.
+        """
         pass
 
-    def seed(self, seed=None):
-        # Seeding for reproducibility
+    def seed(self, seed=None) -> List[int]:
+        """
+        Seed the environment for reproducibility.
+
+        Args:
+            seed (Any): The seed value.
+
+        Returns:
+            List[int]: The list containing the seed used.
+        """
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
 
@@ -179,16 +215,36 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         target_distance,
         sharpness=SHARPNESS,
         distance_threshold=DISTANCE_THRESHOLD,
-    ):
+    ) -> float:
+        """
+        Calculate the reward based on the distance to the target using a logistic function.
+
+        Args:
+            target_distance (float): Distance from the target.
+            sharpness (int): Sharpness factor for the logistic function.
+            distance_threshold (float): Threshold distance for target detection.
+
+        Returns:
+            float: The reward based on the target distance.
+        """
         exponent = sharpness * (target_distance - distance_threshold) * math.log(10)
         try:
             result = 1 / (1 + math.exp(exponent))
         except OverflowError:
-            # When exponent is too large, the value approaches zero
-            result = 0
+            result = 0  # If exponent is too large, the value approaches zero
         return result
 
-    def get_observation(self, width, height):
+    def get_observation(self, width, height) -> Tuple[np.ndarray, float]:
+        """
+        Capture and process an image from the robot's camera to detect the target.
+
+        Args:
+            width (int): Width of the camera frame.
+            height (int): Height of the camera frame.
+
+        Returns:
+            Tuple: The current state and the distance to the target.
+        """
         image = self.camera.getImage()
 
         # Extract RGB channels from the image
@@ -202,7 +258,20 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         return self.state, distance
 
-    def extract_rgb_channels(self, image, width, height):
+    def extract_rgb_channels(
+        self, image, width, height
+    ) -> Tuple[List[List[int]], List[List[int]], List[List[int]]]:
+        """
+        Extract the RGB channels from the camera image.
+
+        Args:
+            image (Any): The image captured by the camera.
+            width (int): Width of the camera frame.
+            height (int): Height of the camera frame.
+
+        Returns:
+            Tuple: Red, Green, and Blue channels as lists of lists.
+        """
         red_channel, green_channel, blue_channel = [], [], []
         for j in range(height):
             red_row, green_row, blue_row = [], [], []
@@ -215,7 +284,18 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             blue_channel.append(blue_row)
         return red_channel, green_channel, blue_channel
 
-    def recognition_process(self, image, width, height):
+    def recognition_process(self, image, width, height) -> Tuple[np.ndarray, float]:
+        """
+        Process the image to detect the target object based on color.
+
+        Args:
+            image (List[List[int]]): RGB channels of the image.
+            width (int): Width of the camera frame.
+            height (int): Height of the camera frame.
+
+        Returns:
+            Tuple: The state array and distance to the target.
+        """
         target_px, distance, centroid = 0, 300, [None, None]
         target_x_min, target_x_max, target_y_min, target_y_max = width, 0, height, 0
 
@@ -256,7 +336,10 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         return self.state, distance
 
-    def set_arena_boundaries(self):
+    def set_arena_boundaries(self) -> None:
+        """
+        Set the boundaries of the arena based on the floor node size.
+        """
         arena_tolerance = 1.0
         size_field = self.floor.getField("floorSize").getSFVec3f()
         x, y = size_field
@@ -266,14 +349,26 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
         self.arena_x_min, self.arena_y_min = -self.arena_x_max, -self.arena_y_max
 
-    def init_camera(self):
+    def init_camera(self) -> Any:
+        """
+        Initialize the camera device and enable recognition.
+
+        Returns:
+            Any: The initialized camera device.
+        """
         camera = self.getDevice("cabin_camera")
         camera.enable(self.timestep)
         camera.recognitionEnable(self.timestep)
         camera.enableRecognitionSegmentation()
         return camera
 
-    def init_motors_and_sensors(self):
+    def init_motors_and_sensors(self) -> Tuple[dict, dict, dict]:
+        """
+        Initialize the motors and sensors of the robot.
+
+        Returns:
+            Tuple: Dictionaries of wheel motors, arm motors, and sensors.
+        """
         names = ["turret", "arm_connector", "lower_arm", "uppertolow", "scoop"]
         wheel = ["lf", "rf", "lb", "rb"]
 
@@ -290,13 +385,20 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         return wheel_motors, motors, sensors
 
-    def run_wheels(self, velocity, wheel):
+    def run_wheels(self, velocity, wheel) -> None:
+        """
+        Set the velocity for the robot's wheels.
+
+        Args:
+            velocity (float): Speed to set for the wheels.
+            wheel (str): Specifies which wheels to move ('left' or 'right').
+        """
         wheels = self.left_wheels if wheel == "left" else self.right_wheels
         for motor in wheels:
             motor.setVelocity(velocity)
 
 
-# register the environment
+# Register the environment
 register(
     id=ENV_ID,
     entry_point=lambda: YOLO_VisuoExcaRobo(),
