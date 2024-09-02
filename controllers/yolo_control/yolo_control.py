@@ -71,7 +71,7 @@ class YOLOControl(Supervisor):
         self.initial_move = random.choice([0, 1])
 
         # Set the initial state
-        self.state = np.zeros(4, dtype=np.int16)
+        self.state = np.zeros(4, dtype=np.uint16)
 
     def run(self):
         while self.step(self.timestep) != -1:
@@ -167,13 +167,18 @@ class YOLOControl(Supervisor):
 
                 # Display the image in the OpenCV window
                 cv2.imshow("Display_2", img_bgr)
-
-                return self.state, distance, centroid
+            else:
+                self.search_target()
+                self.state, distance, centroid = (
+                    np.zeros(4, dtype=np.uint16),
+                    None,
+                    [None, None],
+                )
 
         # Display the image in the OpenCV window
         cv2.imshow("Display_2", img_bgr)
 
-        return np.zeros(4, dtype=np.int16), None, [None, None]
+        return self.state, distance, centroid
 
     def search_target(self):
         print("No target found.")
