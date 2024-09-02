@@ -57,7 +57,7 @@ class YOLOControl(Supervisor):
         # Set the target properties
         self.center_x = self.camera_width / 2
         self.lower_y = self.camera_height + LOWER_Y
-        self.lower_center = [self.center_x, self.lower_y]
+        self.target_coordinate = [self.center_x, self.lower_y]
         self.tolerance_x = 1
 
         # Load the YOLO model
@@ -138,11 +138,26 @@ class YOLOControl(Supervisor):
 
         # Post-process the results
         for box in result.boxes:
-            class_id = result.names[box.cls[0].item()]
-            cords = box.xyxy[0].tolist()
-            cords = [round(x) for x in cords]
-            conf = round(box.conf[0].item(), 2)
-            print(f"Obj. Type: {class_id}; Coords: {cords}; Prob.: {conf}")
+            label = result.names[box.cls[0].item()]  # Get the label
+            cords = box.xyxy[0].tolist()  # Get the coordinates
+            cords = [round(x) for x in cords]  # Round the coordinates
+            conf = round(box.conf[0].item(), 2)  # Get the confidence
+
+            print(f"Obj. Type: {label}; Coords: {cords}; Prob.: {conf}")
+
+        if label == "rock":
+            x_min, y_min, x_max, y_max = cords
+
+            # Calculate the centroid and the distance from the lower center
+            centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
+            distance = np.sqrt(
+                (centroid[0] - self.target_coordinate[0]) ** 2
+                + (centroid[1] - self.target_coordinate[1]) ** 2
+            )
+
+            print(
+                f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
+            )
             print("---")
 
         # Display the image in the OpenCV window
