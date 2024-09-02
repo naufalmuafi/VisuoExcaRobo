@@ -74,7 +74,7 @@ class YOLOControl(Supervisor):
         self.state = np.zeros(4, dtype=np.uint16)
 
     def run(self):
-        while self.step(self.timestep) != -1:            
+        while self.step(self.timestep) != -1:
             self.state, distance, centroid = self.get_observation()
             if self.is_done(distance, centroid):
                 print("sip.")
@@ -161,7 +161,7 @@ class YOLOControl(Supervisor):
                     f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
                 )
                 self.move_towards_target(centroid, distance)
-                
+
             else:
                 self.search_target()
                 self.state, distance, centroid = (
@@ -169,7 +169,7 @@ class YOLOControl(Supervisor):
                     None,
                     [None, None],
                 )
-            
+
             print("---")
 
         # Display the image in the OpenCV window
@@ -178,6 +178,10 @@ class YOLOControl(Supervisor):
         return self.state, distance, centroid
 
     def search_target(self):
+        # Update display first to ensure UI responsiveness
+        cv2.imshow("Display_2", self.img_bgr)
+        cv2.waitKey(1)  # Ensure the display updates
+
         print("No target found.")
 
         if self.initial_move == 0:
@@ -186,6 +190,10 @@ class YOLOControl(Supervisor):
             self.run_wheels(-self.initial_move, "right")
 
     def move_towards_target(self, centroid, distance):
+        # Update display first to ensure UI responsiveness
+        cv2.imshow("Display_2", self.img_bgr)
+        cv2.waitKey(1)  # Ensure the display updates
+
         if (distance >= self.distance_threshold) or (centroid == [None, None]):
             if centroid[0] <= self.center_x - self.tolerance_x:
                 self.adjust_turret_and_wheels(direction="left")
