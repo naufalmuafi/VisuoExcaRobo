@@ -94,7 +94,20 @@ class YOLOControl(Supervisor):
             # Convert BGRA to BGR for OpenCV processing
             img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
-            results = self.yolo_model(img_bgr)
+            # Perform object detection with YOLO
+            results = self.yolo_model.predict(img_bgr)
+            result = results[0]
+
+            # Post-process the results
+            for box in result.boxes:
+                class_id = result.names[box.cls[0].item()]
+                cords = box.xyxy[0].tolist()
+                cords = [round(x) for x in cords]
+                conf = round(box.conf[0].item(), 2)
+                print("Object type:", class_id)
+                print("Coordinates:", cords)
+                print("Probability:", conf)
+                print("---")
 
             # Display the image in the OpenCV window
             cv2.imshow("Display_2", img_bgr)
