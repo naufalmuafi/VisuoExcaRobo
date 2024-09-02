@@ -79,7 +79,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Target properties
         self.center_x = self.camera_width / 2
         self.lower_y = self.camera_height + LOWER_Y
-        self.lower_center = [self.center_x, self.lower_y]
+        self.target_coordinate = [self.center_x, self.lower_y]
         self.tolerance_x = 1
 
         # Load the YOLO model
@@ -97,6 +97,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Initialize the robot state
         self.state = np.zeros(4, dtype=np.uint16)
+        self.cords = []
+        
+        # Set the seed for reproducibility
         self.seed()
 
     def reset(self, seed: Any = None, options: Any = None) -> Any:
@@ -249,8 +252,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        distance, centroid = 300, [None, None]
-        self.cords = []
+        distance, centroid = 300, [None, None]        
 
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
@@ -271,7 +273,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                 x_min, y_min, x_max, y_max = self.cords
 
                 # Get the new state
-                self.state = [x_min, y_min, x_max, y_max]
+                self.state = np.array([x_min, y_min, x_max, y_max], dtype=np.uint16)
 
                 # Calculate the centroid and the distance from the lower center
                 centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]

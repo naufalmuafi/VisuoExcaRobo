@@ -111,8 +111,8 @@ class VisuoExcaRobo:
             learning_rate (float): The learning rate for the PPO model.
         """
         # Construct the filenames for model and log storage
-        model_filename = f"{self.model_dir}/{self.today_date}_ppo_{self.timesteps}_bs_{batch_size}_lr_{learning_rate:.0e}"
-        log_filename = f"{self.log_dir}/{self.today_date}_ppo_{self.timesteps}_bs_{batch_size}_lr_{learning_rate:.0e}"
+        model_filename = f"{self.model_dir}/{self.env_type}_{self.today_date}_ppo_{self.timesteps}_bs_{batch_size}_lr_{learning_rate:.0e}"
+        log_filename = f"{self.log_dir}/{self.env_type}_{self.today_date}_ppo_{self.timesteps}_bs_{batch_size}_lr_{learning_rate:.0e}"
 
         # Instantiate the PPO model with MlpPolicy
         print("Training the model with PPO...")
