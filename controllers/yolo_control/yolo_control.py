@@ -1,12 +1,9 @@
 """
+YOLO Target Control for Excavator Robot
 
-YOLO Target Control
-for Excavator Robot
+This controller is used to control the excavator robot to find the target object using the YOLO object detection model.
 
-This controller is used to control the excavator robot to find the target object using YOLO control method.
-
-by: Naufal Mu'afi
-
+Author: Naufal Mu'afi
 """
 
 import cv2
@@ -15,15 +12,43 @@ import numpy as np
 from ultralytics import YOLO
 from controller import Supervisor
 
-
-MAX_MOTOR_SPEED = 0.7
-LOWER_Y = -20
-DISTANCE_THRESHOLD = 1.0
+# Constants for the robot's control
+MAX_MOTOR_SPEED = 0.7  # Maximum speed for the motors
+LOWER_Y = -20  # Lower boundary for the y-coordinate
+DISTANCE_THRESHOLD = 1.0  # Distance threshold for considering the target as "reached"
 
 
 class YOLOControl(Supervisor):
+    """
+    The YOLOControl class controls the excavator robot using the YOLO object detection model.
+    It processes camera input to find and move towards a specified target object.
+
+    Attributes:
+        timestep (int): Simulation timestep duration.
+        robot (Node): The robot node in the simulation.
+        max_motor_speed (float): Maximum speed for the robot's motors.
+        max_wheel_speed (float): Maximum speed for the robot's wheels.
+        distance_threshold (float): Distance threshold to determine if the target is reached.
+        floor (Node): The floor node in the simulation.
+        camera (Camera): The camera device attached to the robot.
+        display (Display): The display device for showing camera images.
+        camera_width (int): Width of the camera's resolution.
+        camera_height (int): Height of the camera's resolution.
+        frame_area (int): Total area of the camera frame.
+        center_x (float): Center x-coordinate of the camera frame.
+        lower_y (float): Adjusted lower y-coordinate for the target.
+        target_coordinate (list): Coordinates representing the target location.
+        tolerance_x (int): Tolerance for the x-coordinate when aligning with the target.
+        yolo_model (YOLO): The YOLO model used for object detection.
+        initial_move (int): Initial random move direction (0 for left, 1 for right).
+        state (np.ndarray): Current state of the robot's target observation.
+    """
+
     def __init__(self):
-        # Initialize the supervisor class
+        """
+        Initializes the YOLOControl class, setting up the simulation environment,
+        camera, motors, and YOLO model.
+        """
         super().__init__()
         self.timestep = int(self.getBasicTimeStep())
         random.seed(42)
@@ -40,9 +65,9 @@ class YOLOControl(Supervisor):
         self.floor = self.getFromDef("FLOOR")
         self.set_arena_boundaries()
 
-        # Initialize the camera and display (optional)
+        # Initialize the camera and display
         self.camera = self.init_camera()
-        self.display = self.getDevice("display_1")        
+        self.display = self.getDevice("display_1")
 
         # Set the camera properties
         self.camera_width, self.camera_height = (
@@ -71,22 +96,26 @@ class YOLOControl(Supervisor):
         self.state = np.zeros(4, dtype=np.uint16)
 
     def run(self):
-        # Reset the simulation
+        """
+        Main loop of the controller that resets the simulation and continuously
+        processes camera input to control the robot.
+        """
         self.reset()
-        
-        # Main loop
+
         while self.step(self.timestep) != -1:
             self.state, distance, centroid = self.get_observation()
             if self.is_done(distance, centroid):
-                print("sip.")                
+                print("sip.")
                 exit(1)
 
-            # Wait for a short time (1 ms) to allow the image to be displayed
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-    
-    def reset(self):        
-        # Reset the simulation
+
+    def reset(self):
+        """
+        Resets the simulation environment, reinitializes the robot position,
+        motors, and sensors.
+        """
         self.simulationReset()
         self.simulationResetPhysics()
         super().step(self.timestep)
@@ -99,13 +128,15 @@ class YOLOControl(Supervisor):
         self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
         self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
 
-        # Step of the robot in simulation world
         super().step(self.timestep)
 
         # Initialize the state
         self.state = np.zeros(4, dtype=np.uint16)
 
     def set_arena_boundaries(self):
+        """
+        Sets the boundaries of the arena based on the floor node size, with a tolerance.
+        """
         arena_tolerance = 1.0
         size_field = self.floor.getField("floorSize").getSFVec3f()
         x, y = size_field
@@ -116,12 +147,24 @@ class YOLOControl(Supervisor):
         self.arena_x_min, self.arena_y_min = -self.arena_x_max, -self.arena_y_max
 
     def init_camera(self):
+        """
+        Initializes the camera device and enables it for capturing images.
+
+        Returns:
+            Camera: The initialized camera device.
+        """
         camera = self.getDevice("cabin_camera")
         camera.enable(self.timestep)
 
         return camera
 
     def init_motors_and_sensors(self):
+        """
+        Initializes the motors and sensors of the robot and enables them.
+
+        Returns:
+            Tuple[dict, dict, dict]: Dictionaries of wheel motors, arm motors, and sensors.
+        """
         names = ["turret", "arm_connector", "lower_arm", "uppertolow", "scoop"]
         wheel = ["lf", "rf", "lb", "rb"]
 
@@ -139,10 +182,16 @@ class YOLOControl(Supervisor):
         return wheel_motors, motors, sensors
 
     def get_observation(self):
-        # Initialize the variables
+        """
+        Captures an image from the camera, performs object detection using YOLO,
+        and processes the results to determine the target's position.
+
+        Returns:
+            Tuple[np.ndarray, float, list]: The state array, distance to the target, and centroid of the target.
+        """
         distance, centroid = None, [None, None]
         self.cords = []
-        
+
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
 
@@ -177,15 +226,20 @@ class YOLOControl(Supervisor):
                     f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
                 )
                 self.move_towards_target(centroid, distance)
-
             else:
-                self.search_target()                
+                self.search_target()
 
             print("---")
 
         return self.state, distance, centroid
 
     def _get_image_in_display(self):
+        """
+        Captures an image from the Webots camera and processes it for object detection.
+
+        Returns:
+            np.ndarray: The processed BGR image.
+        """
         # Get the image from the Webots camera (BGRA format)
         video_reader = self.camera.getImage()
 
@@ -207,16 +261,28 @@ class YOLOControl(Supervisor):
         return img_bgr
 
     def draw_bounding_box(self, img, cords, label):
+        """
+        Draws a bounding box around the detected object and labels it.
+
+        Args:
+            img (np.ndarray): The image on which to draw the bounding box.
+            cords (list): Coordinates of the bounding box.
+            label (str): The label of the detected object.
+        """
         bb_x_min, bb_y_min, bb_x_max, bb_y_max = cords
 
         # Draw the bounding box
-        cv2.rectangle(img, (bb_x_min, bb_y_min), (bb_x_max, bb_y_max), (0, 0, 255), 2)  # Red box        
+        cv2.rectangle(
+            img, (bb_x_min, bb_y_min), (bb_x_max, bb_y_max), (0, 0, 255), 2
+        )  # Red box
 
         # Get the width and height of the text box
         (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
         # Draw a filled rectangle for the label background
-        cv2.rectangle(img, (bb_x_min, bb_y_min - h - 1), (bb_x_min + w, bb_y_min), (0, 0, 255), -1)
+        cv2.rectangle(
+            img, (bb_x_min, bb_y_min - h - 1), (bb_x_min + w, bb_y_min), (0, 0, 255), -1
+        )
 
         # Put the label text on the image
         cv2.putText(
@@ -230,6 +296,9 @@ class YOLOControl(Supervisor):
         )
 
     def search_target(self):
+        """
+        Performs a search pattern when the target object is not detected.
+        """
         # Update display first to ensure UI responsiveness
         self._get_image_in_display()
 
@@ -241,6 +310,14 @@ class YOLOControl(Supervisor):
             self.run_wheels(-self.initial_move, "right")
 
     def move_towards_target(self, centroid, distance):
+        """
+        Moves the robot towards the detected target based on the centroid position
+        and distance to the target.
+
+        Args:
+            centroid (list): The x and y coordinates of the target's centroid.
+            distance (float): The distance from the robot to the target.
+        """
         # Update display first to ensure UI responsiveness
         self._get_image_in_display()
 
@@ -259,6 +336,12 @@ class YOLOControl(Supervisor):
             self.stop_robot()
 
     def adjust_turret_and_wheels(self, direction):
+        """
+        Adjusts the turret and wheels to align the robot with the target.
+
+        Args:
+            direction (str): The direction to adjust ('left' or 'right').
+        """
         self.motors["turret"].setVelocity(0.0)
         if direction == "left":
             self.turn_left()
@@ -266,6 +349,16 @@ class YOLOControl(Supervisor):
             self.turn_right()
 
     def is_done(self, distance, centroid):
+        """
+        Checks if the robot has successfully reached the target.
+
+        Args:
+            distance (float): The distance from the robot to the target.
+            centroid (list): The x and y coordinates of the target's centroid.
+
+        Returns:
+            bool: True if the robot has reached the target, False otherwise.
+        """
         if centroid == [None, None]:
             return False
 
@@ -286,6 +379,13 @@ class YOLOControl(Supervisor):
         return False
 
     def run_wheels(self, velocity, wheel="all"):
+        """
+        Sets the velocity for the robot's wheels.
+
+        Args:
+            velocity (float): The speed to set for the wheels.
+            wheel (str): Specifies which wheels to move ('all', 'left', or 'right').
+        """
         wheels = (
             self.left_wheels + self.right_wheels
             if wheel == "all"
@@ -295,17 +395,30 @@ class YOLOControl(Supervisor):
             motor.setVelocity(velocity)
 
     def turn_left(self):
+        """
+        Turns the robot left by running the left wheels backward and the right wheels forward.
+        """
         self.run_wheels(-self.max_wheel_speed, "left")
         self.run_wheels(self.max_wheel_speed, "right")
 
     def turn_right(self):
+        """
+        Turns the robot right by running the left wheels forward and the right wheels backward.
+        """
         self.run_wheels(self.max_wheel_speed, "left")
         self.run_wheels(-self.max_wheel_speed, "right")
 
     def stop_robot(self):
+        """
+        Stops the robot by setting all wheels' velocity to zero.
+        """
         self.run_wheels(0.0, "all")
 
 
 if __name__ == "__main__":
+    """
+    Main entry point of the YOLOControl script.
+    Initializes the YOLOControl instance and starts the control loop.
+    """
     controller = YOLOControl()
     controller.run()
