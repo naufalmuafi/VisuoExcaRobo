@@ -4,17 +4,26 @@ import argparse
 def parse_arguments(timesteps) -> argparse.Namespace:
     # Create the parser
     parser = argparse.ArgumentParser(
-        description="Train and test the model with 2 options for environment: Color or Object"
+        description="Train or Test the model with 2 options for environment: Color or YOLO"
     )
 
     # Add the arguments
     parser.add_argument(
+        "-d",
+        "--duty",
+        type=str,
+        default="test",
+        help="Choose the Duty: train or test",
+        choices=["train", "test"],
+        required=True,
+    )
+    parser.add_argument(
         "-e",
         "--env",
         type=str,
-        default="Color",
-        help="Choose the environment to train and test the model: Color or Object",
-        choices=["Color", "Object"],
+        default="color",
+        help="Choose the environment to train and test the model: color or YOLO",
+        choices=["color", "YOLO"],
         required=True,
     )
     parser.add_argument(
