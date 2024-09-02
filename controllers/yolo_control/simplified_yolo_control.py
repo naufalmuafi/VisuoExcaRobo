@@ -75,42 +75,13 @@ class YOLOControl(Supervisor):
 
     def run(self):
         while self.step(self.timestep) != -1:
-            # self.state, distance, centroid = self.get_observation()
+            self.run_wheels(2.0, "all")
+
+            self.get_observation()
             # if self.is_done(distance, centroid):
             #     print("sip.")
             #     # self.digging_operation()
             #     exit(1)
-
-            self.run_wheels(2.0, "all")
-
-            # Get the image from the Webots camera (BGRA format)
-            video_reader = self.camera.getImage()
-
-            # Convert the raw image data to a NumPy array
-            img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
-                (self.camera_height, self.camera_width, 4)
-            )
-
-            # Convert BGRA to BGR for OpenCV processing
-            img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
-
-            # Perform object detection with YOLO
-            results = self.yolo_model.predict(img_bgr)
-            result = results[0]
-
-            # Post-process the results
-            for box in result.boxes:
-                class_id = result.names[box.cls[0].item()]
-                cords = box.xyxy[0].tolist()
-                cords = [round(x) for x in cords]
-                conf = round(box.conf[0].item(), 2)
-                print("Object type:", class_id)
-                print("Coordinates:", cords)
-                print("Probability:", conf)
-                print("---")
-
-            # Display the image in the OpenCV window
-            cv2.imshow("Display_2", img_bgr)
 
             # Wait for a short time (1 ms) to allow the image to be displayed
             if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -150,42 +121,32 @@ class YOLOControl(Supervisor):
         return wheel_motors, motors, sensors
 
     def get_observation(self):
-        # Get the image from Webots camera (BGRA format)
-        image = np.array(self.camera.getImageArray(), dtype=np.uint8)
+        # Get the image from the Webots camera (BGRA format)
+        video_reader = self.camera.getImage()
 
-        # Convert BGRA to BGR
-        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+        # Convert the raw image data to a NumPy array
+        img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
+            (self.camera_height, self.camera_width, 4)
+        )
+
+        # Convert BGRA to BGR for OpenCV processing
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
         # Perform object detection with YOLO
-        results = self.yolo_model.predict(image)
+        results = self.yolo_model.predict(img_bgr)
+        result = results[0]
 
-        if len(results) > 0:
-            detected_objects = results[0]  # Accessing the first result
-            if detected_objects.boxes is not None:
-                for obj in detected_objects.boxes:
-                    label = int(obj.cls.item())  # class index (as an integer)
-                    confidence = obj.conf.item()  # confidence score
-                    bbox = obj.xyxy[0].numpy()  # bounding box coordinates
+        # Post-process the results
+        for box in result.boxes:
+            class_id = result.names[box.cls[0].item()]
+            cords = box.xyxy[0].tolist()
+            cords = [round(x) for x in cords]
+            conf = round(box.conf[0].item(), 2)
+            print(f"Obj. Type: {class_id}; Coords: {cords}; Prob.: {conf}")
+            print("---")
 
-                    if label == 0:  # assuming 'rock' is class 0 in your YOLO model
-                        x_min, y_min, x_max, y_max = bbox
-                        centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
-                        distance = np.sqrt(
-                            (centroid[0] - self.lower_center[0]) ** 2
-                            + (centroid[1] - self.lower_center[1]) ** 2
-                        )
-
-                        print(
-                            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}; Confidence: {confidence:.2f}"
-                        )
-
-                        # Draw bounding box and centroid on the image
-                        self.draw_bounding_box(image, bbox, label, confidence)
-                        self.move_towards_target(centroid, distance)
-                        return [x_min, x_max, y_min, y_max], distance, centroid
-
-        self.search_target()
-        return np.zeros(4, dtype=np.int16), None, [None, None]
+        # Display the image in the OpenCV window
+        cv2.imshow("Display_2", img_bgr)
 
     def draw_bounding_box(self, image, bbox, label, confidence):
         x_min, y_min, x_max, y_max = [int(i) for i in bbox]
