@@ -119,6 +119,9 @@ class YOLOControl(Supervisor):
         return wheel_motors, motors, sensors
 
     def get_observation(self):
+        # Initialize the variables
+        distance, centroid = 300, [None, None]
+        
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
 
@@ -128,16 +131,16 @@ class YOLOControl(Supervisor):
 
         # Post-process the results
         for box in result.boxes:
-            label = result.names[box.cls[0].item()]  # Get the label
-            cords = box.xyxy[0].tolist()  # Get the coordinates
-            cords = [round(x) for x in cords]  # Round the coordinates
-            conf = round(box.conf[0].item(), 2)  # Get the confidence
+            self.label = result.names[box.cls[0].item()]  # Get the label
+            self.cords = box.xyxy[0].tolist()  # Get the coordinates
+            self.cords = [round(x) for x in self.cords]  # Round the coordinates
+            self.conf = round(box.conf[0].item(), 2)  # Get the confidence
 
-            print(f"Obj. Type: {label}; Coords: {cords}; Prob.: {conf}")
+            print(f"Obj. Type: {self.label}; Coords: {self.cords}; Prob.: {self.conf}")
 
-            if label == "rock":
+            if self.label == "rock":
                 # Get the coordinates of the bounding box
-                x_min, y_min, x_max, y_max = cords
+                x_min, y_min, x_max, y_max = self.cords
 
                 # Get the new state
                 self.state = [x_min, y_min, x_max, y_max]
@@ -155,12 +158,7 @@ class YOLOControl(Supervisor):
                 self.move_towards_target(centroid, distance)
 
             else:
-                self.search_target()
-                self.state, distance, centroid = (
-                    np.zeros(4, dtype=np.uint16),
-                    None,
-                    [None, None],
-                )
+                self.search_target()                
 
             print("---")
 
@@ -180,21 +178,18 @@ class YOLOControl(Supervisor):
 
         # Draw bounding box with label if state is not empty
         if np.any(self.state):
-            self.draw_bounding_box(img_bgr, self.state)
+            self.draw_bounding_box(img_bgr, self.state, self.label)
 
         # Display the image in the OpenCV window
         cv2.imshow("Display_2", img_bgr)
 
         return img_bgr
 
-    def draw_bounding_box(self, img, state):
+    def draw_bounding_box(self, img, state, label):
         x_min, y_min, x_max, y_max = state
 
         # Draw the bounding box
-        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)  # Red box
-
-        # Prepare the label with the confidence score
-        label = f"{self.yolo_model.names[state[-1]]} {round(state[-2], 2)}"
+        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)  # Red box        
 
         # Get the width and height of the text box
         (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
@@ -208,7 +203,7 @@ class YOLOControl(Supervisor):
             label,
             (x_min, y_min - 5),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
+            0.3,
             (255, 255, 255),
             1,
         )
