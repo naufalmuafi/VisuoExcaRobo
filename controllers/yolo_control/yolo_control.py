@@ -74,9 +74,7 @@ class YOLOControl(Supervisor):
         self.state = np.zeros(4, dtype=np.uint16)
 
     def run(self):
-        while self.step(self.timestep) != -1:
-            self.run_wheels(2.0, "all")
-
+        while self.step(self.timestep) != -1:            
             self.state, distance, centroid = self.get_observation()
             if self.is_done(distance, centroid):
                 print("sip.")
@@ -163,10 +161,7 @@ class YOLOControl(Supervisor):
                     f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
                 )
                 self.move_towards_target(centroid, distance)
-                print("---")
-
-                # Display the image in the OpenCV window
-                cv2.imshow("Display_2", img_bgr)
+                
             else:
                 self.search_target()
                 self.state, distance, centroid = (
@@ -174,6 +169,8 @@ class YOLOControl(Supervisor):
                     None,
                     [None, None],
                 )
+            
+            print("---")
 
         # Display the image in the OpenCV window
         cv2.imshow("Display_2", img_bgr)
