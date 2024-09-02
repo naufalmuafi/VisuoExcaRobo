@@ -120,15 +120,7 @@ class YOLOControl(Supervisor):
 
     def get_observation(self):
         # Get the image from the Webots camera (BGRA format)
-        video_reader = self.camera.getImage()
-
-        # Convert the raw image data to a NumPy array
-        img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
-            (self.camera_height, self.camera_width, 4)
-        )
-
-        # Convert BGRA to BGR for OpenCV processing
-        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+        img_bgr = self._get_image_in_display()
 
         # Perform object detection with YOLO
         results = self.yolo_model.predict(img_bgr)
@@ -170,17 +162,30 @@ class YOLOControl(Supervisor):
                     [None, None],
                 )
 
-            print("---")
-
-        # Display the image in the OpenCV window
-        cv2.imshow("Display_2", img_bgr)
+            print("---")        
 
         return self.state, distance, centroid
+    
+    def _get_image_in_display(self):
+        # Get the image from the Webots camera (BGRA format)
+        video_reader = self.camera.getImage()
+
+        # Convert the raw image data to a NumPy array
+        img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
+            (self.camera_height, self.camera_width, 4)
+        )
+
+        # Convert BGRA to BGR for OpenCV processing
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+        
+        # Display the image in the OpenCV window
+        cv2.imshow("Display_2", img_bgr)
+        
+        return img_bgr
 
     def search_target(self):
         # Update display first to ensure UI responsiveness
-        cv2.imshow("Display_2", self.img_bgr)
-        cv2.waitKey(1)  # Ensure the display updates
+        self._get_image_in_display()
 
         print("No target found.")
 
@@ -191,8 +196,7 @@ class YOLOControl(Supervisor):
 
     def move_towards_target(self, centroid, distance):
         # Update display first to ensure UI responsiveness
-        cv2.imshow("Display_2", self.img_bgr)
-        cv2.waitKey(1)  # Ensure the display updates
+        self._get_image_in_display()
 
         if (distance >= self.distance_threshold) or (centroid == [None, None]):
             if centroid[0] <= self.center_x - self.tolerance_x:
