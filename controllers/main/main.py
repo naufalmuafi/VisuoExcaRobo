@@ -1,31 +1,40 @@
 import VisuoExcaRobo as ver
 from argparser import parse_arguments
 
-TIMESTEPS = 1000
-BATCH_SIZE = 1024
-LEARNING_RATE = 1e-4
+# Constants for model training
+TIMESTEPS = 1000  # Number of timesteps for training
+BATCH_SIZE = 1024  # Batch size for training
+LEARNING_RATE = 1e-4  # Learning rate for the PPO model
 
-# main program
+# Main program entry point
 if __name__ == "__main__":
-    # Define the temp directories
+    """
+    This is the main entry point of the program where the VisuoExcaRobo model is
+    initialized, the environment is checked, and the training or testing is performed
+    based on the provided arguments.
+    """
+
+    # Define the model directory where trained models will be stored
     __modeldir = "models/"
 
-    # Get the parsed arguments from parser.py
+    # Parse the command-line arguments
     args = parse_arguments(TIMESTEPS)
 
-    # Instantiate the VisuoExcaRobo class
+    # Instantiate the VisuoExcaRobo class with parsed arguments
     robot = ver.VisuoExcaRobo(args)
 
-    # Check the environment
+    # Check if the environment is properly set up and ready
     ready = robot.check_environment()
 
+    # If the environment is ready, proceed with training or testing
     if ready:
         print(f"Environment is ready: {robot.env}")
 
-        # Perform the robot
+        # Define the result file name based on current configurations
         result_file = "20240901_ppo_5000000_bs_1024_lr_1e-04"
         model_train_dir = __modeldir + result_file
 
+        # Fit the model by either training or testing it based on 'duty' argument
         robot.fit(
             batch_size=BATCH_SIZE,
             learning_rate=LEARNING_RATE,
