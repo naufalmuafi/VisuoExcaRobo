@@ -57,15 +57,15 @@ class YOLOControl(Supervisor):
         # Set the target properties
         self.center_x = self.camera_width / 2
         self.lower_y = self.camera_height + LOWER_Y
-        self.lower_center = [self.center_x, self.lower_y]
+        self.target_coordinate = [self.center_x, self.lower_y]
         self.tolerance_x = 1
 
         # Load the YOLO model
         self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
         self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
 
-        # Initialize the display window for visualizing bounding boxes
-        cv2.namedWindow("YOLO Detection", cv2.WINDOW_AUTOSIZE)
+        # Create a window for displaying the processed image
+        cv2.namedWindow("Display_2", cv2.WINDOW_AUTOSIZE)
 
         # Set initial move
         self.initial_move = random.choice([0, 1])
@@ -75,11 +75,17 @@ class YOLOControl(Supervisor):
 
     def run(self):
         while self.step(self.timestep) != -1:
+            self.run_wheels(2.0, "all")
+
             self.state, distance, centroid = self.get_observation()
             if self.is_done(distance, centroid):
                 print("sip.")
                 # self.digging_operation()
                 exit(1)
+
+            # Wait for a short time (1 ms) to allow the image to be displayed
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
@@ -115,61 +121,59 @@ class YOLOControl(Supervisor):
         return wheel_motors, motors, sensors
 
     def get_observation(self):
-        # Get the image from Webots camera (BGRA format)
-        image = np.array(self.camera.getImageArray(), dtype=np.uint8)
-        
-        # Convert BGRA to BGR
-        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+        # Get the image from the Webots camera (BGRA format)
+        video_reader = self.camera.getImage()
 
-        # Perform object detection with YOLO
-        results = self.yolo_model.predict(image)
-
-        if len(results) > 0:
-            detected_objects = results[0]  # Accessing the first result
-            if detected_objects.boxes is not None:
-                for obj in detected_objects.boxes:
-                    label = int(obj.cls.item())  # class index (as an integer)
-                    confidence = obj.conf.item()  # confidence score
-                    bbox = obj.xyxy[0].numpy()  # bounding box coordinates
-
-                    if label == 0:  # assuming 'rock' is class 0 in your YOLO model
-                        x_min, y_min, x_max, y_max = bbox
-                        centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
-                        distance = np.sqrt(
-                            (centroid[0] - self.lower_center[0]) ** 2 +
-                            (centroid[1] - self.lower_center[1]) ** 2
-                        )
-
-                        print(
-                            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}; Confidence: {confidence:.2f}"
-                        )
-
-                        # Draw bounding box and centroid on the image
-                        self.draw_bounding_box(image, bbox, label, confidence)
-                        self.move_towards_target(centroid, distance)
-                        return [x_min, x_max, y_min, y_max], distance, centroid
-
-        self.search_target()
-        return np.zeros(4, dtype=np.int16), None, [None, None]
-
-    def draw_bounding_box(self, image, bbox, label, confidence):
-        x_min, y_min, x_max, y_max = [int(i) for i in bbox]
-        color = (0, 0, 255)
-        cv2.rectangle(image, (x_min, y_min), (x_max, y_max), color, 2)
-
-        text = f"{self.yolo_model.names[label]}: {confidence:.2f}"
-        cv2.putText(
-            image, text, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2
+        # Convert the raw image data to a NumPy array
+        img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
+            (self.camera_height, self.camera_width, 4)
         )
 
-        # Draw the centroid
-        centroid_x, centroid_y = (x_min + x_max) // 2, (y_min + y_max) // 2
-        cv2.circle(
-            image, (centroid_x, centroid_y), 5, (255, 0, 0), -1
-        )  # Blue dot for centroid
+        # Convert BGRA to BGR for OpenCV processing
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
-        cv2.imshow("YOLO Detection", image)
-        cv2.waitKey(1)
+        # Perform object detection with YOLO
+        results = self.yolo_model.predict(img_bgr)
+        result = results[0]
+
+        # Post-process the results
+        for box in result.boxes:
+            label = result.names[box.cls[0].item()]  # Get the label
+            cords = box.xyxy[0].tolist()  # Get the coordinates
+            cords = [round(x) for x in cords]  # Round the coordinates
+            conf = round(box.conf[0].item(), 2)  # Get the confidence
+
+            print(f"Obj. Type: {label}; Coords: {cords}; Prob.: {conf}")
+
+            if label == "rock":
+                # Get the coordinates of the bounding box
+                x_min, y_min, x_max, y_max = cords
+
+                # Get the new state
+                self.state = [x_min, y_min, x_max, y_max]
+
+                # Calculate the centroid and the distance from the lower center
+                centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
+                distance = np.sqrt(
+                    (centroid[0] - self.target_coordinate[0]) ** 2
+                    + (centroid[1] - self.target_coordinate[1]) ** 2
+                )
+
+                print(
+                    f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
+                )
+                self.move_towards_target(centroid, distance)
+                print("---")
+
+                # Display the image in the OpenCV window
+                cv2.imshow("Display_2", img_bgr)
+
+                return self.state, distance, centroid
+
+        # Display the image in the OpenCV window
+        cv2.imshow("Display_2", img_bgr)
+
+        return np.zeros(4, dtype=np.int16), None, [None, None]
 
     def search_target(self):
         print("No target found.")
@@ -240,175 +244,6 @@ class YOLOControl(Supervisor):
 
     def stop_robot(self):
         self.run_wheels(0.0, "all")
-
-    # 0 is left, 1 is right
-    def move_arm_connector(
-        self,
-        direction,
-        min_position=-1.1,
-        max_position=1.1,
-        velocity=MAX_MOTOR_SPEED,
-        toCenter=False,
-    ):
-        current_position = self.sensors["arm_connector"].getValue()
-
-        if toCenter:
-            tolerance = 0.001
-            if current_position > tolerance or current_position < -tolerance:
-                self.motors["arm_connector"].setVelocity(
-                    velocity * (1 if current_position < 0 else -1)
-                )
-            elif current_position < tolerance or current_position > -tolerance:
-                self.motors["arm_connector"].setVelocity(0.0)
-        else:
-            # Check if the motor is within the defined range
-            if min_position <= current_position <= max_position:
-                self.motors["arm_connector"].setVelocity(
-                    velocity * (1 if direction == 0 else -1)
-                )
-            else:
-                self.motors["arm_connector"].setVelocity(0.0)
-
-    # 0 is down, 1 is up
-    def move_lower_arm(
-        self, direction, min_position=-0.27, max_position=0.27, velocity=MAX_MOTOR_SPEED
-    ):
-        current_position = self.sensors["lower_arm"].getValue()
-
-        # Check if the motor is within the defined range
-        if min_position <= current_position <= max_position:
-            self.motors["lower_arm"].setVelocity(
-                velocity * (1 if direction == 0 else -1)
-            )
-        else:
-            self.motors["lower_arm"].setVelocity(0.0)
-
-    # 0 is down, 1 is up
-    def move_uppertolow(
-        self, direction, min_position=-0.9, max_position=0.9, velocity=MAX_MOTOR_SPEED
-    ):
-        current_position = self.sensors["uppertolow"].getValue()
-
-        # Check if the motor is within the defined range
-        if min_position <= current_position <= max_position:
-            self.motors["uppertolow"].setVelocity(
-                velocity * (1 if direction == 0 else -1)
-            )
-        else:
-            self.motors["uppertolow"].setVelocity(0.0)
-
-    # 0 is inside, 1 is outside
-    def move_scoop(
-        self,
-        direction,
-        min_position=-1.1,
-        max_position=1.1,
-        velocity=MAX_MOTOR_SPEED + 0.5,
-    ):
-        current_position = self.sensors["scoop"].getValue()
-
-        # Check if the motor is within the defined range
-        if min_position <= current_position <= max_position:
-            self.motors["scoop"].setVelocity(velocity * (1 if direction == 0 else -1))
-        else:
-            self.motors["scoop"].setVelocity(0.0)
-
-    def digging_operation(self):
-        initial_positions = {
-            "scoop": self.sensors["scoop"].getValue(),
-            "lower_arm": self.sensors["lower_arm"].getValue(),
-            "uppertolow": self.sensors["uppertolow"].getValue(),
-            "arm_connector": self.sensors["arm_connector"].getValue(),
-        }
-
-        targets = {
-            "scoop": 1.0,
-            "lower_arm": 0.1,
-            "uppertolow": 0.45,
-        }
-
-        step = 0
-        delay_start_time = None
-
-        while True:
-            current_positions = {
-                "scoop": self.sensors["scoop"].getValue(),
-                "lower_arm": self.sensors["lower_arm"].getValue(),
-                "uppertolow": self.sensors["uppertolow"].getValue(),
-            }
-
-            if step == 0:
-                # Adjust the target for uppertolow
-                adjusted_targets = {
-                    "scoop": -targets["scoop"],
-                    "lower_arm": -targets["lower_arm"],
-                    "uppertolow": -targets["uppertolow"],
-                }
-
-                self.move_scoop(
-                    0,
-                    min_position=initial_positions["scoop"],
-                    max_position=adjusted_targets["scoop"],
-                )
-                self.move_lower_arm(
-                    0,
-                    min_position=initial_positions["lower_arm"],
-                    max_position=adjusted_targets["lower_arm"],
-                )
-                self.move_uppertolow(1, min_position=adjusted_targets["uppertolow"])
-                self.move_arm_connector(1, toCenter=True)
-
-                print(f"Current positions: {current_positions}")
-                print(f"Adjusted targets: {adjusted_targets}")
-
-                # Check if all the joints have reached or exceeded their adjusted targets
-                if all(
-                    current_positions[joint] >= adjusted_targets[joint]
-                    for joint in adjusted_targets
-                ):
-                    delay_start_time = self.getTime()
-                    print("Step 0 done.")
-                    step = 1
-
-            elif step == 1:
-                print("Step 1")
-                if self.getTime() - delay_start_time >= 2.0:
-                    step = 2
-
-            elif step == 2:
-                print("Step 2")
-                # Move down
-                self.move_scoop(0, max_position=targets["scoop"] - 0.5)
-                self.move_lower_arm(0, max_position=targets["lower_arm"] - 0.1)
-                self.move_uppertolow(0, max_position=targets["uppertolow"])
-                self.move_arm_connector(1, toCenter=True)
-
-                adjusted_targets = {
-                    "lower_arm": targets["lower_arm"] - 0.1,
-                    "scoop": targets["scoop"] - 0.5,
-                }
-                # Check if all the joints have reached or exceeded their adjusted targets
-                if all(
-                    current_positions[joint] <= adjusted_targets.get(joint, target)
-                    for joint, target in adjusted_targets.items()
-                ):
-                    print("Step 2 done.")
-                    delay_start_time = self.getTime()
-                    step = 3
-
-            elif step == 3:
-                if self.getTime() - delay_start_time >= 1.0:
-                    return [
-                        initial_positions[joint]
-                        for joint in [
-                            "arm_connector",
-                            "lower_arm",
-                            "uppertolow",
-                            "scoop",
-                        ]
-                    ]
-
-            self.step(self.timestep)
 
 
 if __name__ == "__main__":
