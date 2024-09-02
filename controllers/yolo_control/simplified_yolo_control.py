@@ -77,11 +77,11 @@ class YOLOControl(Supervisor):
         while self.step(self.timestep) != -1:
             self.run_wheels(2.0, "all")
 
-            self.get_observation()
-            # if self.is_done(distance, centroid):
-            #     print("sip.")
-            #     # self.digging_operation()
-            #     exit(1)
+            self.state, distance, centroid = self.get_observation()
+            if self.is_done(distance, centroid):
+                print("sip.")
+                # self.digging_operation()
+                exit(1)
 
             # Wait for a short time (1 ms) to allow the image to be displayed
             if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -145,23 +145,32 @@ class YOLOControl(Supervisor):
 
             print(f"Obj. Type: {label}; Coords: {cords}; Prob.: {conf}")
 
-        if label == "rock":
-            x_min, y_min, x_max, y_max = cords
+            if label == "rock":
+                # Get the coordinates of the bounding box
+                x_min, y_min, x_max, y_max = cords
 
-            # Calculate the centroid and the distance from the lower center
-            centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
-            distance = np.sqrt(
-                (centroid[0] - self.target_coordinate[0]) ** 2
-                + (centroid[1] - self.target_coordinate[1]) ** 2
-            )
+                # Get the new state
+                self.state = [x_min, y_min, x_max, y_max]
 
-            print(
-                f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
-            )
-            print("---")
+                # Calculate the centroid and the distance from the lower center
+                centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
+                distance = np.sqrt(
+                    (centroid[0] - self.target_coordinate[0]) ** 2
+                    + (centroid[1] - self.target_coordinate[1]) ** 2
+                )
+
+                print(
+                    f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
+                )
+                self.move_towards_target(centroid, distance)
+                print("---")
+
+                return self.state, distance, centroid
 
         # Display the image in the OpenCV window
         cv2.imshow("Display_2", img_bgr)
+
+        return np.zeros(4, dtype=np.int16), None, [None, None]
 
     def draw_bounding_box(self, image, bbox, label, confidence):
         x_min, y_min, x_max, y_max = [int(i) for i in bbox]
