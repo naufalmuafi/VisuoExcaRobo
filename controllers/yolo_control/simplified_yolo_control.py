@@ -80,20 +80,20 @@ class YOLOControl(Supervisor):
             #     print("sip.")
             #     # self.digging_operation()
             #     exit(1)
-            
+
             self.run_wheels(2.0, "all")
 
             # Get the image from the Webots camera (BGRA format)
             video_reader = self.camera.getImage()
 
-            # Convert the raw image data to a NumPy array            
+            # Convert the raw image data to a NumPy array
             img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
                 (self.camera_height, self.camera_width, 4)
             )
 
             # Convert BGRA to BGR for OpenCV processing
             img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
-            
+
             results = self.yolo_model(img_bgr)
 
             # Display the image in the OpenCV window
