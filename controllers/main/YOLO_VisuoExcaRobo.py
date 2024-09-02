@@ -66,8 +66,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.set_arena_boundaries()
 
         # Initialize camera and display
-        self.camera = self.init_camera()
-        self.display = self.getDevice("display_1")
+        self.camera = self.init_camera()        
 
         # Set camera properties
         self.camera_width, self.camera_height = (
@@ -96,8 +95,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
 
         # Initialize the robot state
-        self.state = np.zeros(4, dtype=np.uint16)
-        self.cords = []
+        self.state = np.zeros(4, dtype=np.uint16)        
         
         # Set the seed for reproducibility
         self.seed()
@@ -143,9 +141,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         Returns:
             Tuple: Observation, reward, done flag, truncation flag, and info dictionary.
-        """
-        # Get the image from the camera
-        self._get_image_in_display()
+        """        
 
         # Set the action for left and right wheels
         left_wheels_action = action[0] * self.max_wheel_speed
@@ -252,13 +248,14 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        distance, centroid = 300, [None, None]        
+        distance, centroid = 300, [None, None]
+        self.cords = []
 
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
 
         # Perform object detection with YOLO
-        results = self.yolo_model.predict(img_bgr)
+        results = self.yolo_model.predict(img_bgr, verbose=False)
         result = results[0]
 
         # Post-process the results
