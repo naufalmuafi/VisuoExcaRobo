@@ -162,10 +162,10 @@ class YOLOControl(Supervisor):
                     [None, None],
                 )
 
-            print("---")        
+            print("---")
 
         return self.state, distance, centroid
-    
+
     def _get_image_in_display(self):
         # Get the image from the Webots camera (BGRA format)
         video_reader = self.camera.getImage()
@@ -177,11 +177,41 @@ class YOLOControl(Supervisor):
 
         # Convert BGRA to BGR for OpenCV processing
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
-        
+
+        # Draw bounding box with label if state is not empty
+        if np.any(self.state):
+            self.draw_bounding_box(img_bgr, self.state)
+
         # Display the image in the OpenCV window
         cv2.imshow("Display_2", img_bgr)
-        
+
         return img_bgr
+
+    def draw_bounding_box(self, img, state):
+        x_min, y_min, x_max, y_max = state
+
+        # Draw the bounding box
+        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)  # Red box
+
+        # Prepare the label with the confidence score
+        label = f"{self.yolo_model.names[state[-1]]} {round(state[-2], 2)}"
+
+        # Get the width and height of the text box
+        (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+
+        # Draw a filled rectangle for the label background
+        cv2.rectangle(img, (x_min, y_min - h - 10), (x_min + w, y_min), (0, 0, 255), -1)
+
+        # Put the label text on the image
+        cv2.putText(
+            img,
+            label,
+            (x_min, y_min - 5),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255, 255, 255),
+            1,
+        )
 
     def search_target(self):
         # Update display first to ensure UI responsiveness
