@@ -1,12 +1,14 @@
 import sys
 from typing import Any, Tuple, List
-from controller import Supervisor, Display
+from controller import Supervisor
 
 try:
+    import cv2
     import math
     import random
     import numpy as np
     import gymnasium as gym
+    from ultralytics import YOLO
     from gymnasium import Env, spaces
     from gymnasium.envs.registration import EnvSpec, register
 except ImportError:
@@ -28,7 +30,7 @@ DISTANCE_THRESHOLD = 20
 
 class YOLO_VisuoExcaRobo(Supervisor, Env):
     """
-    A custom Gym environment for controlling an excavator robot in Webots using color-based target detection.
+    A custom Gym environment for controlling an excavator robot in Webots using YOLO-based target detection.
 
     This class integrates the Webots Supervisor with Gymnasium's Env, enabling reinforcement learning tasks.
     """
@@ -36,6 +38,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
     def __init__(self, max_episode_steps: int = MAX_EPISODE_STEPS) -> None:
         """
         Initialize the YOLO_VisuoExcaRobo environment.
+
+        Initializes the YOLOControl class, setting up the simulation environment,
+        camera, motors, and YOLO model.
 
         Args:
             max_episode_steps (int): The maximum number of steps per episode.
@@ -77,11 +82,12 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.lower_center = [self.center_x, self.lower_y]
         self.tolerance_x = 1
 
-        # Color range for target detection
-        color_tolerance = 5
-        self.color_target = np.array([46, 52, 54])
-        self.lower_color = self.color_target - color_tolerance
-        self.upper_color = self.color_target + color_tolerance
+        # Load the YOLO model
+        self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
+        self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
+
+        # Create a window for displaying the processed image
+        cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
 
         # Define action space and observation space
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
@@ -135,6 +141,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: Observation, reward, done flag, truncation flag, and info dictionary.
         """
+        # Get the image from the camera
+        self._get_image_in_display()
+
         # Set the action for left and right wheels
         left_wheels_action = action[0] * self.max_wheel_speed
         right_wheels_action = action[1] * self.max_wheel_speed
@@ -147,12 +156,10 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         super().step(self.timestep)
 
         # Get new observation and target distance
-        self.state, target_distance = self.get_observation(
-            self.camera_width, self.camera_height
-        )
+        self.state, target_distance = self.get_observation()
 
         # Calculate the reward
-        reward_color = self.f(target_distance) * (10**-3)
+        reward_yolo = self.f(target_distance) * (10**-3)
         reach_target = target_distance <= self.distance_threshold - 10
         reward_reach_target = 10 if reach_target else 0
 
@@ -174,7 +181,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Final reward calculation
         reward = (
-            reward_color
+            reward_yolo
             + reward_reach_target
             + robot_distance_punishment
             + hit_arena_punishment
@@ -234,107 +241,108 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             result = 0  # If exponent is too large, the value approaches zero
         return result
 
-    def get_observation(self, width, height) -> Tuple[np.ndarray, float]:
+    def get_observation(self) -> Tuple[np.ndarray, float]:
         """
-        Capture and process an image from the robot's camera to detect the target.
-
-        Args:
-            width (int): Width of the camera frame.
-            height (int): Height of the camera frame.
+        Captures an image from the camera, performs object detection using YOLO,
+        and processes the results to determine the target's position.
 
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        image = self.camera.getImage()
+        distance, centroid = 300, [None, None]
+        self.cords = []
 
-        # Extract RGB channels from the image
-        red_channel, green_channel, blue_channel = self.extract_rgb_channels(
-            image, width, height
-        )
-        self.img_rgb = [red_channel, green_channel, blue_channel]
+        # Get the image from the Webots camera (BGRA format)
+        img_bgr = self._get_image_in_display()
 
-        # Perform the recognition process
-        self.state, distance = self.recognition_process(self.img_rgb, width, height)
+        # Perform object detection with YOLO
+        results = self.yolo_model.predict(img_bgr)
+        result = results[0]
 
-        return self.state, distance
+        # Post-process the results
+        for box in result.boxes:
+            self.label = result.names[box.cls[0].item()]  # Get the label
+            self.cords = box.xyxy[0].tolist()  # Get the coordinates
+            self.cords = [round(x) for x in self.cords]  # Round the coordinates
+            self.conf = round(box.conf[0].item(), 2)  # Get the confidence
 
-    def extract_rgb_channels(
-        self, image, width, height
-    ) -> Tuple[List[List[int]], List[List[int]], List[List[int]]]:
-        """
-        Extract the RGB channels from the camera image.
+            if self.label == "rock":
+                # Get the coordinates of the bounding box
+                x_min, y_min, x_max, y_max = self.cords
 
-        Args:
-            image (Any): The image captured by the camera.
-            width (int): Width of the camera frame.
-            height (int): Height of the camera frame.
+                # Get the new state
+                self.state = [x_min, y_min, x_max, y_max]
 
-        Returns:
-            Tuple: Red, Green, and Blue channels as lists of lists.
-        """
-        red_channel, green_channel, blue_channel = [], [], []
-        for j in range(height):
-            red_row, green_row, blue_row = [], [], []
-            for i in range(width):
-                red_row.append(self.camera.imageGetRed(image, width, i, j))
-                green_row.append(self.camera.imageGetGreen(image, width, i, j))
-                blue_row.append(self.camera.imageGetBlue(image, width, i, j))
-            red_channel.append(red_row)
-            green_channel.append(green_row)
-            blue_channel.append(blue_row)
-        return red_channel, green_channel, blue_channel
-
-    def recognition_process(self, image, width, height) -> Tuple[np.ndarray, float]:
-        """
-        Process the image to detect the target object based on color.
-
-        Args:
-            image (List[List[int]]): RGB channels of the image.
-            width (int): Width of the camera frame.
-            height (int): Height of the camera frame.
-
-        Returns:
-            Tuple: The state array and distance to the target.
-        """
-        target_px, distance, centroid = 0, 300, [None, None]
-        target_x_min, target_x_max, target_y_min, target_y_max = width, 0, height, 0
-
-        for y in range(height):
-            for x in range(width):
-                r, g, b = image[0][y][x], image[1][y][x], image[2][y][x]
-                if (
-                    self.lower_color[0] <= r <= self.upper_color[0]
-                    and self.lower_color[1] <= g <= self.upper_color[1]
-                    and self.lower_color[2] <= b <= self.upper_color[2]
-                ):
-                    target_px += 1
-                    target_x_min, target_x_max = min(target_x_min, x), max(
-                        target_x_max, x
-                    )
-                    target_y_min, target_y_max = min(target_y_min, y), max(
-                        target_y_max, y
-                    )
-
-        # If the target is not detected
-        if target_px == 0:
-            return np.zeros(4, dtype=np.uint16), distance
-
-        # Set the new state
-        self.state = np.array(
-            [target_x_min, target_x_max, target_y_min, target_y_max], dtype=np.uint16
-        )
-
-        # Calculate the centroid and distance from the target
-        centroid = [
-            (target_x_max + target_x_min) / 2,
-            (target_y_max + target_y_min) / 2,
-        ]
-        distance = np.sqrt(
-            (centroid[0] - self.lower_center[0]) ** 2
-            + (centroid[1] - self.lower_center[1]) ** 2
-        )
+                # Calculate the centroid and the distance from the lower center
+                centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
+                distance = np.sqrt(
+                    (centroid[0] - self.target_coordinate[0]) ** 2
+                    + (centroid[1] - self.target_coordinate[1]) ** 2
+                )
 
         return self.state, distance
+
+    def _get_image_in_display(self):
+        """
+        Captures an image from the Webots camera and processes it for object detection.
+
+        Returns:
+            np.ndarray: The processed BGR image.
+        """
+        # Get the image from the Webots camera (BGRA format)
+        video_reader = self.camera.getImage()
+
+        # Convert the raw image data to a NumPy array
+        img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
+            (self.camera_height, self.camera_width, 4)
+        )
+
+        # Convert BGRA to BGR for OpenCV processing
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+
+        # Draw bounding box with label if state is not empty
+        if np.any(self.cords):
+            self.draw_bounding_box(img_bgr, self.cords, self.label)
+
+        # Display the image in the OpenCV window
+        cv2.imshow("Webots YOLO Display", img_bgr)
+
+        return img_bgr
+
+    def draw_bounding_box(self, img, cords, label):
+        """
+        Draws a bounding box around the detected object and labels it.
+
+        Args:
+            img (np.ndarray): The image on which to draw the bounding box.
+            cords (list): Coordinates of the bounding box.
+            label (str): The label of the detected object.
+        """
+        bb_x_min, bb_y_min, bb_x_max, bb_y_max = cords
+
+        # Draw the bounding box
+        cv2.rectangle(
+            img, (bb_x_min, bb_y_min), (bb_x_max, bb_y_max), (0, 0, 255), 2
+        )  # Red box
+
+        # Get the width and height of the text box
+        (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+
+        # Draw a filled rectangle for the label background
+        cv2.rectangle(
+            img, (bb_x_min, bb_y_min - h - 1), (bb_x_min + w, bb_y_min), (0, 0, 255), -1
+        )
+
+        # Put the label text on the image
+        cv2.putText(
+            img,
+            label,
+            (bb_x_min, bb_y_min - 5),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.3,
+            (255, 255, 255),
+            1,
+        )
 
     def set_arena_boundaries(self) -> None:
         """
