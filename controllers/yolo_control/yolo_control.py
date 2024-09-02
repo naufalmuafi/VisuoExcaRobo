@@ -40,12 +40,9 @@ class YOLOControl(Supervisor):
         self.floor = self.getFromDef("FLOOR")
         self.set_arena_boundaries()
 
-        # Initialize the camera, motors, and sensors
+        # Initialize the camera and display (optional)
         self.camera = self.init_camera()
-        self.display = self.getDevice("display_1")
-        self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
-        self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
-        self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
+        self.display = self.getDevice("display_1")        
 
         # Set the camera properties
         self.camera_width, self.camera_height = (
@@ -65,7 +62,7 @@ class YOLOControl(Supervisor):
         self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
 
         # Create a window for displaying the processed image
-        cv2.namedWindow("Display_2", cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
 
         # Set initial move
         self.initial_move = random.choice([0, 1])
@@ -74,16 +71,39 @@ class YOLOControl(Supervisor):
         self.state = np.zeros(4, dtype=np.uint16)
 
     def run(self):
+        # Reset the simulation
+        self.reset()
+        
+        # Main loop
         while self.step(self.timestep) != -1:
             self.state, distance, centroid = self.get_observation()
             if self.is_done(distance, centroid):
-                print("sip.")
-                # self.digging_operation()
+                print("sip.")                
                 exit(1)
 
             # Wait for a short time (1 ms) to allow the image to be displayed
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
+    
+    def reset(self):        
+        # Reset the simulation
+        self.simulationReset()
+        self.simulationResetPhysics()
+        super().step(self.timestep)
+
+        # Set the robot to the initial position
+        self.init_pos = self.robot.getPosition()
+
+        # Initialize the motors and sensors
+        self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
+        self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
+        self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
+
+        # Step of the robot in simulation world
+        super().step(self.timestep)
+
+        # Initialize the state
+        self.state = np.zeros(4, dtype=np.uint16)
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
@@ -120,7 +140,8 @@ class YOLOControl(Supervisor):
 
     def get_observation(self):
         # Initialize the variables
-        distance, centroid = 300, [None, None]
+        distance, centroid = None, [None, None]
+        self.cords = []
         
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
@@ -177,31 +198,31 @@ class YOLOControl(Supervisor):
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
         # Draw bounding box with label if state is not empty
-        if np.any(self.state):
-            self.draw_bounding_box(img_bgr, self.state, self.label)
+        if np.any(self.cords):
+            self.draw_bounding_box(img_bgr, self.cords, self.label)
 
         # Display the image in the OpenCV window
-        cv2.imshow("Display_2", img_bgr)
+        cv2.imshow("Webots YOLO Display", img_bgr)
 
         return img_bgr
 
-    def draw_bounding_box(self, img, state, label):
-        x_min, y_min, x_max, y_max = state
+    def draw_bounding_box(self, img, cords, label):
+        bb_x_min, bb_y_min, bb_x_max, bb_y_max = cords
 
         # Draw the bounding box
-        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)  # Red box        
+        cv2.rectangle(img, (bb_x_min, bb_y_min), (bb_x_max, bb_y_max), (0, 0, 255), 2)  # Red box        
 
         # Get the width and height of the text box
-        (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+        (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
         # Draw a filled rectangle for the label background
-        cv2.rectangle(img, (x_min, y_min - h - 10), (x_min + w, y_min), (0, 0, 255), -1)
+        cv2.rectangle(img, (bb_x_min, bb_y_min - h - 1), (bb_x_min + w, bb_y_min), (0, 0, 255), -1)
 
         # Put the label text on the image
         cv2.putText(
             img,
             label,
-            (x_min, y_min - 5),
+            (bb_x_min, bb_y_min - 5),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.3,
             (255, 255, 255),
