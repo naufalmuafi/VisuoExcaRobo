@@ -156,8 +156,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         super().step(self.timestep)
 
         # Get new observation and target distance
-        self.state, target_distance = self.get_observation()
-        print(f"State: {self.state}, Distance: {target_distance}")
+        self.state, target_distance = self.get_observation()        
 
         # Calculate the reward
         reward_yolo = self.f(target_distance) * (10**-3)
@@ -251,6 +250,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             Tuple: The current state and the distance to the target.
         """
         distance, centroid = 300, [None, None]
+        x_min, y_min, x_max, y_max = 0, 0, 0, 0        
 
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
@@ -266,7 +266,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.cords = [round(x) for x in self.cords]  # Round the coordinates
             self.conf = round(box.conf[0].item(), 2)  # Get the confidence
 
-            if self.label == "rock":
+            if self.label == "rock":                                                
                 # Get the coordinates of the bounding box
                 x_min, y_min, x_max, y_max = self.cords
 
@@ -278,9 +278,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                 distance = np.sqrt(
                     (centroid[0] - self.target_coordinate[0]) ** 2
                     + (centroid[1] - self.target_coordinate[1]) ** 2
-                )
+                )        
             else:
-                self.state = np.zeros(4, dtype=np.uint16)
+                self.state = np.array([0, 0, 0, 0], dtype=np.uint16)
                 distance = 300
 
         return self.state, distance
