@@ -1,6 +1,7 @@
 import Color_VisuoExcaRobo
 import YOLO_VisuoExcaRobo
 
+import cv2
 import os
 import datetime
 import gymnasium as gym
@@ -170,6 +171,10 @@ class VisuoExcaRobo:
             # Reset the environment if the episode is done
             if done:
                 obs, _ = self.env.reset()
+            
+            # Break the loop if 'q' is pressed
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break            
 
             step += 1
 

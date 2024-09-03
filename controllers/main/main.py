@@ -31,7 +31,7 @@ if __name__ == "__main__":
         print(f"Environment is ready: {robot.env}")
 
         # Define the result file name based on current configurations
-        result_file = "20240901_ppo_5000000_bs_1024_lr_1e-04"
+        result_file = "YOLO_20240902_ppo_5000000_bs_1024_lr_1e-04"
         model_train_dir = __modeldir + result_file
 
         # Fit the model by either training or testing it based on 'duty' argument
