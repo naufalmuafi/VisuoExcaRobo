@@ -24,7 +24,7 @@ MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
 LOWER_Y = -20
-SHARPNESS = 3
+STEPNESS = 4
 DISTANCE_THRESHOLD = 20
 
 
@@ -82,7 +82,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.tolerance_x = 1
 
         # Load the YOLO model
-        self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
+        # self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
         self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
 
         # Create a window for displaying the processed image
@@ -95,7 +95,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
 
         # Initialize the robot state
-        self.state = np.zeros(4, dtype=np.uint16)        
+        self.state = np.zeros(4, dtype=np.uint16)
         
         # Set the seed for reproducibility
         self.seed()
@@ -128,7 +128,8 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Initialize state and return it
         self.state = np.zeros(4, dtype=np.uint16)
-        self.cords = []
+        self.cords = [0, 0, 0, 0]
+        
         info: dict = {}
 
         return self.state, info
@@ -142,8 +143,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         Returns:
             Tuple: Observation, reward, done flag, truncation flag, and info dictionary.
-        """        
-
+        """                
         # Set the action for left and right wheels
         left_wheels_action = action[0] * self.max_wheel_speed
         right_wheels_action = action[1] * self.max_wheel_speed
@@ -157,6 +157,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Get new observation and target distance
         self.state, target_distance = self.get_observation()
+        print(f"State: {self.state}, Distance: {target_distance}")
 
         # Calculate the reward
         reward_yolo = self.f(target_distance) * (10**-3)
@@ -177,7 +178,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
             and self.arena_y_min + arena_th <= pos[1] <= self.arena_y_max - arena_th
         )
-        hit_arena_punishment = -3 if hit_arena else 0
+        hit_arena_punishment = -3 if hit_arena else 0                
 
         # Final reward calculation
         reward = (
@@ -220,7 +221,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
     def f(
         self,
         target_distance,
-        sharpness=SHARPNESS,
+        stepness=STEPNESS,
         distance_threshold=DISTANCE_THRESHOLD,
     ) -> float:
         """
@@ -228,13 +229,13 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         Args:
             target_distance (float): Distance from the target.
-            sharpness (int): Sharpness factor for the logistic function.
+            stepness (int): Sharpness factor for the logistic function.
             distance_threshold (float): Threshold distance for target detection.
 
         Returns:
             float: The reward based on the target distance.
         """
-        exponent = sharpness * (target_distance - distance_threshold) * math.log(10)
+        exponent = stepness * (target_distance - distance_threshold) * math.log(10)
         try:
             result = 1 / (1 + math.exp(exponent))
         except OverflowError:
@@ -249,7 +250,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        distance, centroid = 300, [None, None]        
+        distance, centroid = 300, [None, None]
 
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
@@ -278,6 +279,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                     (centroid[0] - self.target_coordinate[0]) ** 2
                     + (centroid[1] - self.target_coordinate[1]) ** 2
                 )
+            else:
+                self.state = np.zeros(4, dtype=np.uint16)
+                distance = 300
 
         return self.state, distance
 
@@ -300,8 +304,8 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
         # Draw bounding box with label if state is not empty
-        if np.any(self.cords):
-            self.draw_bounding_box(img_bgr, self.cords, self.label)
+        if self.cords != [0, 0, 0, 0]:
+            self.draw_bounding_box(img_bgr, self.cords, self.label)        
 
         # Display the image in the OpenCV window
         cv2.imshow("Webots YOLO Display", img_bgr)
