@@ -102,7 +102,8 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
 
         # Initialize the robot state
-        self.state = np.zeros(4, dtype=np.uint16)        
+        self.state = np.zeros(4, dtype=np.uint16)     
+        self.cords = np.zeros(4, dtype=np.uint16)   
         
         # Set the seed for reproducibility
         self.seed()
@@ -198,7 +199,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
 
         # Check if the episode is done
-        done = reach_target or robot_far_away or hit_arena
+        done = reach_target or robot_far_away or hit_arena        
 
         return self.state, reward, done, False, {}
 
@@ -260,13 +261,14 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
+        # Get the image from the Webots camera (BGRA format)
+        img_bgr = self._get_image_in_display()
+        
+        # Initialize the variables
         distance, centroid = 300, [0, 0]
         x_min, y_min, x_max, y_max = 0, 0, 0, 0
         obs = np.zeros(4, dtype=np.uint16)
         self.cords = np.zeros(4, dtype=np.uint16)
-
-        # Get the image from the Webots camera (BGRA format)
-        img_bgr = self._get_image_in_display()
 
         # Perform object detection with YOLO
         results = self.yolo_model.predict(img_bgr, verbose=False)
@@ -293,10 +295,12 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                         (centroid[0] - self.target_coordinate[0]) ** 2
                         + (centroid[1] - self.target_coordinate[1]) ** 2
                     )
-        else:
-            print("No objects detected.")
+        else:            
             obs = np.array(self.cords, dtype=np.uint16)
             distance = 300
+        
+        # Get the image from the Webots camera (BGRA format)
+        img_bgr = self._get_image_in_display()
 
         return obs, distance
 
@@ -319,7 +323,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
         # Draw bounding box with label if state is not empty
-        if self.cords != np.zeros(4, dtype=np.uint16):
+        if np.any(self.cords != np.zeros(4, dtype=np.uint16)):
             self.draw_bounding_box(img_bgr, self.cords, self.label)        
 
         # Display the image in the OpenCV window
