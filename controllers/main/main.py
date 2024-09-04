@@ -12,10 +12,7 @@ if __name__ == "__main__":
     This is the main entry point of the program where the VisuoExcaRobo model is
     initialized, the environment is checked, and the training or testing is performed
     based on the provided arguments.
-    """
-
-    # Define the model directory where trained models will be stored
-    __modeldir = "models/"
+    """    
 
     # Parse the command-line arguments
     args = parse_arguments(TIMESTEPS)
@@ -28,16 +25,10 @@ if __name__ == "__main__":
 
     # If the environment is ready, proceed with training or testing
     if ready:
-        print(f"Environment is ready: {robot.env}")
-
-        # Define the result file name based on current configurations
-        result_file = "YOLO_20240902_ppo_5000000_bs_1024_lr_1e-04"
-        model_train_dir = __modeldir + result_file
+        print(f"Environment is ready: {robot.env}")        
 
         # Fit the model by either training or testing it based on 'duty' argument
         robot.fit(
             batch_size=BATCH_SIZE,
-            learning_rate=LEARNING_RATE,
-            model_dir=model_train_dir,
-            result_file=result_file,
+            learning_rate=LEARNING_RATE            
         )

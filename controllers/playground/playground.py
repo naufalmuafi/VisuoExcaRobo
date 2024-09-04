@@ -72,20 +72,21 @@ class ColorControl(Supervisor):
     def run(self):
         while self.step(self.timestep) != -1:
             # current_time = self.getTime()
+            self.run_wheels(5.0, "all")
 
             # # Capture and save an image every 500 ms
             # if current_time - self.last_save_time >= IMAGE_SAVE_INTERVAL:
             #     self.save_image(current_time)
             #     self.last_save_time = current_time
 
-            self.state, distance, centroid = self.get_observation(
-                self.camera_width, self.camera_height
-            )
-            if self.is_done(distance, centroid):
-                print("sip.")
-                # self.digging_operation()
+            # self.state, distance, centroid = self.get_observation(
+            #     self.camera_width, self.camera_height
+            # )
+            # if self.is_done(distance, centroid):
+            #     print("sip.")
+            #     # self.digging_operation()
 
-                exit(1)
+            #     exit(1)
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0

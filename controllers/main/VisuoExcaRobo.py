@@ -44,8 +44,10 @@ class VisuoExcaRobo:
             self.duty,
             self.env_type,
             self.timesteps,
+            self.model_path,
             self.model_name,
             self.log_name,
+            self.plot_name,
         ) = self.extract_args(args)
 
         # Define the environment ID based on the environment type
@@ -87,21 +89,19 @@ class VisuoExcaRobo:
             return False
 
     def fit(
-        self, batch_size=64, learning_rate=0.0003, model_dir="models/", result_file=""
+        self, batch_size=64, learning_rate=0.0003
     ) -> None:
         """
         Fits the model by training or testing it based on the duty specified.
 
         Args:
             batch_size (int): The size of the batch for training.
-            learning_rate (float): The learning rate for the PPO model.
-            model_dir (str): The directory where the trained model is saved.
-            result_file (str): The filename for saving test results.
+            learning_rate (float): The learning rate for the PPO model.            
         """
         if self.duty == "train":
             self.train_PPO(batch_size=batch_size, learning_rate=learning_rate)
         elif self.duty == "test":
-            self.test_PPO(model_dir=model_dir, result_file=result_file)
+            self.test_PPO(max_steps=self.timesteps, model_dir=str(self.model_path), plot_name=str(self.plot_name))
 
     def train_PPO(self, batch_size=64, learning_rate=0.0003) -> None:
         """
@@ -131,13 +131,14 @@ class VisuoExcaRobo:
         model.save(model_filename)
         print(f"Model saved as {model_filename}")
 
-    def test_PPO(self, model_dir: str = None, result_file: str = None) -> None:
+    def test_PPO(self, max_steps: int=3000, model_dir: str = None, plot_name: str = None) -> None:
         """
         Tests the trained PPO model and visualizes the rewards over time.
 
         Args:
+            max_steps (int): The maximum number of steps to run the test.
             model_dir (str): The directory path where the trained model is stored.
-            result_file (str): The filename to save the test results.
+            plot_name (str): The filename to save the test results.
         """
         # Load the pre-trained model
         try:
@@ -171,23 +172,27 @@ class VisuoExcaRobo:
             # Reset the environment if the episode is done
             if done:
                 obs, _ = self.env.reset()
+                print("Test Success.")
+            
+            if step >= max_steps:
+                print("Max Steps Reached.")
+                done = True
             
             # Break the loop if 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord("q"):
-                break            
+                print("Test Interrupted.")
+                done = True                
 
             step += 1
 
-        print("Test Success.")
+        print("Test Job Done.")
 
         # Plot the reward curve
         plt.plot(step_list, reward_list)
         # Save the plot as a PNG file
         plt.savefig(
-            f"{self.log_dir}/test_reward_plot_{result_file}_{self.today_date}.png"
-        )
-        # Display the plot
-        plt.show()
+            f"{self.log_dir}/test_reward_plot_{plot_name}_{self.today_date}.png"
+        )        
 
     def extract_args(self, args) -> Tuple[str, int, str, str]:
         """
@@ -202,10 +207,12 @@ class VisuoExcaRobo:
         duty = args.duty
         env_type = args.env
         timesteps = args.timesteps
+        model_path = args.model_path
         model_dir = args.model_dir
         log_dir = args.log_dir
+        plot_name = args.plot_name
 
-        return duty, env_type, timesteps, model_dir, log_dir
+        return duty, env_type, timesteps, model_path, model_dir, log_dir, plot_name
 
     def create_dir(
         self, model_name: str = "models", log_name: str = "logs"

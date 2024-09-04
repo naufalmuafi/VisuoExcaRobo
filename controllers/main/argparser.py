@@ -6,13 +6,15 @@ class DutyAction(argparse.Action):
     Custom argparse action to handle 'duty' argument.
 
     This class ensures that when the 'train' duty is selected, certain arguments
-    such as 'timesteps' are required.
+    such as 'timesteps' are required. Similarly, when the 'test' duty is selected,
+    the 'model_path' argument is required.
     """
 
     def __call__(self, parser, namespace, values, option_string=None) -> None:
         """
         Called when the 'duty' argument is parsed. It sets the value and checks
-        for additional required arguments if 'train' is selected.
+        for additional required arguments if 'train' is selected. If the required
+        arguments are not provided, an error is raised.
 
         Args:
             parser (argparse.ArgumentParser): The argument parser instance.
@@ -26,6 +28,9 @@ class DutyAction(argparse.Action):
         # If 'duty' is 'train', ensure 'timesteps' is provided
         if values == "train" and not namespace.timesteps:
             parser.error("Argument --timesteps required when duty is 'train'.")
+        # If 'duty' is 'test', ensure 'model_path' is provided
+        elif values == "test" and not namespace.model_path and not namespace.plot_name:
+            parser.error("Argument --model_path and --plot_name required when duty is 'test'.")
 
 
 def parse_arguments(timesteps: int) -> argparse.Namespace:
@@ -74,6 +79,15 @@ def parse_arguments(timesteps: int) -> argparse.Namespace:
         default=timesteps,
         help="Number of timesteps to train the model",
     )
+    
+    # Add the 'model_path' argument for specifying model file
+    parser.add_argument(
+        "-mp",
+        "--model_path",
+        type=str,
+        default="models/",
+        help="Filename of the model to load",
+    )
 
     # Add the 'model_dir' argument for specifying model directory
     parser.add_argument(
@@ -92,6 +106,15 @@ def parse_arguments(timesteps: int) -> argparse.Namespace:
         default="logs",
         help="Directory to store the logs",
     )
+    
+    # Add the 'plot_name' argument for specifying plot name
+    parser.add_argument(
+        "-pn",
+        "--plot_name",
+        type=str,
+        default="test_1",
+        help="Filename to save the test results",
+    )
 
     # Parse the arguments
     args = parser.parse_args()
@@ -100,5 +123,8 @@ def parse_arguments(timesteps: int) -> argparse.Namespace:
     if args.duty == "train":
         if args.timesteps is None:
             parser.error("Argument --timesteps is required when duty is 'train'.")
+    elif args.duty == "test":
+        if args.model_path and args.plot_name is None:
+            parser.error("Argument --model_path and --plot_name is required when duty is 'test'.")
 
     return args
