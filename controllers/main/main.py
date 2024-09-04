@@ -3,8 +3,8 @@ from argparser import parse_arguments
 
 # Constants for model training
 TIMESTEPS = 1000  # Number of timesteps for training
-BATCH_SIZE = 1024  # Batch size for training
-LEARNING_RATE = 1e-3  # Learning rate for the PPO model
+BATCH_SIZE = 2048  # Batch size for training
+LEARNING_RATE = 1e-4  # Learning rate for the PPO model
 
 # Main program entry point
 if __name__ == "__main__":
