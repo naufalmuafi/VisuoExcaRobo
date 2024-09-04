@@ -19,12 +19,12 @@ except ImportError:
 
 # Constants used in the environment
 ENV_ID = "YOLO_VisuoExcaRobo"
-MAX_EPISODE_STEPS = 5000
+MAX_EPISODE_STEPS = 3000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
 LOWER_Y = -20
-STEPNESS = 4
+STEPNESS = 5
 DISTANCE_THRESHOLD = 20
 
 
@@ -47,7 +47,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         """
         super().__init__()
         self.timestep = int(self.getBasicTimeStep())
-        random.seed(42)
+        random.seed(123)
 
         # Register the environment with Gym
         self.spec: EnvSpec = EnvSpec(id=ENV_ID, max_episode_steps=max_episode_steps)
