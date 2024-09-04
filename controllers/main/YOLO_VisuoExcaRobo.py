@@ -23,9 +23,12 @@ MAX_EPISODE_STEPS = 3000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
-LOWER_Y = -20
+
+# Constants for the logistic function
+LOWER_Y = -38
 STEPNESS = 5
-DISTANCE_THRESHOLD = 20
+MIDPOINT = 13
+TARGET_TH = 5
 
 
 class YOLO_VisuoExcaRobo(Supervisor, Env):
@@ -59,7 +62,10 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = MAX_WHEEL_SPEED
         self.max_robot_distance = MAX_ROBOT_DISTANCE
-        self.distance_threshold = DISTANCE_THRESHOLD
+        
+        # Set the logistic function parameters
+        self.midpoint = MIDPOINT
+        self.target_th = TARGET_TH
 
         # Get the floor node and set arena boundaries
         self.floor = self.getFromDef("FLOOR")
@@ -83,19 +89,20 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Load the YOLO model
         # self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
-        self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
+        self.yolo_model = YOLO("../../runs/detect/train_m_300/weights/best.pt")
 
         # Create a window for displaying the processed image
         cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
 
         # Define action space and observation space
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
+        high = max(self.camera_width, self.camera_height)
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(4,), dtype=np.uint16
+            low=0, high=high, shape=(4,), dtype=np.uint16
         )
 
         # Initialize the robot state
-        self.state = np.zeros(4, dtype=np.uint16)
+        self.state = np.zeros(4, dtype=np.uint16)        
         
         # Set the seed for reproducibility
         self.seed()
@@ -126,9 +133,8 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         super().step(self.timestep)
 
-        # Initialize state and return it
-        self.state = np.zeros(4, dtype=np.uint16)
-        self.cords = [0, 0, 0, 0]
+        # Initialize state
+        self.state = np.zeros(4, dtype=np.uint16)        
         
         info: dict = {}
 
@@ -158,18 +164,22 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Get new observation and target distance
         self.state, target_distance = self.get_observation()        
 
-        # Calculate the reward
-        reward_yolo = self.f(target_distance) * (10**-3)
-        reach_target = target_distance <= self.distance_threshold - 10
+        # Calculate the reward        
+        # Calculate the reward based on the distance to the target
+        reward_yolo = self.f(target_distance)
+        
+        # Check if the robot reaches the target
+        reach_target = 0 <= target_distance <= self.target_th
         reward_reach_target = 10 if reach_target else 0
 
+        # Give The Punishment
         # Check robot position relative to its initial position
         pos = self.robot.getPosition()
         robot_distance = (
             (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
         ) ** 0.5
         robot_far_away = robot_distance > self.max_robot_distance
-        robot_distance_punishment = -3 if robot_far_away else 0
+        robot_distance_punishment = -2 if robot_far_away else 0
 
         # Check if the robot hits the arena boundaries
         arena_th = 1.5
@@ -177,7 +187,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
             and self.arena_y_min + arena_th <= pos[1] <= self.arena_y_max - arena_th
         )
-        hit_arena_punishment = -3 if hit_arena else 0                
+        hit_arena_punishment = -2 if hit_arena else 0                
 
         # Final reward calculation
         reward = (
@@ -219,26 +229,27 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
     def f(
         self,
-        target_distance,
+        x,
         stepness=STEPNESS,
-        distance_threshold=DISTANCE_THRESHOLD,
+        midpoint=MIDPOINT,
     ) -> float:
         """
         Calculate the reward based on the distance to the target using a logistic function.
 
         Args:
-            target_distance (float): Distance from the target.
+            x (float): Distance from the target.
             stepness (int): Sharpness factor for the logistic function.
-            distance_threshold (float): Threshold distance for target detection.
+            midpoint (float): Threshold distance for target detection.
 
         Returns:
             float: The reward based on the target distance.
-        """
-        exponent = stepness * (target_distance - distance_threshold) * math.log(10)
+        """        
+        exponent = ((stepness * x) - (stepness * midpoint)) * math.log(10)
         try:
             result = 1 / (1 + math.exp(exponent))
         except OverflowError:
             result = 0  # If exponent is too large, the value approaches zero
+            
         return result
 
     def get_observation(self) -> Tuple[np.ndarray, float]:
@@ -249,9 +260,10 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        distance, centroid = None, [None, None]
-        self.label, self.cords, self.conf = "", [None, None, None, None], None
-        x_min, y_min, x_max, y_max = None, None, None, None    
+        distance, centroid = 300, [0, 0]
+        x_min, y_min, x_max, y_max = 0, 0, 0, 0
+        obs = np.zeros(4, dtype=np.uint16)
+        self.cords = np.zeros(4, dtype=np.uint16)
 
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
@@ -260,31 +272,33 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         results = self.yolo_model.predict(img_bgr, verbose=False)
         result = results[0]
 
-        # Post-process the results
-        for box in result.boxes:
-            self.label = result.names[box.cls[0].item()]  # Get the label
-            self.cords = box.xyxy[0].tolist()  # Get the coordinates
-            self.cords = [round(x) for x in self.cords]  # Round the coordinates
-            self.conf = round(box.conf[0].item(), 2)  # Get the confidence
+        # Post-process the results (if any objects are detected)
+        if result.boxes:
+            for box in result.boxes:
+                self.label = result.names[box.cls[0].item()]  # Get the label
+                self.cords = box.xyxy[0].tolist()  # Get the coordinates
+                self.cords = [round(x) for x in self.cords]  # Round the coordinates
+                self.conf = round(box.conf[0].item(), 2)  # Get the confidence
 
-            if self.label == "rock":                                                
-                # Get the coordinates of the bounding box
-                x_min, y_min, x_max, y_max = self.cords
+                if self.label == "rock":                                                
+                    # Get the new state
+                    obs = np.array(self.cords, dtype=np.uint16)
+                    
+                    # Get the coordinates of the bounding box
+                    x_min, y_min, x_max, y_max = self.cords
 
-                # Get the new state
-                self.state = np.array([x_min, y_min, x_max, y_max], dtype=np.uint16)
+                    # Calculate the centroid and the distance from the lower center
+                    centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
+                    distance = np.sqrt(
+                        (centroid[0] - self.target_coordinate[0]) ** 2
+                        + (centroid[1] - self.target_coordinate[1]) ** 2
+                    )
+        else:
+            print("No objects detected.")
+            obs = np.array(self.cords, dtype=np.uint16)
+            distance = 300
 
-                # Calculate the centroid and the distance from the lower center
-                centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
-                distance = np.sqrt(
-                    (centroid[0] - self.target_coordinate[0]) ** 2
-                    + (centroid[1] - self.target_coordinate[1]) ** 2
-                )        
-            else:
-                self.state = np.array([0, 0, 0, 0], dtype=np.uint16)
-                distance = 300
-
-        return self.state, distance
+        return obs, distance
 
     def _get_image_in_display(self):
         """
@@ -305,7 +319,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
         # Draw bounding box with label if state is not empty
-        if self.label == "rock":
+        if self.cords != np.zeros(4, dtype=np.uint16):
             self.draw_bounding_box(img_bgr, self.cords, self.label)        
 
         # Display the image in the OpenCV window

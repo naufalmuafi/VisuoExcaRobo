@@ -84,7 +84,7 @@ class YOLOControl(Supervisor):
 
         # Load the YOLO model
         self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
-        self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
+        self.yolo_model = YOLO("../../runs/detect/train_n_219/weights/best.pt")
 
         # Create a window for displaying the processed image
         cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
@@ -100,7 +100,7 @@ class YOLOControl(Supervisor):
         Main loop of the controller that resets the simulation and continuously
         processes camera input to control the robot.
         """
-        self.reset()
+        self.reset()            
 
         while self.step(self.timestep) != -1:
             self.state, distance, centroid = self.get_observation()
@@ -199,7 +199,7 @@ class YOLOControl(Supervisor):
         results = self.yolo_model.predict(img_bgr)
         result = results[0]
 
-        # Post-process the results
+        # Post-process the results (shows only if the object is a rock)
         for box in result.boxes:
             self.label = result.names[box.cls[0].item()]  # Get the label
             self.cords = box.xyxy[0].tolist()  # Get the coordinates
@@ -224,12 +224,13 @@ class YOLOControl(Supervisor):
 
                 print(
                     f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
-                )
+                )                
                 self.move_towards_target(centroid, distance)
             else:
                 self.search_target()
 
-            print("---")
+        print(self.cords)
+        print("---")
 
         return self.state, distance, centroid
 
