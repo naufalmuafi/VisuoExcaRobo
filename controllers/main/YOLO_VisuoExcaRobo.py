@@ -249,8 +249,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        distance, centroid = 300, [None, None]
-        x_min, y_min, x_max, y_max = 0, 0, 0, 0        
+        distance, centroid = None, [None, None]
+        self.label, self.cords, self.conf = "", [None, None, None, None], None
+        x_min, y_min, x_max, y_max = None, None, None, None    
 
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
@@ -304,7 +305,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
         # Draw bounding box with label if state is not empty
-        if self.cords != [0, 0, 0, 0]:
+        if self.label == "rock":
             self.draw_bounding_box(img_bgr, self.cords, self.label)        
 
         # Display the image in the OpenCV window
