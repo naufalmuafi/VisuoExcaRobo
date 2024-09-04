@@ -89,7 +89,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Load the YOLO model
         # self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
-        self.yolo_model = YOLO("../../runs/detect/train_m_300/weights/best.pt")
+        self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
 
         # Create a window for displaying the processed image
         cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
