@@ -180,7 +180,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
         ) ** 0.5
         robot_far_away = robot_distance > self.max_robot_distance
-        robot_distance_punishment = -2 if robot_far_away else 0
+        robot_distance_punishment = -1 if robot_far_away else 0
 
         # Check if the robot hits the arena boundaries
         arena_th = 1.5
@@ -188,7 +188,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
             and self.arena_y_min + arena_th <= pos[1] <= self.arena_y_max - arena_th
         )
-        hit_arena_punishment = -2 if hit_arena else 0                
+        hit_arena_punishment = -1 if hit_arena else 0                
 
         # Final reward calculation
         reward = (
