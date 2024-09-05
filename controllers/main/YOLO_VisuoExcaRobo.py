@@ -19,7 +19,7 @@ except ImportError:
 
 # Constants used in the environment
 ENV_ID = "YOLO_VisuoExcaRobo"
-MAX_EPISODE_STEPS = 5000
+MAX_EPISODE_STEPS = 2000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
@@ -28,7 +28,7 @@ MAX_ROBOT_DISTANCE = 8.0
 LOWER_Y = -38
 STEPNESS = 5
 MIDPOINT = 13
-TARGET_TH = 5
+TARGET_TH = 3
 
 
 class YOLO_VisuoExcaRobo(Supervisor, Env):
