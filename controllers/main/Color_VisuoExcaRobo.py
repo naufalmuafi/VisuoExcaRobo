@@ -1,6 +1,6 @@
 import sys
 from typing import Any, Tuple, List
-from controller import Supervisor, Display
+from controller import Supervisor
 
 try:
     import cv2
@@ -84,7 +84,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         self.tolerance_x = 1
 
         # Color range for target detection
-        color_tolerance = 5
+        color_tolerance = 3
         self.color_target = np.array([46, 52, 54])
         self.lower_color = self.color_target - color_tolerance
         self.upper_color = self.color_target + color_tolerance
@@ -94,8 +94,9 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         
         # Define action space and observation space
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
+        high = max(self.camera_width, self.camera_height)
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(4,), dtype=np.uint16
+            low=0, high=high, shape=(4,), dtype=np.uint16
         )
 
         # Initialize the robot state
@@ -298,7 +299,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
             self.draw_bounding_box(img_bgr, self.state, "Target")        
 
         # Display the image in the OpenCV window
-        cv2.imshow("Webots YOLO Display", img_bgr)
+        cv2.imshow("Webots Color Recognition Display", img_bgr)
         cv2.waitKey(1)
 
         return img_bgr
