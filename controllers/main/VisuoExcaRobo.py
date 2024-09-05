@@ -169,7 +169,7 @@ class VisuoExcaRobo:
             step_list.append(step)
             reward_list.append(reward)
 
-            # Reset the environment if the episode is done
+            # Reset the environment if the episode is done            
             if done:
                 obs, _ = self.env.reset()
                 print("Test Success.")
