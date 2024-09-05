@@ -165,8 +165,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         # Calculate the reward
         # Calculate the reward based on the distance to the target
-        # reward_color = self.f(target_distance) * (10**-3)
-        reward_color = self.f(target_distance)
+        reward_color = self.f(target_distance) * (10**-2)
         
         # Check if the target is reached
         reach_target = 0 <= target_distance <= self.target_th
