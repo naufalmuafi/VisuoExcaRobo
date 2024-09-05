@@ -84,3 +84,15 @@ INFO: 'wheeledExcavator' extern controller: connected.
 INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
 INFO: 'wheeledExcavator' extern controller: connected.
 INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: "wheeledExcavator" extern controller: stopped.
+INFO: 'wheeledExcavator' extern controller: disconnected.
+INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
+INFO: 'wheeledExcavator' extern controller: connected.
+WARNING: Contact joints between materials 'default' and 'default' will only be created for the 10 deepest contact points instead of all the 51 contact points.
+WARNING: Contact joints between materials 'default' and 'default' will only be created for the 10 deepest contact points instead of all the 45 contact points.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: "wheeledExcavator" extern controller: stopped.
+INFO: 'wheeledExcavator' extern controller: disconnected.
+INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
