@@ -71,7 +71,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.floor = self.getFromDef("FLOOR")
         self.set_arena_boundaries()
 
-        # Initialize camera and display
+        # Initialize camera
         self.camera = self.init_camera()        
 
         # Set camera properties
