@@ -19,7 +19,7 @@ except ImportError:
 
 # Constants used in the environment
 ENV_ID = "YOLO_VisuoExcaRobo"
-MAX_EPISODE_STEPS = 2000
+MAX_EPISODE_STEPS = 2048
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
@@ -96,14 +96,27 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Define action space and observation space
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
+        
+        # schema 1: coordinates of the target
         high = max(self.camera_width, self.camera_height)
+        # self.observation_space = spaces.Box(
+        #     low=0, high=high, shape=(4,), dtype=np.uint16
+        # )
+        
+        # schema 2: pure image
         self.observation_space = spaces.Box(
-            low=0, high=high, shape=(4,), dtype=np.uint16
+            low=0,
+            high=255,
+            shape=(3, self.camera_height, self.camera_width),
+            dtype=np.uint8,
         )
 
-        # Initialize the robot state
-        self.state = np.zeros(4, dtype=np.uint16)     
-        self.cords = np.zeros(4, dtype=np.uint16)   
+        # Initialize the robot state (schema 1)
+        # self.state = np.zeros(4, dtype=np.uint16)     
+        # self.cords = np.zeros(4, dtype=np.uint16)
+        
+        # Initialize the robot state (schema 2)
+        self.state = np.zeros((3, self.camera_height, self.camera_width), dtype=np.uint8)
         
         # Set the seed for reproducibility
         self.seed()
@@ -134,8 +147,11 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         super().step(self.timestep)
 
-        # Initialize state
-        self.state = np.zeros(4, dtype=np.uint16)        
+        # Initialize state (schema 1)
+        # self.state = np.zeros(4, dtype=np.uint16)        
+        
+        # Initialize state (schema 2)
+        self.state = np.zeros((3, self.camera_height, self.camera_width), dtype=np.uint8)
         
         info: dict = {}
 
@@ -162,8 +178,16 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Proceed to the next simulation step
         super().step(self.timestep)
 
-        # Get new observation and target distance
-        self.state, target_distance = self.get_observation()        
+        # Get new observation and target distance (schema 1)
+        # self.state, target_distance = self.get_observation()        
+        
+        # Get new observation and target distance (schema 2)
+        _, target_distance = self.get_observation()        
+        image = self.camera.getImage()
+        red_channel, green_channel, blue_channel = self.extract_rgb_channels(
+            image, self.camera_width, self.camera_height
+        )
+        self.state = np.array([red_channel, green_channel, blue_channel], dtype=np.uint8)
 
         # Calculate the reward        
         # Calculate the reward based on the distance to the target
@@ -366,6 +390,32 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             (255, 255, 255),
             1,
         )
+        
+    def extract_rgb_channels(
+        self, image, width, height
+    ) -> Tuple[List[List[int]], List[List[int]], List[List[int]]]:
+        """
+        Extract the RGB channels from the camera image.
+
+        Args:
+            image (Any): The image captured by the camera.
+            width (int): Width of the camera frame.
+            height (int): Height of the camera frame.
+
+        Returns:
+            Tuple: Red, Green, and Blue channels as lists of lists.
+        """
+        red_channel, green_channel, blue_channel = [], [], []
+        for j in range(height):
+            red_row, green_row, blue_row = [], [], []
+            for i in range(width):
+                red_row.append(self.camera.imageGetRed(image, width, i, j))
+                green_row.append(self.camera.imageGetGreen(image, width, i, j))
+                blue_row.append(self.camera.imageGetBlue(image, width, i, j))
+            red_channel.append(red_row)
+            green_channel.append(green_row)
+            blue_channel.append(blue_row)
+        return red_channel, green_channel, blue_channel
 
     def set_arena_boundaries(self) -> None:
         """
