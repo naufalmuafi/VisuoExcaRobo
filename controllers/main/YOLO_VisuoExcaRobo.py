@@ -60,6 +60,8 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
+
+        # Set the observation and reward schemas
         self.obs_space_schema = OBS_SPACE_SCHEMA
         self.reward_schema = REWARD_SCHEMA
         self.target_area_th = TARGET_AREA_TH
@@ -110,7 +112,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             )
 
             # Initialize the robot state (schema 1)
-            self.state = np.zeros(4, dtype=np.uint16)                                    
+            self.state = np.zeros(4, dtype=np.uint16)
         elif self.obs_space_schema == 2:  # schema 2: pure image
             self.observation_space = spaces.Box(
                 low=0,
@@ -123,7 +125,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.state = np.zeros(
                 (3, self.camera_height, self.camera_width), dtype=np.uint8
             )
-            
+
         # Variables initialization
         self.cords = np.zeros(4, dtype=np.uint16)
         self.prev_target_area = 0
@@ -274,18 +276,12 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
         in_target_y = centroid[1] >= self.moiety
         in_target = in_target_x and in_target_y
-        
+
         # x-axis reward and punishment
-        reward_x = (
-            10000
-            if in_target_x 
-            else -10 * abs(centroid[0] - self.center_x)
-        )
+        reward_x = 10000 if in_target_x else -10 * abs(centroid[0] - self.center_x)
 
         # y-axis reward and punishment
-        reward_y = (
-            10000 if in_target_y else -10 * (self.moiety - centroid[1])
-        )
+        reward_y = 10000 if in_target_y else -10 * (self.moiety - centroid[1])
 
         # Give The Punishment
         # Time Punishment

@@ -18,10 +18,13 @@ except ImportError:
 
 # Constants used in the environment
 ENV_ID = "Color_VisuoExcaRobo"
-MAX_EPISODE_STEPS = 3000
+OBS_SPACE_SCHEMA = 2  # 1: coordinates of the target, 2: pure image
+REWARD_SCHEMA = 1  # 1: reward function based on pixel position, 2: reward function based on distance
+MAX_EPISODE_STEPS = 2000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
+TARGET_AREA_TH = 2000
 
 # Constants for the logistic function
 LOWER_Y = -38
@@ -54,11 +57,16 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         # Get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
 
+        # Set the observation and reward schemas
+        self.obs_space_schema = OBS_SPACE_SCHEMA
+        self.reward_schema = REWARD_SCHEMA
+        self.target_area_th = TARGET_AREA_TH
+
         # Set motor and wheel speeds
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = MAX_WHEEL_SPEED
         self.max_robot_distance = MAX_ROBOT_DISTANCE
-        
+
         # Set the logistic function parameters
         self.midpoint = MIDPOINT
         self.target_th = TARGET_TH
@@ -68,7 +76,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         self.set_arena_boundaries()
 
         # Initialize camera
-        self.camera = self.init_camera()        
+        self.camera = self.init_camera()
 
         # Set camera properties
         self.camera_width, self.camera_height = (
@@ -80,8 +88,9 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         # Target properties
         self.center_x = self.camera_width / 2
         self.lower_y = self.camera_height + LOWER_Y
-        self.lower_center = [self.center_x, self.lower_y]
+        self.target_coordinate = [self.center_x, self.lower_y]
         self.tolerance_x = 1
+        self.moiety = 2.0 * self.camera_height / 3.0 + 5
 
         # Color range for target detection
         color_tolerance = 3
@@ -91,17 +100,34 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         # Create a window for displaying the processed image
         cv2.namedWindow("Webots Color Recognition Display", cv2.WINDOW_AUTOSIZE)
-        
+
         # Define action space and observation space
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
-        high = max(self.camera_width, self.camera_height)
-        self.observation_space = spaces.Box(
-            low=0, high=high, shape=(4,), dtype=np.uint16
-        )
 
-        # Initialize the robot state
-        self.state = np.zeros(4, dtype=np.uint16)
-        
+        if self.obs_space_schema == 1:  # schema 1: coordinates of the target
+            high = max(self.camera_width, self.camera_height)
+            self.observation_space = spaces.Box(
+                low=0, high=high, shape=(4,), dtype=np.uint16
+            )
+
+            # Initialize the robot state (schema 1)
+            self.state = np.zeros(4, dtype=np.uint16)
+        elif self.obs_space_schema == 2:  # schema 2: pure image
+            self.observation_space = spaces.Box(
+                low=0,
+                high=255,
+                shape=(3, self.camera_height, self.camera_width),
+                dtype=np.uint8,
+            )
+
+            # Initialize the robot state (schema 2)
+            self.state = np.zeros(
+                (3, self.camera_height, self.camera_width), dtype=np.uint8
+            )
+
+        # Variables initialization
+        self.prev_target_area = 0
+
         # Set the seed for reproducibility
         self.seed()
 
@@ -131,8 +157,15 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         super().step(self.timestep)
 
-        # Initialize state and return it
-        self.state = np.zeros(4, dtype=np.uint16)
+        if self.obs_space_schema == 1:  # schema 1: coordinates of the target
+            # Initialize state (schema 1)
+            self.state = np.zeros(4, dtype=np.uint16)
+        elif self.obs_space_schema == 2:  # schema 2: pure image
+            # Initialize state (schema 2)
+            self.state = np.zeros(
+                (3, self.camera_height, self.camera_width), dtype=np.uint8
+            )
+
         info: dict = {}
 
         return self.state, info
@@ -159,16 +192,152 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         super().step(self.timestep)
 
         # Get new observation and target distance
-        self.state, target_distance = self.get_observation(
+        target_coordinate, target_distance = self.get_observation(
             self.camera_width, self.camera_height
         )
 
-        # Calculate the reward
+        # Update the state based on the observation schema
+        if self.obs_space_schema == 1:  # schema 1: coordinates of the target
+            self.state = target_coordinate
+        elif self.obs_space_schema == 2:  # schema 2: pure image
+            image = self.camera.getImage()
+
+            red_channel, green_channel, blue_channel = self.extract_rgb_channels(
+                image, self.camera_width, self.camera_height
+            )
+
+            self.state = np.array(
+                [red_channel, green_channel, blue_channel], dtype=np.uint8
+            )
+
+        # Calculate the reward and check if the episode is done
+        if self.reward_schema == 1:  # schema 1: reward function based on pixel position
+            reward, done = self.get_reward_and_done_1(target_coordinate)
+        elif self.reward_schema == 2:  # schema 2: reward function based on distance
+            reward, done = self.get_reward_and_done_2(target_distance)
+
+        return self.state, reward, done, False, {}
+
+    def render(self, mode: str = "human") -> Any:
+        """
+        Render the environment (not implemented).
+
+        Args:
+            mode (str): The mode for rendering.
+
+        Returns:
+            Any: Not used.
+        """
+        pass
+
+    def seed(self, seed=None) -> List[int]:
+        """
+        Seed the environment for reproducibility.
+
+        Args:
+            seed (Any): The seed value.
+
+        Returns:
+            List[int]: The list containing the seed used.
+        """
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
+        return [seed]
+
+    def get_reward_and_done_1(self, coordinate=[0, 0, 0, 0]) -> Tuple[float, bool]:
+        """
+        Schema 1: Reward Function based on the pixel position of the target.
+
+        Args:
+            coordinate (list): The coordinates of the target object.
+
+        Returns:
+            Tuple: The reward and done flag.
+        """
+        # Get the target coordinates and calculate the centroid
+        target_x_min, target_y_min, target_x_max, target_y_max = coordinate
+        centroid = [
+            (target_x_min + target_x_max) / 2,
+            (target_y_min + target_y_max) / 2,
+        ]
+
+        # Calculate the reward based on the target area
+        target_area = (target_x_max - target_x_min) * (target_y_max - target_y_min)
+        reward_area = 100 if target_area > self.prev_target_area else -100
+
+        # Check if the robot reaches the target
+        reach_target = target_area >= self.target_area_th
+        reward_reach_target = 10000 if reach_target else 0
+
+        # Reward based on pixel position (x and y alignment)
+        in_target_x = (
+            self.center_x - self.tolerance_x
+            <= centroid[0]
+            <= self.center_x + self.tolerance_x
+        )
+        in_target_y = centroid[1] >= self.moiety
+        in_target = in_target_x and in_target_y
+
+        # x-axis reward and punishment
+        reward_x = 10000 if in_target_x else -10 * abs(centroid[0] - self.center_x)
+
+        # y-axis reward and punishment
+        reward_y = 10000 if in_target_y else -10 * (self.moiety - centroid[1])
+
+        # Give The Punishment
+        # Time Punishment
+        time_punishment = -1
+
+        # Check robot position relative to its initial position
+        pos = self.robot.getPosition()
+        robot_distance = (
+            (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
+        ) ** 0.5
+        robot_far_away = robot_distance > self.max_robot_distance
+        robot_distance_punishment = -10000 if robot_far_away else 0
+
+        # Check if the robot hits the arena boundaries
+        arena_th = 1.5
+        hit_arena = not (
+            self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
+            and self.arena_y_min + arena_th <= pos[1] <= self.arena_y_max - arena_th
+        )
+        hit_arena_punishment = -10000 if hit_arena else 0
+
+        # Final reward calculation
+        reward = (
+            reward_area
+            + reward_x
+            + reward_y
+            + reward_reach_target
+            + time_punishment
+            + robot_distance_punishment
+            + hit_arena_punishment
+        )
+
+        # Check if the episode is done
+        done = reach_target or robot_far_away or hit_arena or in_target
+
+        # Update the previous target area
+        self.prev_target_area = target_area
+
+        return reward, bool(done)
+
+    def get_reward_and_done_2(self, distance: float = 300) -> Tuple[float, bool]:
+        """
+        Schema 2: Reward Function based on the distance to the target and the robot's position.
+        Calculate the reward and done flag based on the target area and robot position.
+
+        Args:
+            distance (float): The distance between the target point and the current object.
+
+        Returns:
+            Tuple: The reward and done flag.
+        """
         # Calculate the reward based on the distance to the target
-        reward_color = self.f(target_distance) * (10**-2)
-        
-        # Check if the target is reached
-        reach_target = 0 <= target_distance <= self.target_th
+        reward_color = self.f(distance)
+
+        # Check if the robot reaches the target
+        reach_target = 0 <= distance <= self.target_th
         reward_reach_target = 10 if reach_target else 0
 
         # Give The Punishment
@@ -199,32 +368,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         # Check if the episode is done
         done = reach_target or robot_far_away or hit_arena
 
-        return self.state, reward, done, False, {}
-
-    def render(self, mode: str = "human") -> Any:
-        """
-        Render the environment (not implemented).
-
-        Args:
-            mode (str): The mode for rendering.
-
-        Returns:
-            Any: Not used.
-        """
-        pass
-
-    def seed(self, seed=None) -> List[int]:
-        """
-        Seed the environment for reproducibility.
-
-        Args:
-            seed (Any): The seed value.
-
-        Returns:
-            List[int]: The list containing the seed used.
-        """
-        self.np_random, seed = gym.utils.seeding.np_random(seed)
-        return [seed]
+        return reward, bool(done)
 
     def f(
         self,
@@ -261,7 +405,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        image = self.camera.getImage()            
+        image = self.camera.getImage()
 
         # Extract RGB channels from the image
         red_channel, green_channel, blue_channel = self.extract_rgb_channels(
@@ -270,20 +414,20 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         self.img_rgb = [red_channel, green_channel, blue_channel]
 
         # Perform the recognition process
-        self.state, distance = self.recognition_process(self.img_rgb, width, height)
-        
+        coordinate, distance = self.recognition_process(self.img_rgb, width, height)
+
         # Get the image with the bounding box
         self._get_image_in_display(image)
 
-        return self.state, distance
-    
+        return coordinate, distance
+
     def _get_image_in_display(self, img):
         """
         Captures an image from the Webots camera and processes it for object detection.
 
         Returns:
             np.ndarray: The processed BGR image.
-        """        
+        """
 
         # Convert the raw image data to a NumPy array
         img_np = np.frombuffer(img, dtype=np.uint8).reshape(
@@ -295,7 +439,7 @@ class Color_VisuoExcaRobo(Supervisor, Env):
 
         # Draw bounding box with label if state is not empty
         if np.any(self.state != np.zeros(4, dtype=np.uint16)):
-            self.draw_bounding_box(img_bgr, self.state, "Target")        
+            self.draw_bounding_box(img_bgr, self.state, "Target")
 
         # Display the image in the OpenCV window
         cv2.imshow("Webots Color Recognition Display", img_bgr)
@@ -410,8 +554,8 @@ class Color_VisuoExcaRobo(Supervisor, Env):
             (target_y_max + target_y_min) / 2,
         ]
         distance = np.sqrt(
-            (centroid[0] - self.lower_center[0]) ** 2
-            + (centroid[1] - self.lower_center[1]) ** 2
+            (centroid[0] - self.target_coordinate[0]) ** 2
+            + (centroid[1] - self.target_coordinate[1]) ** 2
         )
 
         return obs, distance
