@@ -19,6 +19,7 @@ except ImportError:
 
 # Constants used in the environment
 ENV_ID = "YOLO_VisuoExcaRobo"
+OBS_SPACE_SCHEMA = 2  # 1: coordinates of the target, 2: pure image
 MAX_EPISODE_STEPS = 2048
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
@@ -57,12 +58,13 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
+        self.obs_space_schema = OBS_SPACE_SCHEMA
 
         # Set motor and wheel speeds
         self.max_motor_speed = MAX_MOTOR_SPEED
         self.max_wheel_speed = MAX_WHEEL_SPEED
         self.max_robot_distance = MAX_ROBOT_DISTANCE
-        
+
         # Set the logistic function parameters
         self.midpoint = MIDPOINT
         self.target_th = TARGET_TH
@@ -72,7 +74,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.set_arena_boundaries()
 
         # Initialize camera
-        self.camera = self.init_camera()        
+        self.camera = self.init_camera()
 
         # Set camera properties
         self.camera_width, self.camera_height = (
@@ -96,30 +98,31 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Define action space and observation space
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
-        
-        # schema 1: coordinates of the target
-        high = max(self.camera_width, self.camera_height)
-        # self.observation_space = spaces.Box(
-        #     low=0, high=high, shape=(4,), dtype=np.uint16
-        # )
-        
-        # schema 2: pure image
-        self.observation_space = spaces.Box(
-            low=0,
-            high=255,
-            shape=(3, self.camera_height, self.camera_width),
-            dtype=np.uint8,
-        )
 
-        # Initialize the robot state (schema 1)
-        # self.state = np.zeros(4, dtype=np.uint16)     
-        
-        # Initialize the robot state (schema 2)
-        self.state = np.zeros((3, self.camera_height, self.camera_width), dtype=np.uint8)
-        
+        if self.obs_space_schema == 1:  # schema 1: coordinates of the target
+            high = max(self.camera_width, self.camera_height)
+            self.observation_space = spaces.Box(
+                low=0, high=high, shape=(4,), dtype=np.uint16
+            )
+
+            # Initialize the robot state (schema 1)
+            self.state = np.zeros(4, dtype=np.uint16)
+        elif self.obs_space_schema == 2:  # schema 2: pure image
+            self.observation_space = spaces.Box(
+                low=0,
+                high=255,
+                shape=(3, self.camera_height, self.camera_width),
+                dtype=np.uint8,
+            )
+
+            # Initialize the robot state (schema 2)
+            self.state = np.zeros(
+                (3, self.camera_height, self.camera_width), dtype=np.uint8
+            )
+
         # Variables initialization
         self.cords = np.zeros(4, dtype=np.uint16)
-        
+
         # Set the seed for reproducibility
         self.seed()
 
@@ -149,12 +152,15 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         super().step(self.timestep)
 
-        # Initialize state (schema 1)
-        # self.state = np.zeros(4, dtype=np.uint16)        
-        
-        # Initialize state (schema 2)
-        self.state = np.zeros((3, self.camera_height, self.camera_width), dtype=np.uint8)
-        
+        if self.obs_space_schema == 1:  # schema 1: coordinates of the target
+            # Initialize state (schema 1)
+            self.state = np.zeros(4, dtype=np.uint16)
+        elif self.obs_space_schema == 2:  # schema 2: pure image
+            # Initialize state (schema 2)
+            self.state = np.zeros(
+                (3, self.camera_height, self.camera_width), dtype=np.uint8
+            )
+
         info: dict = {}
 
         return self.state, info
@@ -168,7 +174,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         Returns:
             Tuple: Observation, reward, done flag, truncation flag, and info dictionary.
-        """                
+        """
         # Set the action for left and right wheels
         left_wheels_action = action[0] * self.max_wheel_speed
         right_wheels_action = action[1] * self.max_wheel_speed
@@ -181,20 +187,24 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         super().step(self.timestep)
 
         # Get new observation and target distance (schema 1)
-        # self.state, target_distance = self.get_observation()        
-        
-        # Get new observation and target distance (schema 2)
-        _, target_distance = self.get_observation()        
-        image = self.camera.getImage()
-        red_channel, green_channel, blue_channel = self.extract_rgb_channels(
-            image, self.camera_width, self.camera_height
-        )
-        self.state = np.array([red_channel, green_channel, blue_channel], dtype=np.uint8)
+        if self.obs_space_schema == 1:  # schema 1: coordinates of the target
+            self.state, target_distance = self.get_observation()
+        elif self.obs_space_schema == 2:  # schema 2: pure image
+            _, target_distance = self.get_observation()
+            image = self.camera.getImage()
 
-        # Calculate the reward        
+            red_channel, green_channel, blue_channel = self.extract_rgb_channels(
+                image, self.camera_width, self.camera_height
+            )
+
+            self.state = np.array(
+                [red_channel, green_channel, blue_channel], dtype=np.uint8
+            )
+
+        # Calculate the reward
         # Calculate the reward based on the distance to the target
         reward_yolo = self.f(target_distance)
-        
+
         # Check if the robot reaches the target
         reach_target = 0 <= target_distance <= self.target_th
         reward_reach_target = 10 if reach_target else 0
@@ -214,7 +224,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
             and self.arena_y_min + arena_th <= pos[1] <= self.arena_y_max - arena_th
         )
-        hit_arena_punishment = -1 if hit_arena else 0                
+        hit_arena_punishment = -1 if hit_arena else 0
 
         # Final reward calculation
         reward = (
@@ -225,7 +235,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
 
         # Check if the episode is done
-        done = reach_target or robot_far_away or hit_arena        
+        done = reach_target or robot_far_away or hit_arena
 
         return self.state, reward, done, False, {}
 
@@ -270,13 +280,13 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         Returns:
             float: The reward based on the target distance.
-        """        
+        """
         exponent = ((stepness * x) - (stepness * midpoint)) * math.log(10)
         try:
             result = 1 / (1 + math.exp(exponent))
         except OverflowError:
             result = 0  # If exponent is too large, the value approaches zero
-            
+
         return result
 
     def get_observation(self) -> Tuple[np.ndarray, float]:
@@ -289,7 +299,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         """
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
-        
+
         # Initialize the variables
         distance, centroid = 300, [0, 0]
         x_min, y_min, x_max, y_max = 0, 0, 0, 0
@@ -308,10 +318,10 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                 self.cords = [round(x) for x in self.cords]  # Round the coordinates
                 self.conf = round(box.conf[0].item(), 2)  # Get the confidence
 
-                if self.label == "rock":                                                
+                if self.label == "rock":
                     # Get the new state
                     obs = np.array(self.cords, dtype=np.uint16)
-                    
+
                     # Get the coordinates of the bounding box
                     x_min, y_min, x_max, y_max = self.cords
 
@@ -321,10 +331,10 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                         (centroid[0] - self.target_coordinate[0]) ** 2
                         + (centroid[1] - self.target_coordinate[1]) ** 2
                     )
-        else:            
+        else:
             obs = np.array(self.cords, dtype=np.uint16)
             distance = 300
-        
+
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
 
@@ -350,7 +360,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Draw bounding box with label if state is not empty
         if np.any(self.cords != np.zeros(4, dtype=np.uint16)):
-            self.draw_bounding_box(img_bgr, self.cords, self.label)        
+            self.draw_bounding_box(img_bgr, self.cords, self.label)
 
         # Display the image in the OpenCV window
         cv2.imshow("Webots YOLO Display", img_bgr)
@@ -392,7 +402,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             (255, 255, 255),
             1,
         )
-        
+
     def extract_rgb_channels(
         self, image, width, height
     ) -> Tuple[List[List[int]], List[List[int]], List[List[int]]]:
