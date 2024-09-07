@@ -191,11 +191,13 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Proceed to the next simulation step
         super().step(self.timestep)
 
-        # Get new observation and target distance (schema 1)
+        # Get new observation
+        target_coordinate, target_distance = self.get_observation()
+
+        # Update the state based on the observation schema
         if self.obs_space_schema == 1:  # schema 1: coordinates of the target
-            self.state, target_distance = self.get_observation()
+            self.state = target_coordinate
         elif self.obs_space_schema == 2:  # schema 2: pure image
-            coordinate, target_distance = self.get_observation()
             image = self.camera.getImage()
 
             red_channel, green_channel, blue_channel = self.extract_rgb_channels(
@@ -208,7 +210,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Calculate the reward and check if the episode is done
         if self.reward_schema == 1:  # schema 1: reward function based on pixel position
-            reward, done = self.get_reward_and_done_1(coordinate, target_distance)
+            reward, done = self.get_reward_and_done_1(target_coordinate)
         elif self.reward_schema == 2:  # schema 2: reward function based on distance
             reward, done = self.get_reward_and_done_2(target_distance)
 
@@ -239,9 +241,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
 
-    def get_reward_and_done_1(
-        self, coordinate=[0, 0, 0, 0], centroid=[0, 0]
-    ) -> Tuple[float, bool]:
+    def get_reward_and_done_1(self, coordinate=[0, 0, 0, 0]) -> Tuple[float, bool]:
         """
         Schema 1: Reward Function based on the pixel position of the target.
 
@@ -251,8 +251,14 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The reward and done flag.
         """
-        # Calculate the reward based on the target area
+        # Get the target coordinates and calculate the centroid
         target_x_min, target_y_min, target_x_max, target_y_max = coordinate
+        centroid = [
+            (target_x_min + target_x_max) / 2,
+            (target_y_min + target_y_max) / 2,
+        ]
+
+        # Calculate the reward based on the target area
         target_area = (target_x_max - target_x_min) * (target_y_max - target_y_min)
         reward_area = 100 if target_area > self.prev_target_area else -100
 
