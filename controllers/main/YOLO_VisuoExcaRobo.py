@@ -111,6 +111,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
             # Initialize the robot state (schema 1)
             self.state = np.zeros(4, dtype=np.uint16)
+            
+            # Variables initialization
+            self.cords = np.zeros(4, dtype=np.uint16)
         elif self.obs_space_schema == 2:  # schema 2: pure image
             self.observation_space = spaces.Box(
                 low=0,
@@ -123,10 +126,10 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.state = np.zeros(
                 (3, self.camera_height, self.camera_width), dtype=np.uint8
             )
+            
+            # Variables initialization
+            self.target_area = 2000
 
-        # Variables initialization
-        self.cords = np.zeros(4, dtype=np.uint16)
-        self.target_area = 0
 
         # Set the seed for reproducibility
         self.seed()
@@ -267,18 +270,23 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         reward_reach_target = 10000 if reach_target else 0
 
         # Reward based on pixel position (x and y alignment)
+        in_target_x = (
+            self.center_x - self.tolerance_x
+            <= centroid[0]
+            <= self.center_x + self.tolerance_x
+        )
+        in_target_y = centroid[1] >= self.moiety
+        
         # x-axis reward and punishment
         reward_x = (
             10000
-            if self.center_x - self.tolerance_x
-            <= centroid[0]
-            <= self.center_x + self.tolerance_x
+            if in_target_x 
             else -10 * abs(centroid[0] - self.center_x)
         )
 
         # y-axis reward and punishment
         reward_y = (
-            10000 if centroid[1] >= self.moiety else -10 * (self.moiety - centroid[1])
+            10000 if in_target_y else -10 * (self.moiety - centroid[1])
         )
 
         # Give The Punishment
@@ -313,7 +321,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
 
         # Check if the episode is done
-        done = reach_target or robot_far_away or hit_arena
+        done = reach_target or robot_far_away or hit_arena or (in_target_x and in_target_y)
 
         # Update the previous target area
         self.prev_target_area = target_area
