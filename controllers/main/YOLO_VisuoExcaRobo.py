@@ -25,6 +25,7 @@ MAX_EPISODE_STEPS = 3000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
+TARGET_AREA_TH = 10
 
 # Constants for the logistic function
 LOWER_Y = -38
@@ -61,6 +62,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.robot = self.getFromDef("EXCAVATOR")
         self.obs_space_schema = OBS_SPACE_SCHEMA
         self.reward_schema = REWARD_SCHEMA
+        self.target_area_th = TARGET_AREA_TH
 
         # Set motor and wheel speeds
         self.max_motor_speed = MAX_MOTOR_SPEED
@@ -90,9 +92,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.lower_y = self.camera_height + LOWER_Y
         self.target_coordinate = [self.center_x, self.lower_y]
         self.tolerance_x = 1
+        self.moiety = 2.0 * self.camera_height / 3.0 + 5
 
         # Load the YOLO model
-        # self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
         self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
 
         # Create a window for displaying the processed image
@@ -124,6 +126,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Variables initialization
         self.cords = np.zeros(4, dtype=np.uint16)
+        self.target_area = 0
 
         # Set the seed for reproducibility
         self.seed()
@@ -192,7 +195,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         if self.obs_space_schema == 1:  # schema 1: coordinates of the target
             self.state, target_distance = self.get_observation()
         elif self.obs_space_schema == 2:  # schema 2: pure image
-            _, target_distance = self.get_observation()
+            coordinate, target_distance = self.get_observation()
             image = self.camera.getImage()
 
             red_channel, green_channel, blue_channel = self.extract_rgb_channels(
@@ -205,7 +208,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Calculate the reward and check if the episode is done
         if self.reward_schema == 1:  # schema 1: reward function based on pixel position
-            reward, done = self.get_reward_and_done_1(target_distance)
+            reward, done = self.get_reward_and_done_1(coordinate, target_distance)
         elif self.reward_schema == 2:  # schema 2: reward function based on distance
             reward, done = self.get_reward_and_done_2(target_distance)
 
@@ -236,32 +239,53 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
 
-    def get_reward_and_done_1(self, distance: float = 300) -> Tuple[float, bool]:
+    def get_reward_and_done_1(
+        self, coordinate=[0, 0, 0, 0], centroid=[0, 0]
+    ) -> Tuple[float, bool]:
         """
-        Schema 2: Reward Function based on the distance to the target and the robot's position.
-        Calculate the reward and done flag based on the target area and robot position.
+        Schema 1: Reward Function based on the pixel position of the target.
 
         Args:
-            distance (float): The distance between the target point and the current object.
+            coordinate (list): The coordinates of the target object.
 
         Returns:
             Tuple: The reward and done flag.
         """
-        # Calculate the reward based on the distance to the target
-        reward_yolo = self.f(distance)
+        # Calculate the reward based on the target area
+        target_x_min, target_y_min, target_x_max, target_y_max = coordinate
+        target_area = (target_x_max - target_x_min) * (target_y_max - target_y_min)
+        reward_area = 100 if target_area > self.prev_target_area else -100
 
         # Check if the robot reaches the target
-        reach_target = 0 <= distance <= self.target_th
-        reward_reach_target = 10 if reach_target else 0
+        reach_target = target_area >= self.target_area_th
+        reward_reach_target = 10000 if reach_target else 0
+
+        # Reward based on pixel position (x and y alignment)
+        # x-axis reward and punishment
+        reward_x = (
+            10000
+            if self.center_x - self.tolerance_x
+            <= centroid[0]
+            <= self.center_x + self.tolerance_x
+            else -10 * abs(centroid[0] - self.center_x)
+        )
+
+        # y-axis reward and punishment
+        reward_y = (
+            10000 if centroid[1] >= self.moiety else -10 * (self.moiety - centroid[1])
+        )
 
         # Give The Punishment
+        # Time Punishment
+        time_punishment = -1
+
         # Check robot position relative to its initial position
         pos = self.robot.getPosition()
         robot_distance = (
             (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
         ) ** 0.5
         robot_far_away = robot_distance > self.max_robot_distance
-        robot_distance_punishment = -1 if robot_far_away else 0
+        robot_distance_punishment = -10000 if robot_far_away else 0
 
         # Check if the robot hits the arena boundaries
         arena_th = 1.5
@@ -269,18 +293,24 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
             and self.arena_y_min + arena_th <= pos[1] <= self.arena_y_max - arena_th
         )
-        hit_arena_punishment = -1 if hit_arena else 0
+        hit_arena_punishment = -10000 if hit_arena else 0
 
         # Final reward calculation
         reward = (
-            reward_yolo
+            reward_area
+            + reward_x
+            + reward_y
             + reward_reach_target
+            + time_punishment
             + robot_distance_punishment
             + hit_arena_punishment
         )
 
         # Check if the episode is done
         done = reach_target or robot_far_away or hit_arena
+
+        # Update the previous target area
+        self.prev_target_area = target_area
 
         return reward, done
 
