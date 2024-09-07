@@ -100,7 +100,7 @@ class YOLOControl(Supervisor):
         Main loop of the controller that resets the simulation and continuously
         processes camera input to control the robot.
         """
-        self.reset()            
+        self.reset()
 
         while self.step(self.timestep) != -1:
             self.state, distance, centroid = self.get_observation()
@@ -224,7 +224,8 @@ class YOLOControl(Supervisor):
 
                 print(
                     f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
-                )                
+                )
+                print(f"Target Area: {(x_max - x_min) * (y_max - y_min)}")
                 self.move_towards_target(centroid, distance)
             else:
                 self.search_target()
