@@ -273,6 +273,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             <= self.center_x + self.tolerance_x
         )
         in_target_y = centroid[1] >= self.moiety
+        in_target = in_target_x and in_target_y
         
         # x-axis reward and punishment
         reward_x = (
@@ -318,12 +319,12 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         )
 
         # Check if the episode is done
-        done = reach_target or robot_far_away or hit_arena or (in_target_x and in_target_y)
+        done = reach_target or robot_far_away or hit_arena or in_target
 
         # Update the previous target area
         self.prev_target_area = target_area
 
-        return reward, done
+        return reward, bool(done)
 
     def get_reward_and_done_2(self, distance: float = 300) -> Tuple[float, bool]:
         """
@@ -371,7 +372,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Check if the episode is done
         done = reach_target or robot_far_away or hit_arena
 
-        return reward, done
+        return reward, bool(done)
 
     def f(
         self,

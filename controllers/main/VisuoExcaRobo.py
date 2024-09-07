@@ -64,7 +64,7 @@ class VisuoExcaRobo:
         # self.env = DummyVecEnv([self.make_env(self.env_id, i) for i in range(num_cpu)])
 
         # Set the seed for reproducibility
-        self.env.seed(42)
+        self.env.unwrapped.seed(123)
 
         # Create the directories for model and log storage
         self.model_dir, self.log_dir = self.create_dir(self.model_name, self.log_name)
@@ -78,7 +78,7 @@ class VisuoExcaRobo:
 
         Returns:
             bool: True if the environment is valid, False otherwise.
-        """
+        """        
         try:
             print(f"Checking the environment: {self.env}...")
             check_env(self.env)
