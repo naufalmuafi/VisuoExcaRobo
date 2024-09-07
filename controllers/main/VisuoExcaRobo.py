@@ -118,7 +118,7 @@ class VisuoExcaRobo:
         # Instantiate the PPO model with MlpPolicy
         print("Training the model with PPO...")
         model = PPO(
-            "MlpPolicy",
+            "CnnPolicy",
             self.env,
             verbose=1,
             tensorboard_log=log_filename,

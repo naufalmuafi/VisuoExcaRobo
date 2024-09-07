@@ -113,10 +113,12 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Initialize the robot state (schema 1)
         # self.state = np.zeros(4, dtype=np.uint16)     
-        # self.cords = np.zeros(4, dtype=np.uint16)
         
         # Initialize the robot state (schema 2)
         self.state = np.zeros((3, self.camera_height, self.camera_width), dtype=np.uint8)
+        
+        # Variables initialization
+        self.cords = np.zeros(4, dtype=np.uint16)
         
         # Set the seed for reproducibility
         self.seed()
