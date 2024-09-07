@@ -21,7 +21,7 @@ except ImportError:
 ENV_ID = "YOLO_VisuoExcaRobo"
 OBS_SPACE_SCHEMA = 2  # 1: coordinates of the target, 2: pure image
 REWARD_SCHEMA = 1  # 1: reward function based on pixel position, 2: reward function based on distance
-MAX_EPISODE_STEPS = 3000
+MAX_EPISODE_STEPS = 2000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
