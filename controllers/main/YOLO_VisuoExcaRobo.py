@@ -20,7 +20,8 @@ except ImportError:
 # Constants used in the environment
 ENV_ID = "YOLO_VisuoExcaRobo"
 OBS_SPACE_SCHEMA = 2  # 1: coordinates of the target, 2: pure image
-MAX_EPISODE_STEPS = 2048
+REWARD_SCHEMA = 1  # 1: reward function based on pixel position, 2: reward function based on distance
+MAX_EPISODE_STEPS = 3000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
@@ -59,6 +60,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Get the robot node
         self.robot = self.getFromDef("EXCAVATOR")
         self.obs_space_schema = OBS_SPACE_SCHEMA
+        self.reward_schema = REWARD_SCHEMA
 
         # Set motor and wheel speeds
         self.max_motor_speed = MAX_MOTOR_SPEED
@@ -201,12 +203,55 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                 [red_channel, green_channel, blue_channel], dtype=np.uint8
             )
 
-        # Calculate the reward
+        # Calculate the reward and check if the episode is done
+        if self.reward_schema == 1:  # schema 1: reward function based on pixel position
+            reward, done = self.get_reward_and_done_1(target_distance)
+        elif self.reward_schema == 2:  # schema 2: reward function based on distance
+            reward, done = self.get_reward_and_done_2(target_distance)
+
+        return self.state, reward, done, False, {}
+
+    def render(self, mode: str = "human") -> Any:
+        """
+        Render the environment (not implemented).
+
+        Args:
+            mode (str): The mode for rendering.
+
+        Returns:
+            Any: Not used.
+        """
+        pass
+
+    def seed(self, seed=None) -> List[int]:
+        """
+        Seed the environment for reproducibility.
+
+        Args:
+            seed (Any): The seed value.
+
+        Returns:
+            List[int]: The list containing the seed used.
+        """
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
+        return [seed]
+
+    def get_reward_and_done_1(self, distance: float = 300) -> Tuple[float, bool]:
+        """
+        Schema 2: Reward Function based on the distance to the target and the robot's position.
+        Calculate the reward and done flag based on the target area and robot position.
+
+        Args:
+            distance (float): The distance between the target point and the current object.
+
+        Returns:
+            Tuple: The reward and done flag.
+        """
         # Calculate the reward based on the distance to the target
-        reward_yolo = self.f(target_distance)
+        reward_yolo = self.f(distance)
 
         # Check if the robot reaches the target
-        reach_target = 0 <= target_distance <= self.target_th
+        reach_target = 0 <= distance <= self.target_th
         reward_reach_target = 10 if reach_target else 0
 
         # Give The Punishment
@@ -237,32 +282,55 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Check if the episode is done
         done = reach_target or robot_far_away or hit_arena
 
-        return self.state, reward, done, False, {}
+        return reward, done
 
-    def render(self, mode: str = "human") -> Any:
+    def get_reward_and_done_2(self, distance: float = 300) -> Tuple[float, bool]:
         """
-        Render the environment (not implemented).
+        Schema 2: Reward Function based on the distance to the target and the robot's position.
+        Calculate the reward and done flag based on the target area and robot position.
 
         Args:
-            mode (str): The mode for rendering.
+            distance (float): The distance between the target point and the current object.
 
         Returns:
-            Any: Not used.
+            Tuple: The reward and done flag.
         """
-        pass
+        # Calculate the reward based on the distance to the target
+        reward_yolo = self.f(distance)
 
-    def seed(self, seed=None) -> List[int]:
-        """
-        Seed the environment for reproducibility.
+        # Check if the robot reaches the target
+        reach_target = 0 <= distance <= self.target_th
+        reward_reach_target = 10 if reach_target else 0
 
-        Args:
-            seed (Any): The seed value.
+        # Give The Punishment
+        # Check robot position relative to its initial position
+        pos = self.robot.getPosition()
+        robot_distance = (
+            (pos[0] - self.init_pos[0]) ** 2 + (pos[1] - self.init_pos[1]) ** 2
+        ) ** 0.5
+        robot_far_away = robot_distance > self.max_robot_distance
+        robot_distance_punishment = -1 if robot_far_away else 0
 
-        Returns:
-            List[int]: The list containing the seed used.
-        """
-        self.np_random, seed = gym.utils.seeding.np_random(seed)
-        return [seed]
+        # Check if the robot hits the arena boundaries
+        arena_th = 1.5
+        hit_arena = not (
+            self.arena_x_min + arena_th <= pos[0] <= self.arena_x_max - arena_th
+            and self.arena_y_min + arena_th <= pos[1] <= self.arena_y_max - arena_th
+        )
+        hit_arena_punishment = -1 if hit_arena else 0
+
+        # Final reward calculation
+        reward = (
+            reward_yolo
+            + reward_reach_target
+            + robot_distance_punishment
+            + hit_arena_punishment
+        )
+
+        # Check if the episode is done
+        done = reach_target or robot_far_away or hit_arena
+
+        return reward, done
 
     def f(
         self,
