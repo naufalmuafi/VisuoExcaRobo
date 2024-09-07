@@ -25,7 +25,7 @@ MAX_EPISODE_STEPS = 2000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
 MAX_ROBOT_DISTANCE = 8.0
-TARGET_AREA_TH = 10
+TARGET_AREA_TH = 2000
 
 # Constants for the logistic function
 LOWER_Y = -38
@@ -110,10 +110,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             )
 
             # Initialize the robot state (schema 1)
-            self.state = np.zeros(4, dtype=np.uint16)
-            
-            # Variables initialization
-            self.cords = np.zeros(4, dtype=np.uint16)
+            self.state = np.zeros(4, dtype=np.uint16)                                    
         elif self.obs_space_schema == 2:  # schema 2: pure image
             self.observation_space = spaces.Box(
                 low=0,
@@ -127,9 +124,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                 (3, self.camera_height, self.camera_width), dtype=np.uint8
             )
             
-            # Variables initialization
-            self.target_area = 2000
-
+        # Variables initialization
+        self.cords = np.zeros(4, dtype=np.uint16)
+        self.prev_target_area = 0
 
         # Set the seed for reproducibility
         self.seed()
