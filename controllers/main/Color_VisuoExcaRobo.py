@@ -417,11 +417,11 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         coordinate, distance = self.recognition_process(self.img_rgb, width, height)
 
         # Get the image with the bounding box
-        self._get_image_in_display(image)
+        self._get_image_in_display(image, coordinate)
 
         return coordinate, distance
 
-    def _get_image_in_display(self, img):
+    def _get_image_in_display(self, img, coordinate):
         """
         Captures an image from the Webots camera and processes it for object detection.
 
@@ -438,8 +438,8 @@ class Color_VisuoExcaRobo(Supervisor, Env):
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
         # Draw bounding box with label if state is not empty
-        if np.any(self.state != np.zeros(4, dtype=np.uint16)):
-            self.draw_bounding_box(img_bgr, self.state, "Target")
+        if np.any(coordinate != np.zeros(4, dtype=np.uint16)):
+            self.draw_bounding_box(img_bgr, coordinate, "Target")
 
         # Display the image in the OpenCV window
         cv2.imshow("Webots Color Recognition Display", img_bgr)
