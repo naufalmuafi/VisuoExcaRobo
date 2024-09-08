@@ -474,7 +474,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             self.draw_bounding_box(img_bgr, coordinate, label)
 
         # Display the image in the OpenCV window
-        cv2.imshow("Webots Color Recognition Display", img_bgr)
+        cv2.imshow("Webots YOLO Display", img_bgr)
         cv2.waitKey(1)
 
         return img_bgr
