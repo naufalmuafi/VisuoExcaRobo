@@ -195,3 +195,5 @@ INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connec
 INFO: "wheeledExcavator" extern controller: stopped.
 INFO: 'wheeledExcavator' extern controller: disconnected.
 INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
