@@ -403,8 +403,10 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        # Get the image from the Webots camera (BGRA format)
-        img_bgr = self._get_image_in_display()
+        image = self.camera.getImage()
+        
+        # Extract RGB channels from the image        
+        self.img_rgb = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
 
         # Initialize the variables
         distance, centroid = 300, [0, 0]
@@ -413,7 +415,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.cords = np.zeros(4, dtype=np.uint16)
 
         # Perform object detection with YOLO
-        results = self.yolo_model.predict(img_bgr, verbose=False)
+        results = self.yolo_model.predict(self.img_rgb, verbose=False)
         result = results[0]
 
         # Post-process the results (if any objects are detected)
@@ -441,23 +443,21 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             obs = np.array(self.cords, dtype=np.uint16)
             distance = 300
 
-        # Get the image from the Webots camera (BGRA format)
-        img_bgr = self._get_image_in_display()
+        # Get the image from the Webots camera (RGB format)
+        self._get_image_in_display(image, self.cords, self.label)
 
-        return obs, distance
-
-    def _get_image_in_display(self):
+        return obs, distance    
+    
+    def _get_image_in_display(self, img, coordinate, label):
         """
         Captures an image from the Webots camera and processes it for object detection.
 
         Returns:
             np.ndarray: The processed BGR image.
         """
-        # Get the image from the Webots camera (BGRA format)
-        video_reader = self.camera.getImage()
 
         # Convert the raw image data to a NumPy array
-        img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
+        img_np = np.frombuffer(img, dtype=np.uint8).reshape(
             (self.camera_height, self.camera_width, 4)
         )
 
@@ -465,11 +465,11 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
 
         # Draw bounding box with label if state is not empty
-        if np.any(self.cords != np.zeros(4, dtype=np.uint16)):
-            self.draw_bounding_box(img_bgr, self.cords, self.label)
+        if np.any(coordinate != np.zeros(4, dtype=np.uint16)):
+            self.draw_bounding_box(img_bgr, coordinate, label)
 
         # Display the image in the OpenCV window
-        cv2.imshow("Webots YOLO Display", img_bgr)
+        cv2.imshow("Webots Color Recognition Display", img_bgr)
         cv2.waitKey(1)
 
         return img_bgr
