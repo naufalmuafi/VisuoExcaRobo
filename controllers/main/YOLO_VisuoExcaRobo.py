@@ -405,17 +405,22 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         """
         image = self.camera.getImage()
         
-        # Extract RGB channels from the image        
-        self.img_rgb = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
+        # Convert the raw image data to a NumPy array
+        image_np = np.frombuffer(image, dtype=np.uint8).reshape(
+            (self.camera_height, self.camera_width, 4)
+        )
+
+        # Convert BGRA to BGR for OpenCV processing
+        img_rgb = cv2.cvtColor(image_np, cv2.COLOR_BGRA2RGB)
 
         # Initialize the variables
         distance, centroid = 300, [0, 0]
         x_min, y_min, x_max, y_max = 0, 0, 0, 0
         obs = np.zeros(4, dtype=np.uint16)
-        self.cords = np.zeros(4, dtype=np.uint16)
+        self.cords, self.label = np.zeros(4, dtype=np.uint16), ""
 
         # Perform object detection with YOLO
-        results = self.yolo_model.predict(self.img_rgb, verbose=False)
+        results = self.yolo_model.predict(img_rgb, verbose=False)
         result = results[0]
 
         # Post-process the results (if any objects are detected)
