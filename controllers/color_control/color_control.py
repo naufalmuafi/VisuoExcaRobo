@@ -441,6 +441,10 @@ class ColorControl(Supervisor):
         """
         for trial in range(MAX_TRIALS):
             print(f"Starting trial {trial + 1}/{MAX_TRIALS}")
+            
+            # Reset the simulation for the next trial
+            self.reset()
+            
             start_time = time.time()
             step_count = 0
             trial_success = False
@@ -449,7 +453,7 @@ class ColorControl(Supervisor):
             position = []
 
             # Simulation loop
-            while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
+            while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:                                
                 step_start_time = time.time()
                 coordinate, distance, centroid = self.get_observation(
                     self.camera_width, self.camera_height
@@ -484,10 +488,7 @@ class ColorControl(Supervisor):
             self.inference_times[trial] = inf_time
             self.total_steps += step_count
             self.false_detections[trial] = false_detection_i
-            self.trajectory[trial] = position
-
-            # Reset the simulation for the next trial
-            self.reset()
+            self.trajectory[trial] = position            
 
         # Plot and save results
         self.plot_results()
