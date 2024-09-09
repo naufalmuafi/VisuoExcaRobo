@@ -617,4 +617,4 @@ class ColorControl(Supervisor):
 
 if __name__ == "__main__":
     controller = ColorControl()
-    controller.run()
+    controller.test()
