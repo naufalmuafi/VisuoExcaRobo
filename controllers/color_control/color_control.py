@@ -25,7 +25,7 @@ LOWER_Y = -20  # Lower boundary for the y-coordinate
 DISTANCE_THRESHOLD = 1.0  # Distance threshold for considering the target as "reached"
 
 # Constants for the testing
-MAX_TRIALS = 10  # Number of trials to run the testing
+MAX_TRIALS = 5  # Number of trials to run the testing
 MAX_EPISODE_STEPS = 2000  # Maximum number of steps per trial
 
 # Create directory for saving plots
@@ -88,7 +88,7 @@ class ColorControl(Supervisor):
         self.state = np.zeros(4, dtype=np.int16)
 
         # Variables to store test results
-        self.inference_times = []
+        self.inference_times = {i: [] for i in range(MAX_TRIALS)}
         self.success_trials = 0
         self.time_to_reach_target = []
         self.distances_over_time = []
@@ -379,14 +379,13 @@ class ColorControl(Supervisor):
             start_time = time.time()
             step_count = 0
             trial_success = False
-            trial_distances = []
+            inf_time = []
 
             while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
                 step_start_time = time.time()
                 coordinate, distance, centroid = self.get_observation(
                     self.camera_width, self.camera_height
                 )
-                trial_distances.append(distance)
 
                 if self.is_done(distance, centroid):
                     trial_success = True
@@ -396,12 +395,13 @@ class ColorControl(Supervisor):
                     break
 
                 inference_time = time.time() - step_start_time
-                self.inference_times.append(inference_time)
+                inf_time.append(inference_time)
                 step_count += 1
 
             if trial_success:
                 self.success_trials += 1
-            self.distances_over_time.append(trial_distances)
+
+            self.inference_times[trial] = inf_time
             self.total_steps += step_count
 
             self.reset()
@@ -409,26 +409,22 @@ class ColorControl(Supervisor):
         self.plot_results()
 
     def plot_results(self):
-        # Plot Inference Time
-        plt.figure()
-        plt.plot(self.inference_times)
-        plt.title("Inference Time per Step")
-        plt.xlabel("Step")
-        plt.ylabel("Time (seconds)")
-        plt.savefig(os.path.join(output_dir, "inference_time_per_step.png"))
-        plt.show()
+        # Plot Average Inference Time in ms
+        avg_inf_time = (
+            np.mean([np.mean(inf_time) for inf_time in self.inference_times.values()])
+            * 1000
+        )
+        print(f"Average Inference Time: {avg_inf_time:.2f} ms")
 
-        # Plot Distance to Target Over Time for each trial
-        for trial_num, distances in enumerate(self.distances_over_time):
+        # Plot Inference Time Distribution
+        for trial_num, inf_time in self.inference_times.items():
             plt.figure()
-            plt.plot(distances)
-            plt.title(f"Distance to Target Over Time - Trial {trial_num + 1}")
+            plt.plot(inf_time)
+            plt.title(f"Inference Time Distribution - Trial {trial_num + 1}")
             plt.xlabel("Step")
-            plt.ylabel("Distance to Target")
+            plt.ylabel("Time (seconds)")
             plt.savefig(
-                os.path.join(
-                    output_dir, f"distance_to_target_trial_{trial_num + 1}.png"
-                )
+                os.path.join(output_dir, f"inference_time_trial_{trial_num + 1}.png")
             )
             plt.show()
 
