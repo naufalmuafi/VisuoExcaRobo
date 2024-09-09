@@ -98,6 +98,7 @@ class YOLOControl(Supervisor):
         self.tolerance_x = 1
 
         # Load the YOLO model
+        self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
         self.yolo_model = YOLO("../../runs/detect/train_m_300/weights/best.pt")
 
         # Create a window for displaying the processed image
@@ -221,6 +222,7 @@ class YOLOControl(Supervisor):
 
         distance, centroid, inference_time = 300, [0, 0], 0.0
         x_min, y_min, x_max, y_max = 0, 0, 0, 0
+        obs = np.zeros(4, dtype=np.uint16)
         self.cords, self.label, self.conf = np.zeros(4, dtype=np.uint16), "", 0
 
         # Perform object detection with YOLO
