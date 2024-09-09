@@ -25,7 +25,7 @@ LOWER_Y = -20  # Lower boundary for the y-coordinate
 DISTANCE_THRESHOLD = 1.0  # Distance threshold for considering the target as "reached"
 
 # Constants for the testing
-MAX_TRIALS = 5  # Number of trials to run the testing
+MAX_TRIALS = 6  # Number of trials to run the testing
 MAX_EPISODE_STEPS = 2000  # Maximum number of steps per trial
 
 # Create directory for saving plots
