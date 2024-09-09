@@ -9,14 +9,17 @@ by: Naufal Mu'afi
 
 """
 
+import cv2
 import random
 import numpy as np
-from controller import Supervisor, Display
+from controller import Supervisor
+from typing import Any, Tuple, List
 
 
-MAX_MOTOR_SPEED = 0.7
-LOWER_Y = -20
-DISTANCE_THRESHOLD = 1.0
+# Constants for the robot's control
+MAX_MOTOR_SPEED = 0.7  # Maximum speed for the motors
+LOWER_Y = -20  # Lower boundary for the y-coordinate
+DISTANCE_THRESHOLD = 1.0  # Distance threshold for considering the target as "reached"
 
 
 class ColorControl(Supervisor):
@@ -64,6 +67,9 @@ class ColorControl(Supervisor):
         self.lower_color = self.color_target - color_tolerance
         self.upper_color = self.color_target + color_tolerance
 
+        # Create a window for displaying the processed image
+        cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
+
         # Set initial move
         self.initial_move = random.choice([0, 1])
 
@@ -80,6 +86,9 @@ class ColorControl(Supervisor):
                 # self.digging_operation()
 
                 exit(1)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
@@ -125,11 +134,75 @@ class ColorControl(Supervisor):
         self.img_rgb = [red_channel, green_channel, blue_channel]
 
         # Perform the recognition process
-        self.state, distance, centroid = self.recognition_process(
+        coordinate, distance, centroid = self.recognition_process(
             self.img_rgb, width, height
         )
 
-        return self.state, distance, centroid
+        # Get the image with the bounding box
+        self._get_image_in_display(image, coordinate)
+
+        return coordinate, distance, centroid
+
+    def _get_image_in_display(self, img, coordinate):
+        """
+        Captures an image from the Webots camera and processes it for object detection.
+
+        Returns:
+            np.ndarray: The processed BGR image.
+        """
+
+        # Convert the raw image data to a NumPy array
+        img_np = np.frombuffer(img, dtype=np.uint8).reshape(
+            (self.camera_height, self.camera_width, 4)
+        )
+
+        # Convert BGRA to BGR for OpenCV processing
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+
+        # Draw bounding box with label if state is not empty
+        if np.any(coordinate != np.zeros(4, dtype=np.uint16)):
+            self.draw_bounding_box(img_bgr, coordinate, "Target")
+
+        # Display the image in the OpenCV window
+        cv2.imshow("Webots Color Recognition Display", img_bgr)
+        cv2.waitKey(1)
+
+        return img_bgr
+
+    def draw_bounding_box(self, img, cords, label):
+        """
+        Draws a bounding box around the detected object and labels it.
+
+        Args:
+            img (np.ndarray): The image on which to draw the bounding box.
+            cords (list): Coordinates of the bounding box.
+            label (str): The label of the detected object.
+        """
+        bb_x_min, bb_y_min, bb_x_max, bb_y_max = cords
+
+        # Draw the bounding box
+        cv2.rectangle(
+            img, (bb_x_min, bb_y_min), (bb_x_max, bb_y_max), (0, 0, 255), 2
+        )  # Red box
+
+        # Get the width and height of the text box
+        (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+
+        # Draw a filled rectangle for the label background
+        cv2.rectangle(
+            img, (bb_x_min, bb_y_min - h - 1), (bb_x_min + w, bb_y_min), (0, 0, 255), -1
+        )
+
+        # Put the label text on the image
+        cv2.putText(
+            img,
+            label,
+            (bb_x_min, bb_y_min - 5),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.3,
+            (255, 255, 255),
+            1,
+        )
 
     def extract_rgb_channels(self, image, width, height):
         red_channel, green_channel, blue_channel = [], [], []
@@ -145,8 +218,8 @@ class ColorControl(Supervisor):
         return red_channel, green_channel, blue_channel
 
     def recognition_process(self, image, width, height):
-        target_px, distance, centroid = 0, None, [None, None]
-        x_min, x_max, y_min, y_max = width, 0, height, 0
+        target_px, distance, centroid = 0, 300, [0, 0]
+        target_x_min, target_y_min, target_x_max, target_y_max = width, height, 0, 0
 
         # Count the number of pixels that match the target color
         for y in range(height):
@@ -158,24 +231,32 @@ class ColorControl(Supervisor):
                     and self.lower_color[2] <= b <= self.upper_color[2]
                 ):
                     target_px += 1
-                    x_min, x_max = min(x_min, x), max(x_max, x)
-                    y_min, y_max = min(y_min, y), max(y_max, y)
+                    target_x_min, target_x_max = min(target_x_min, x), max(
+                        target_x_max, x
+                    )
+                    target_y_min, target_y_max = min(target_y_min, y), max(
+                        target_y_max, y
+                    )
 
         # Calculate the target area and centroid
         if target_px == 0:
             self.search_target()
-            self.state = np.zeros(4, dtype=np.int16)
 
-            return np.zeros(4, dtype=np.int16), None, [None, None]
+            return np.zeros(4, dtype=np.uint16), 300, [0, 0]
 
-        # Set the new state
-        self.state = np.array([x_min, x_max, y_min, y_max], dtype=np.int16)
+        # Set the new observation
+        obs = np.array(
+            [target_x_min, target_y_min, target_x_max, target_y_max], dtype=np.uint16
+        )
 
         # Calculate the centroid and distance from the target
-        centroid = [(x_max + x_min) / 2, (y_max + y_min) / 2]
+        centroid = [
+            (target_x_max + target_x_min) / 2,
+            (target_y_max + target_y_min) / 2,
+        ]
         distance = np.sqrt(
-            (centroid[0] - self.lower_center[0]) ** 2
-            + (centroid[1] - self.lower_center[1]) ** 2
+            (centroid[0] - self.target_coordinate[0]) ** 2
+            + (centroid[1] - self.target_coordinate[1]) ** 2
         )
 
         print(
@@ -183,7 +264,7 @@ class ColorControl(Supervisor):
         )
         self.move_towards_target(centroid, distance)
 
-        return self.state, distance, centroid
+        return obs, distance, centroid
 
     def search_target(self):
         print("No target found.")
