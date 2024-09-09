@@ -436,7 +436,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         cords, label, conf = np.zeros(4, dtype=np.uint16), "", 0.0
 
         # Perform object detection with YOLO
-        results = self.yolo_model.predict(img_bgr)
+        results = self.yolo_model.predict(img_bgr, stream_buffer=True, verbose=False)
         result = results[0]
 
         # Post-process the results (shows only if the object is a rock)
@@ -452,17 +452,14 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                     x_min, y_min, x_max, y_max = cords
 
                     # Get the new state
-                    obs = [x_min, y_min, x_max, y_max]
+                    obs = np.array([x_min, y_min, x_max, y_max], dtype=np.uint16)
 
                     # Calculate the centroid and the distance from the lower center
                     centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
                     distance = np.sqrt(
                         (centroid[0] - self.target_coordinate[0]) ** 2
                         + (centroid[1] - self.target_coordinate[1]) ** 2
-                    )
-                    self.move_towards_target(centroid, distance)
-        else:
-            self.search_target()
+                    )                
 
         return obs, distance, label
 
