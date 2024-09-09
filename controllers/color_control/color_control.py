@@ -205,6 +205,13 @@ class ColorControl(Supervisor):
         # Display the image in the OpenCV window
         cv2.imshow("Webots Color Recognition Display", img_bgr)
         cv2.waitKey(1)
+        
+        # Check for false detection based on the target size
+        width = coordinate[2] - coordinate[0]  # target_x_max - target_x_min
+        height = coordinate[3] - coordinate[1]  # target_y_max - target_y_min
+
+        if width >= 50 and height >= 50:
+            cv2.imwrite(f"false_detection_img.png", img_bgr)
 
         return img_bgr
 
@@ -384,6 +391,7 @@ class ColorControl(Supervisor):
             inf_time = []
             false_detection_i = 0
             position = []
+            count_fd = 1
 
             while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
                 step_start_time = time.time()
@@ -401,7 +409,7 @@ class ColorControl(Supervisor):
                 height = coordinate[3] - coordinate[1]  # target_y_max - target_y_min
 
                 if width >= 50 and height >= 50:
-                    false_detection_i += 1
+                    false_detection_i += 1                                    
 
                 if self.is_done(distance, centroid):
                     trial_success = True
@@ -411,7 +419,7 @@ class ColorControl(Supervisor):
                     break
 
                 inference_time = time.time() - step_start_time
-                inf_time.append(inference_time)
+                inf_time.append(inference_time * 1000)
                 step_count += 1
 
             if trial_success:
@@ -429,8 +437,7 @@ class ColorControl(Supervisor):
     def plot_results(self):
         # Plot Average Inference Time in ms
         avg_inf_time = (
-            np.mean([np.mean(inf_time) for inf_time in self.inference_times.values()])
-            * 1000
+            np.mean([np.mean(inf_time) for inf_time in self.inference_times.values()])            
         )
         msg_avg_inf_time = f"Average Inference Time: {avg_inf_time:.2f} ms"
         print(msg_avg_inf_time)
@@ -439,9 +446,9 @@ class ColorControl(Supervisor):
         for trial_num, inf_time in self.inference_times.items():
             plt.figure()
             plt.plot(inf_time)
-            plt.title(f"Inference Time Distribution - Trial {trial_num + 1}")
+            plt.title(f"Inference Time Distribution - Test {trial_num + 1}")
             plt.xlabel("Step")
-            plt.ylabel("Time (seconds)")
+            plt.ylabel("Time (ms)")
             plt.savefig(
                 os.path.join(output_dir, f"inference_time_trial_{trial_num + 1}.png")
             )
@@ -479,10 +486,10 @@ class ColorControl(Supervisor):
 
         # Print average time to reach target
         avg_time_to_reach_target = np.mean(self.time_to_reach_target)
-        msg_avg_inf_time = (
+        msg_avg_reach_target_time = (
             f"Average Time to Reach Target: {avg_time_to_reach_target:.2f} seconds"
         )
-        print(msg_avg_inf_time)
+        print(msg_avg_reach_target_time)
 
         # Print false detection stats
         total_false_detections = sum(self.false_detections.values())
@@ -495,13 +502,16 @@ class ColorControl(Supervisor):
         for trial_num, trajectory in self.trajectory.items():
             x_positions, y_positions = zip(*trajectory)
             plt.figure()
-            plt.plot(x_positions, y_positions, marker="o", linestyle="--", color="b")
-            plt.scatter([3.5], [-2], color="r", label="Target")
-            plt.title(f"Excavator Movement Trajectory - Trial {trial_num + 1}")
+            plt.plot(x_positions, y_positions, color="b", label="Excavator Trajectory Path")
+            plt.scatter([-4], [0], color="g", label="Initial Position")
+            plt.scatter([3.5], [-2], color="r", marker='*', s=150, label="Target")
+            plt.title(f"Excavator Movement Trajectory - Test {trial_num + 1}")
             plt.xlabel("X Position")
             plt.ylabel("Y Position")
             plt.legend()
             plt.grid(True)
+            plt.xlim([-5, 5])
+            plt.ylim([-3, 3])
             plt.savefig(
                 os.path.join(
                     output_dir, f"excavator_movement_trial_{trial_num + 1}.png"
@@ -513,8 +523,8 @@ class ColorControl(Supervisor):
         with open(os.path.join(output_dir, "results.txt"), "w") as f:
             f.write(f"{msg_avg_inf_time}\n")
             f.write(f"{msg_success_rate}\n")
-            f.write(f"{msg_total_false_detections}\n")
-            f.write(f"{msg_avg_inf_time}\n")
+            f.write(f"{msg_total_false_detections}\n")  
+            f.write(f"{msg_avg_reach_target_time}\n")          
 
     # 0 is left, 1 is right
     def move_arm_connector(
