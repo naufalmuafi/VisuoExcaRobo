@@ -437,67 +437,76 @@ class ColorControl(Supervisor):
 
     def test(self):
         """
-        Runs multiple trials where the robot attempts to reach the target.
-        Tracks performance such as inference time, false detections, and success rate.
+        Runs a series of trials to evaluate the robot's performance in detecting and reaching the target.
         """
         for trial in range(MAX_TRIALS):
             print(f"Starting trial {trial + 1}/{MAX_TRIALS}")
             start_time = time.time()
             step_count = 0
-            inf_time, position = [], []
+            trial_success = False
+            inf_time = []
+            false_detection_i = 0
+            position = []
 
+            # Simulation loop
             while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
-                # Get observation and robot position
                 step_start_time = time.time()
                 coordinate, distance, centroid = self.get_observation(
                     self.camera_width, self.camera_height
                 )
-                x, y, _ = self.robot.getPosition()
+
+                # Get the current position of the excavator
+                pos = self.robot.getPosition()
+                x, y, _ = pos
                 position.append((x, y))
 
-                # Check for false detection based on target size
-                width, height = (
-                    coordinate[2] - coordinate[0],
-                    coordinate[3] - coordinate[1],
-                )
+                # Check for false detections based on the target size
+                width = coordinate[2] - coordinate[0]
+                height = coordinate[3] - coordinate[1]
                 if width >= 50 and height >= 50:
-                    self.false_detections[trial] += 1
+                    false_detection_i += 1
 
-                # Check if the target has been reached
+                # Check if the robot reached the target
                 if self.is_done(distance, centroid):
-                    self.success_trials += 1
-                    self.time_to_reach_target.append(time.time() - start_time)
-                    print(
-                        f"Target reached in {self.time_to_reach_target[-1]:.2f} seconds."
-                    )
+                    trial_success = True
+                    time_taken = time.time() - start_time
+                    self.time_to_reach_target.append(time_taken)
+                    print(f"Target reached in {time_taken:.2f} seconds.")
                     break
 
-                inf_time.append((time.time() - step_start_time) * 1000)
+                inference_time = time.time() - step_start_time
+                inf_time.append(inference_time * 1000)
                 step_count += 1
 
-            # Store inference times and position trajectory
+            # Store results
+            if trial_success:
+                self.success_trials += 1
             self.inference_times[trial] = inf_time
-            self.trajectory[trial] = position
             self.total_steps += step_count
+            self.false_detections[trial] = false_detection_i
+            self.trajectory[trial] = position
 
+            # Reset the simulation for the next trial
             self.reset()
 
+        # Plot and save results
         self.plot_results()
 
     def plot_results(self):
         """
-        Generates plots and prints statistics for the performance metrics across all trials.
+        Generates and saves plots to visualize the robot's performance over all trials.
         """
-        # Calculate and display average inference time
+        # Plot Average Inference Time in ms
         avg_inf_time = np.mean(
-            [np.mean(times) for times in self.inference_times.values()]
+            [np.mean(inf_time) for inf_time in self.inference_times.values()]
         )
         print(f"Average Inference Time: {avg_inf_time:.2f} ms")
 
-        # Plot inference time distribution for each trial
+        # Plot Inference Time Distribution
         for trial_num, inf_time in self.inference_times.items():
+            plt.figure()
             plt.plot(inf_time)
-            plt.title(f"Inference Time Distribution - Trial {trial_num + 1}")
+            plt.title(f"Inference Time Distribution - Test {trial_num + 1}")
             plt.xlabel("Step")
             plt.ylabel("Time (ms)")
             plt.savefig(
@@ -505,7 +514,8 @@ class ColorControl(Supervisor):
             )
             plt.show()
 
-        # Plot false detection per trial
+        # Plot False Detection per Trial
+        plt.figure()
         plt.plot(
             self.false_detections.keys(),
             self.false_detections.values(),
@@ -513,17 +523,19 @@ class ColorControl(Supervisor):
             linestyle="--",
             color="r",
         )
-        plt.title("False Detection per Trial")
-        plt.xlabel("Trial")
-        plt.ylabel("False Detections")
-        plt.savefig(os.path.join(output_dir, "false_detection_per_trial.png"))
+        plt.title(f"False Detection per Trial Test")
+        plt.xlabel("Num of Trials")
+        plt.ylabel("Num of False Detection")
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir, f"false_detection_per_trial.png"))
         plt.show()
 
-        # Calculate and display success rate
+        # Plot Success Rate
         success_rate = (self.success_trials / MAX_TRIALS) * 100
         print(f"Success rate: {success_rate}%")
 
-        # Plot time to reach the target for all trials
+        # Plot Time to Reach Target
+        plt.figure()
         plt.hist(self.time_to_reach_target, bins=10)
         plt.title("Time to Reach Target")
         plt.xlabel("Time (seconds)")
@@ -531,18 +543,45 @@ class ColorControl(Supervisor):
         plt.savefig(os.path.join(output_dir, "time_to_reach_target.png"))
         plt.show()
 
-        # Display and save additional statistics
-        avg_time_to_reach = np.mean(self.time_to_reach_target)
-        total_false_detections = sum(self.false_detections.values())
-        print(f"Average Time to Reach Target: {avg_time_to_reach:.2f} seconds")
-        print(f"Total False Detections: {total_false_detections}")
+        # Print average time to reach target
+        avg_time_to_reach_target = np.mean(self.time_to_reach_target)
+        print(f"Average Time to Reach Target: {avg_time_to_reach_target:.2f} seconds")
 
-        # Save key statistics to a file
+        # Print false detection stats
+        total_false_detections = sum(self.false_detections.values())
+        print(f"Total False Detections: {total_false_detections} in {MAX_TRIALS} Test")
+
+        # Plot The Trajectory
+        for trial_num, trajectory in self.trajectory.items():
+            x_positions, y_positions = zip(*trajectory)
+            plt.figure()
+            plt.plot(
+                x_positions, y_positions, color="b", label="Excavator Trajectory Path"
+            )
+            plt.scatter([-4], [0], color="g", label="Initial Position")
+            plt.scatter([3.5], [-2], color="r", marker="*", s=150, label="Target")
+            plt.title(f"Excavator Movement Trajectory - Test {trial_num + 1}")
+            plt.xlabel("X Position")
+            plt.ylabel("Y Position")
+            plt.legend()
+            plt.grid(True)
+            plt.xlim([-5, 5])
+            plt.ylim([-3, 3])
+            plt.savefig(
+                os.path.join(
+                    output_dir, f"excavator_movement_trial_{trial_num + 1}.png"
+                )
+            )
+            plt.show()
+
+        # Save results to a text file
         with open(os.path.join(output_dir, "results.txt"), "w") as f:
             f.write(f"Average Inference Time: {avg_inf_time:.2f} ms\n")
             f.write(f"Success rate: {success_rate}%\n")
             f.write(f"Total False Detections: {total_false_detections}\n")
-            f.write(f"Average Time to Reach Target: {avg_time_to_reach:.2f} seconds\n")
+            f.write(
+                f"Average Time to Reach Target: {avg_time_to_reach_target:.2f} seconds\n"
+            )
 
     # 0 is left, 1 is right
     def move_arm_connector(
