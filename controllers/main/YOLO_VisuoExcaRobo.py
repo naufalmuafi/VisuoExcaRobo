@@ -127,7 +127,6 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             )
 
         # Variables initialization
-        self.cords, self.label = np.zeros(4, dtype=np.uint16), ""
         self.prev_target_area = 0
 
         # Set the seed for reproducibility
@@ -334,7 +333,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             Tuple: The reward and done flag.
         """
         # Calculate the reward based on the distance to the target
-        reward_yolo = self.f(distance) * (10 ** -3)
+        reward_yolo = self.f(distance) * (10**-3)
 
         # Check if the robot reaches the target
         reach_target = 0 <= distance <= self.target_th
@@ -403,33 +402,57 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        # Get the image from the Webots camera
-        img_bgr = self._get_image_in_display()
+        image = self.camera.getImage()
 
-        # Initialize the variables
-        distance, centroid = 300, [0, 0]
+        # Convert image to NumPy array and then to BGR
+        img_np = np.frombuffer(image, dtype=np.uint8).reshape(
+            (self.camera_height, self.camera_width, 4)
+        )
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+
+        # Perform recognition
+        coordinate, distance, label = self.recognition_process(img_bgr)
+
+        # Get the image from the Webots camera (BGRA format)
+        self._get_image_in_display(img_bgr, coordinate, label)
+
+        return coordinate, distance
+
+    def recognition_process(
+        self, img_bgr
+    ) -> Tuple[np.ndarray, float, List[float], List[Any]]:
+        """
+        Processes the image for object detection using the YOLO model.
+
+        Args:
+            img_bgr (np.ndarray): The BGR image to process.
+
+        Returns:
+            Tuple[np.ndarray, float, List[float], List[Any]]: The observation state, distance to the target, centroid of the target, and YOLO results.
+        """
+        distance, centroid, inference_time = 300, [0, 0], 0.0
         x_min, y_min, x_max, y_max = 0, 0, 0, 0
         obs = np.zeros(4, dtype=np.uint16)
-        self.cords, self.label = np.zeros(4, dtype=np.uint16), ""
+        cords, label, conf = np.zeros(4, dtype=np.uint16), "", 0.0
 
         # Perform object detection with YOLO
-        results = self.yolo_model.predict(img_bgr, stream_buffer=True, verbose=False)
+        results = self.yolo_model.predict(img_bgr)
         result = results[0]
 
-        # Post-process the results (if any objects are detected)
+        # Post-process the results (shows only if the object is a rock)
         if result.boxes:
             for box in result.boxes:
-                self.label = result.names[box.cls[0].item()]  # Get the label
-                self.cords = box.xyxy[0].tolist()  # Get the coordinates
-                self.cords = [round(x) for x in self.cords]  # Round the coordinates
-                self.conf = round(box.conf[0].item(), 2)  # Get the confidence
+                cords = box.xyxy[0].tolist()  # Get the coordinates
+                cords = [round(x) for x in cords]  # Round the coordinates
+                label = result.names[box.cls[0].item()]  # Get the label
+                conf = round(box.conf[0].item(), 2)  # Get the confidence
 
-                if self.label == "rock":
-                    # Get the new state
-                    obs = np.array(self.cords, dtype=np.uint16)
-
+                if label == "rock":
                     # Get the coordinates of the bounding box
-                    x_min, y_min, x_max, y_max = self.cords
+                    x_min, y_min, x_max, y_max = cords
+
+                    # Get the new state
+                    obs = [x_min, y_min, x_max, y_max]
 
                     # Calculate the centroid and the distance from the lower center
                     centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
@@ -437,39 +460,26 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                         (centroid[0] - self.target_coordinate[0]) ** 2
                         + (centroid[1] - self.target_coordinate[1]) ** 2
                     )
+                    self.move_towards_target(centroid, distance)
         else:
-            obs = np.zeros(4, dtype=np.uint16)
-            distance = 300
+            self.search_target()
 
-        return obs, distance  
-    
-    def _get_image_in_display(self):
+        return obs, distance, label
+
+    def _get_image_in_display(self, img_bgr, coordinate, label):
         """
         Captures an image from the Webots camera and processes it for object detection.
 
         Returns:
             np.ndarray: The processed BGR image.
         """
-        # Get the image from the Webots camera (BGRA format)
-        video_reader = self.camera.getImage()
-
-        # Convert the raw image data to a NumPy array
-        img_np = np.frombuffer(video_reader, dtype=np.uint8).reshape(
-            (self.camera_height, self.camera_width, 4)
-        )
-
-        # Convert BGRA to BGR for OpenCV processing
-        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
-
         # Draw bounding box with label if state is not empty
-        if np.any(self.cords != np.zeros(4, dtype=np.uint16)):
-            self.draw_bounding_box(img_bgr, self.cords, self.label)
+        if np.any(coordinate):
+            self.draw_bounding_box(img_bgr, coordinate, label)
 
         # Display the image in the OpenCV window
         cv2.imshow("Webots YOLO Display", img_bgr)
         cv2.waitKey(1)
-
-        return img_bgr    
 
     def draw_bounding_box(self, img, cords, label):
         """

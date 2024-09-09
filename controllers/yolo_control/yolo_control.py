@@ -160,61 +160,13 @@ class YOLOControl(Supervisor):
         # Initialize the state
         self.state = np.zeros(4, dtype=np.uint16)
 
-    def set_arena_boundaries(self):
-        """
-        Sets the boundaries of the arena based on the floor node size, with a tolerance.
-        """
-        arena_tolerance = 1.0
-        size_field = self.floor.getField("floorSize").getSFVec3f()
-        x, y = size_field
-        self.arena_x_max, self.arena_y_max = (
-            x / 2 - arena_tolerance,
-            y / 2 - arena_tolerance,
-        )
-        self.arena_x_min, self.arena_y_min = -self.arena_x_max, -self.arena_y_max
-
-    def init_camera(self):
-        """
-        Initializes the camera device and enables it for capturing images.
-
-        Returns:
-            Camera: The initialized camera device.
-        """
-        camera = self.getDevice("cabin_camera")
-        camera.enable(self.timestep)
-
-        return camera
-
-    def init_motors_and_sensors(self):
-        """
-        Initializes the motors and sensors of the robot and enables them.
-
-        Returns:
-            Tuple[dict, dict, dict]: Dictionaries of wheel motors, arm motors, and sensors.
-        """
-        names = ["turret", "arm_connector", "lower_arm", "uppertolow", "scoop"]
-        wheel = ["lf", "rf", "lb", "rb"]
-
-        wheel_motors = {side: self.getDevice(f"wheel_{side}") for side in wheel}
-        motors = {name: self.getDevice(f"{name}_motor") for name in names}
-        sensors = {name: self.getDevice(f"{name}_sensor") for name in names}
-
-        for motor in list(wheel_motors.values()) + list(motors.values()):
-            motor.setPosition(float("inf"))
-            motor.setVelocity(0.0)
-
-        for sensor in sensors.values():
-            sensor.enable(self.timestep)
-
-        return wheel_motors, motors, sensors
-
     def get_observation(self):
         """
         Captures an image from the camera, performs object detection using YOLO,
         and processes the results to determine the target's position.
 
         Returns:
-            Tuple[np.ndarray, float, list]: The state array, distance to the target, and centroid of the target.
+            Tuple[np.ndarray, float, List[float], List[Any]]: The observation state, distance to the target, centroid of the target, and YOLO results.
         """
         image = self.camera.getImage()
 
@@ -238,7 +190,18 @@ class YOLOControl(Supervisor):
 
         return coordinate, distance, centroid, test_param
 
-    def recognition_process(self, img_bgr):
+    def recognition_process(
+        self, img_bgr
+    ) -> Tuple[np.ndarray, float, List[float], List[Any]]:
+        """
+        Processes the image for object detection using the YOLO model.
+
+        Args:
+            img_bgr (np.ndarray): The BGR image to process.
+
+        Returns:
+            Tuple[np.ndarray, float, List[float], List[Any]]: The observation state, distance to the target, centroid of the target, and YOLO results.
+        """
         distance, centroid, inference_time = 300, [0, 0], 0.0
         x_min, y_min, x_max, y_max = 0, 0, 0, 0
         obs = np.zeros(4, dtype=np.uint16)
@@ -338,6 +301,54 @@ class YOLOControl(Supervisor):
             (255, 255, 255),
             1,
         )
+
+    def set_arena_boundaries(self):
+        """
+        Sets the boundaries of the arena based on the floor node size, with a tolerance.
+        """
+        arena_tolerance = 1.0
+        size_field = self.floor.getField("floorSize").getSFVec3f()
+        x, y = size_field
+        self.arena_x_max, self.arena_y_max = (
+            x / 2 - arena_tolerance,
+            y / 2 - arena_tolerance,
+        )
+        self.arena_x_min, self.arena_y_min = -self.arena_x_max, -self.arena_y_max
+
+    def init_camera(self):
+        """
+        Initializes the camera device and enables it for capturing images.
+
+        Returns:
+            Camera: The initialized camera device.
+        """
+        camera = self.getDevice("cabin_camera")
+        camera.enable(self.timestep)
+
+        return camera
+
+    def init_motors_and_sensors(self):
+        """
+        Initializes the motors and sensors of the robot and enables them.
+
+        Returns:
+            Tuple[dict, dict, dict]: Dictionaries of wheel motors, arm motors, and sensors.
+        """
+        names = ["turret", "arm_connector", "lower_arm", "uppertolow", "scoop"]
+        wheel = ["lf", "rf", "lb", "rb"]
+
+        wheel_motors = {side: self.getDevice(f"wheel_{side}") for side in wheel}
+        motors = {name: self.getDevice(f"{name}_motor") for name in names}
+        sensors = {name: self.getDevice(f"{name}_sensor") for name in names}
+
+        for motor in list(wheel_motors.values()) + list(motors.values()):
+            motor.setPosition(float("inf"))
+            motor.setVelocity(0.0)
+
+        for sensor in sensors.values():
+            sensor.enable(self.timestep)
+
+        return wheel_motors, motors, sensors
 
     def search_target(self):
         """
