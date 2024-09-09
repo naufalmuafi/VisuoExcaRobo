@@ -9,9 +9,12 @@ by: Naufal Mu'afi
 
 """
 
+import os
 import cv2
+import time
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 from controller import Supervisor
 from typing import Any, Tuple, List
 
@@ -20,6 +23,14 @@ from typing import Any, Tuple, List
 MAX_MOTOR_SPEED = 0.7  # Maximum speed for the motors
 LOWER_Y = -20  # Lower boundary for the y-coordinate
 DISTANCE_THRESHOLD = 1.0  # Distance threshold for considering the target as "reached"
+
+# Constants for the testing
+MAX_TRIALS = 10  # Number of trials to run the testing
+MAX_EPISODE_STEPS = 2000  # Maximum number of steps per trial
+
+# Create directory for saving plots
+output_dir = "test_results"
+os.makedirs(output_dir, exist_ok=True)
 
 
 class ColorControl(Supervisor):
@@ -76,6 +87,13 @@ class ColorControl(Supervisor):
         # Set the initial state
         self.state = np.zeros(4, dtype=np.int16)
 
+        # Variables to store test results
+        self.inference_times = []
+        self.success_trials = 0
+        self.time_to_reach_target = []
+        self.distances_over_time = []
+        self.total_steps = 0
+
     def run(self):
         while self.step(self.timestep) != -1:
             self.state, distance, centroid = self.get_observation(
@@ -89,6 +107,25 @@ class ColorControl(Supervisor):
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
+
+    def reset(self):
+        """
+        Resets the simulation environment, reinitializes the robot position,
+        motors, and sensors.
+        """
+        self.simulationReset()
+        self.simulationResetPhysics()
+        super().step(self.timestep)
+
+        # Set the robot to the initial position
+        self.init_pos = self.robot.getPosition()
+
+        # Initialize the motors and sensors
+        self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
+        self.left_wheels = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
+        self.right_wheels = [self.wheel_motors["rf"], self.wheel_motors["rb"]]
+
+        super().step(self.timestep)
 
     def set_arena_boundaries(self):
         arena_tolerance = 1.0
@@ -335,6 +372,78 @@ class ColorControl(Supervisor):
 
     def stop_robot(self):
         self.run_wheels(0.0, "all")
+
+    def test(self):
+        for trial in range(MAX_TRIALS):
+            print(f"Starting trial {trial + 1}/{MAX_TRIALS}")
+            start_time = time.time()
+            step_count = 0
+            trial_success = False
+            trial_distances = []
+
+            while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
+                step_start_time = time.time()
+                coordinate, distance, centroid = self.get_observation(
+                    self.camera_width, self.camera_height
+                )
+                trial_distances.append(distance)
+
+                if self.is_done(distance, centroid):
+                    trial_success = True
+                    time_taken = time.time() - start_time
+                    self.time_to_reach_target.append(time_taken)
+                    print(f"Target reached in {time_taken:.2f} seconds.")
+                    break
+
+                inference_time = time.time() - step_start_time
+                self.inference_times.append(inference_time)
+                step_count += 1
+
+            if trial_success:
+                self.success_trials += 1
+            self.distances_over_time.append(trial_distances)
+            self.total_steps += step_count
+
+            self.reset()
+
+        self.plot_results()
+
+    def plot_results(self):
+        # Plot Inference Time
+        plt.figure()
+        plt.plot(self.inference_times)
+        plt.title("Inference Time per Step")
+        plt.xlabel("Step")
+        plt.ylabel("Time (seconds)")
+        plt.savefig(os.path.join(output_dir, "inference_time_per_step.png"))
+        plt.show()
+
+        # Plot Distance to Target Over Time for each trial
+        for trial_num, distances in enumerate(self.distances_over_time):
+            plt.figure()
+            plt.plot(distances)
+            plt.title(f"Distance to Target Over Time - Trial {trial_num + 1}")
+            plt.xlabel("Step")
+            plt.ylabel("Distance to Target")
+            plt.savefig(
+                os.path.join(
+                    output_dir, f"distance_to_target_trial_{trial_num + 1}.png"
+                )
+            )
+            plt.show()
+
+        # Plot Success Rate
+        success_rate = (self.success_trials / MAX_TRIALS) * 100
+        print(f"Success rate: {success_rate}%")
+
+        # Plot Time to Reach Target
+        plt.figure()
+        plt.hist(self.time_to_reach_target, bins=10)
+        plt.title("Time to Reach Target")
+        plt.xlabel("Time (seconds)")
+        plt.ylabel("Number of Trials")
+        plt.savefig(os.path.join(output_dir, "time_to_reach_target.png"))
+        plt.show()
 
     # 0 is left, 1 is right
     def move_arm_connector(
