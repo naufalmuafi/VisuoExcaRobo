@@ -58,7 +58,7 @@ class ColorControl(Supervisor):
         # Set the target properties
         self.center_x = self.camera_width / 2
         self.lower_y = self.camera_height + LOWER_Y
-        self.lower_center = [self.center_x, self.lower_y]
+        self.target_coordinate = [self.center_x, self.lower_y]
         self.tolerance_x = 1
 
         # Set color range for target detection
@@ -68,7 +68,7 @@ class ColorControl(Supervisor):
         self.upper_color = self.color_target + color_tolerance
 
         # Create a window for displaying the processed image
-        cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow("Webots Color Recognition Display", cv2.WINDOW_AUTOSIZE)
 
         # Set initial move
         self.initial_move = random.choice([0, 1])
@@ -260,7 +260,7 @@ class ColorControl(Supervisor):
         )
 
         print(
-            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}; Target size: {x_max - x_min:.1f}x{y_max - y_min:.1f}"
+            f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}; Target size: {target_x_max - target_x_min:.1f}x{target_y_max - target_y_min:.1f}"
         )
         self.move_towards_target(centroid, distance)
 
