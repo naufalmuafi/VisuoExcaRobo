@@ -374,18 +374,32 @@ class ColorControl(Supervisor):
         self.run_wheels(0.0, "all")
 
     def test(self):
+        false_detections_per_trial = (
+            []
+        )  # Store a list of false detections for each trial
+
         for trial in range(MAX_TRIALS):
             print(f"Starting trial {trial + 1}/{MAX_TRIALS}")
             start_time = time.time()
             step_count = 0
             trial_success = False
             inf_time = []
+            trial_false_detection = False
 
             while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
                 step_start_time = time.time()
                 coordinate, distance, centroid = self.get_observation(
                     self.camera_width, self.camera_height
                 )
+
+                # Check for false detection based on the target size
+                width = coordinate[2] - coordinate[0]  # target_x_max - target_x_min
+                height = coordinate[3] - coordinate[1]  # target_y_max - target_y_min
+
+                if width >= 50 and height >= 50:
+                    trial_false_detection = (
+                        True  # Mark the trial as having a false detection
+                    )
 
                 if self.is_done(distance, centroid):
                     trial_success = True
@@ -403,12 +417,15 @@ class ColorControl(Supervisor):
 
             self.inference_times[trial] = inf_time
             self.total_steps += step_count
+            false_detections_per_trial.append(
+                trial_false_detection
+            )  # Store the result for this trial
 
             self.reset()
 
-        self.plot_results()
+        self.plot_results(false_detections_per_trial)
 
-    def plot_results(self):
+    def plot_results(self, false_detections_per_trial):
         # Plot Average Inference Time in ms
         avg_inf_time = (
             np.mean([np.mean(inf_time) for inf_time in self.inference_times.values()])
@@ -440,6 +457,27 @@ class ColorControl(Supervisor):
         plt.ylabel("Number of Trials")
         plt.savefig(os.path.join(output_dir, "time_to_reach_target.png"))
         plt.show()
+
+        # Plot False Detection per Trial
+        trials = range(1, MAX_TRIALS + 1)
+        false_detections = [
+            int(fd) for fd in false_detections_per_trial
+        ]  # Convert boolean to int (1 or 0)
+
+        plt.figure()
+        plt.plot(trials, false_detections, marker="o", linestyle="--", color="r")
+        plt.title("False Detections per Trial")
+        plt.xlabel("Trial Number")
+        plt.ylabel("False Detection (1=True, 0=False)")
+        plt.xticks(trials)
+        plt.yticks([0, 1])
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir, "false_detections_per_trial.png"))
+        plt.show()
+
+        # Print false detection stats
+        total_false_detections = sum(false_detections)
+        print(f"Total False Detections: {total_false_detections}/{MAX_TRIALS}")
 
     # 0 is left, 1 is right
     def move_arm_connector(
