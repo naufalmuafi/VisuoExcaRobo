@@ -90,6 +90,7 @@ class ColorControl(Supervisor):
         # Variables to store test results
         self.inference_times = {i: [] for i in range(MAX_TRIALS)}
         self.false_detections = {i: [] for i in range(MAX_TRIALS)}
+        self.trajectory = {i: [] for i in range(MAX_TRIALS)}
         self.success_trials = 0
         self.time_to_reach_target = []
         self.distances_over_time = []
@@ -382,12 +383,18 @@ class ColorControl(Supervisor):
             trial_success = False
             inf_time = []
             false_detection_i = 0
+            position = []
 
             while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
                 step_start_time = time.time()
                 coordinate, distance, centroid = self.get_observation(
                     self.camera_width, self.camera_height
                 )
+
+                # Get the current position of the excavator
+                pos = self.robot.getPosition()
+                x, y, _ = pos
+                position.append((x, y))
 
                 # Check for false detection based on the target size
                 width = coordinate[2] - coordinate[0]  # target_x_max - target_x_min
@@ -413,6 +420,7 @@ class ColorControl(Supervisor):
             self.inference_times[trial] = inf_time
             self.total_steps += step_count
             self.false_detections[trial] = false_detection_i
+            self.trajectory[trial] = position
 
             self.reset()
 
@@ -469,6 +477,13 @@ class ColorControl(Supervisor):
         plt.savefig(os.path.join(output_dir, "time_to_reach_target.png"))
         plt.show()
 
+        # Print average time to reach target
+        avg_time_to_reach_target = np.mean(self.time_to_reach_target)
+        msg_avg_inf_time = (
+            f"Average Time to Reach Target: {avg_time_to_reach_target:.2f} seconds"
+        )
+        print(msg_avg_inf_time)
+
         # Print false detection stats
         total_false_detections = sum(self.false_detections.values())
         msg_total_false_detections = (
@@ -476,11 +491,30 @@ class ColorControl(Supervisor):
         )
         print(msg_total_false_detections)
 
+        # Plot The Trajectory
+        for trial_num, trajectory in self.trajectory.items():
+            x_positions, y_positions = zip(*trajectory)
+            plt.figure()
+            plt.plot(x_positions, y_positions, marker="o", linestyle="--", color="b")
+            plt.scatter([3.5], [-2], color="r", label="Target")
+            plt.title(f"Excavator Movement Trajectory - Trial {trial_num + 1}")
+            plt.xlabel("X Position")
+            plt.ylabel("Y Position")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(
+                os.path.join(
+                    output_dir, f"excavator_movement_trial_{trial_num + 1}.png"
+                )
+            )
+            plt.show()
+
         # save msg to file
         with open(os.path.join(output_dir, "results.txt"), "w") as f:
             f.write(f"{msg_avg_inf_time}\n")
             f.write(f"{msg_success_rate}\n")
             f.write(f"{msg_total_false_detections}\n")
+            f.write(f"{msg_avg_inf_time}\n")
 
     # 0 is left, 1 is right
     def move_arm_connector(
