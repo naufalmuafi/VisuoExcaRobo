@@ -216,14 +216,14 @@ class YOLOControl(Supervisor):
 
         Returns:
             Tuple[np.ndarray, float, list]: The state array, distance to the target, and centroid of the target.
-        """
-        # Get the image from the Webots camera (BGRA format)
-        img_bgr = self._get_image_in_display()
-
+        """        
         distance, centroid, inference_time = 300, [0, 0], 0.0
         x_min, y_min, x_max, y_max = 0, 0, 0, 0
         obs = np.zeros(4, dtype=np.uint16)
         self.cords, self.label, self.conf = np.zeros(4, dtype=np.uint16), "", 0
+        
+        # Get the image from the Webots camera (BGRA format)
+        img_bgr = self._get_image_in_display()
 
         # Perform object detection with YOLO
         results = self.yolo_model.predict(img_bgr)
