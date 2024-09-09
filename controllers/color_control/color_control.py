@@ -424,7 +424,8 @@ class ColorControl(Supervisor):
             np.mean([np.mean(inf_time) for inf_time in self.inference_times.values()])
             * 1000
         )
-        print(f"Average Inference Time: {avg_inf_time:.2f} ms")
+        msg_avg_inf_time = f"Average Inference Time: {avg_inf_time:.2f} ms"
+        print(msg_avg_inf_time)
 
         # Plot Inference Time Distribution
         for trial_num, inf_time in self.inference_times.items():
@@ -439,21 +440,25 @@ class ColorControl(Supervisor):
             plt.show()
 
         # Plot False Detection per Trial
-        for trial_num, false_detection in self.false_detections.items():
-            plt.figure()
-            plt.plot(trial_num, false_detection, marker="o", linestyle="--", color="r")
-            plt.title(f"False Detection per Step - Trial {trial_num + 1}")
-            plt.xlabel("Num of Trials")
-            plt.ylabel("Num of False Detection")
-            plt.grid(True)
-            plt.savefig(
-                os.path.join(output_dir, f"false_detection_trial_{trial_num + 1}.png")
-            )
-            plt.show()
+        plt.figure()
+        plt.plot(
+            self.false_detections.keys(),
+            self.false_detections.values(),
+            marker="o",
+            linestyle="--",
+            color="r",
+        )
+        plt.title(f"False Detection per Trial Test")
+        plt.xlabel("Num of Trials")
+        plt.ylabel("Num of False Detection")
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir, f"false_detection_per_trial.png"))
+        plt.show()
 
         # Plot Success Rate
         success_rate = (self.success_trials / MAX_TRIALS) * 100
-        print(f"Success rate: {success_rate}%")
+        msg_success_rate = f"Success rate: {success_rate}%"
+        print(msg_success_rate)
 
         # Plot Time to Reach Target
         plt.figure()
@@ -466,7 +471,16 @@ class ColorControl(Supervisor):
 
         # Print false detection stats
         total_false_detections = sum(self.false_detections.values())
-        print(f"Total False Detections: {total_false_detections} in {MAX_TRIALS} Test")
+        msg_total_false_detections = (
+            f"Total False Detections: {total_false_detections} in {MAX_TRIALS} Test"
+        )
+        print(msg_total_false_detections)
+
+        # save msg to file
+        with open(os.path.join(output_dir, "results.txt"), "w") as f:
+            f.write(f"{msg_avg_inf_time}\n")
+            f.write(f"{msg_success_rate}\n")
+            f.write(f"{msg_total_false_detections}\n")
 
     # 0 is left, 1 is right
     def move_arm_connector(
