@@ -198,6 +198,9 @@ class YOLOControl(Supervisor):
         # Perform object detection with YOLO
         results = self.yolo_model.predict(img_bgr)
         result = results[0]
+        
+        # Get Inferece Time (ms)
+        inference_time = result.speed['inference']        
 
         # Post-process the results (shows only if the object is a rock)
         for box in result.boxes:
@@ -206,7 +209,7 @@ class YOLOControl(Supervisor):
             self.cords = [round(x) for x in self.cords]  # Round the coordinates
             self.conf = round(box.conf[0].item(), 2)  # Get the confidence
 
-            print(f"Obj. Type: {self.label}; Coords: {self.cords}; Prob.: {self.conf}")
+            print(f"Obj. Type: {self.label}; Coords: {self.cords}; Prob.: {self.conf}; Inference Time: {inference_time:.2f} ms")
 
             if self.label == "rock":
                 # Get the coordinates of the bounding box
