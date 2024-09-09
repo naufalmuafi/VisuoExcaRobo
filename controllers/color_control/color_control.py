@@ -408,6 +408,33 @@ class ColorControl(Supervisor):
             return True
         return False
 
+    def adjust_turret_and_wheels(self, direction):
+        self.motors["turret"].setVelocity(0.0)
+        if direction == "left":
+            self.turn_left()
+        elif direction == "right":
+            self.turn_right()
+
+    def run_wheels(self, velocity, wheel="all"):
+        wheels = (
+            self.left_wheels + self.right_wheels
+            if wheel == "all"
+            else self.left_wheels if wheel == "left" else self.right_wheels
+        )
+        for motor in wheels:
+            motor.setVelocity(velocity)
+
+    def turn_left(self):
+        self.run_wheels(-self.max_wheel_speed, "left")
+        self.run_wheels(self.max_wheel_speed, "right")
+
+    def turn_right(self):
+        self.run_wheels(self.max_wheel_speed, "left")
+        self.run_wheels(-self.max_wheel_speed, "right")
+
+    def stop_robot(self):
+        self.run_wheels(0.0, "all")
+
     def test(self):
         """
         Runs multiple trials where the robot attempts to reach the target.
@@ -516,6 +543,175 @@ class ColorControl(Supervisor):
             f.write(f"Success rate: {success_rate}%\n")
             f.write(f"Total False Detections: {total_false_detections}\n")
             f.write(f"Average Time to Reach Target: {avg_time_to_reach:.2f} seconds\n")
+
+    # 0 is left, 1 is right
+    def move_arm_connector(
+        self,
+        direction,
+        min_position=-1.1,
+        max_position=1.1,
+        velocity=MAX_MOTOR_SPEED,
+        toCenter=False,
+    ):
+        current_position = self.sensors["arm_connector"].getValue()
+
+        if toCenter:
+            tolerance = 0.001
+            if current_position > tolerance or current_position < -tolerance:
+                self.motors["arm_connector"].setVelocity(
+                    velocity * (1 if current_position < 0 else -1)
+                )
+            elif current_position < tolerance or current_position > -tolerance:
+                self.motors["arm_connector"].setVelocity(0.0)
+        else:
+            # Check if the motor is within the defined range
+            if min_position <= current_position <= max_position:
+                self.motors["arm_connector"].setVelocity(
+                    velocity * (1 if direction == 0 else -1)
+                )
+            else:
+                self.motors["arm_connector"].setVelocity(0.0)
+
+    # 0 is down, 1 is up
+    def move_lower_arm(
+        self, direction, min_position=-0.27, max_position=0.27, velocity=MAX_MOTOR_SPEED
+    ):
+        current_position = self.sensors["lower_arm"].getValue()
+
+        # Check if the motor is within the defined range
+        if min_position <= current_position <= max_position:
+            self.motors["lower_arm"].setVelocity(
+                velocity * (1 if direction == 0 else -1)
+            )
+        else:
+            self.motors["lower_arm"].setVelocity(0.0)
+
+    # 0 is down, 1 is up
+    def move_uppertolow(
+        self, direction, min_position=-0.9, max_position=0.9, velocity=MAX_MOTOR_SPEED
+    ):
+        current_position = self.sensors["uppertolow"].getValue()
+
+        # Check if the motor is within the defined range
+        if min_position <= current_position <= max_position:
+            self.motors["uppertolow"].setVelocity(
+                velocity * (1 if direction == 0 else -1)
+            )
+        else:
+            self.motors["uppertolow"].setVelocity(0.0)
+
+    # 0 is inside, 1 is outside
+    def move_scoop(
+        self,
+        direction,
+        min_position=-1.1,
+        max_position=1.1,
+        velocity=MAX_MOTOR_SPEED + 0.5,
+    ):
+        current_position = self.sensors["scoop"].getValue()
+
+        # Check if the motor is within the defined range
+        if min_position <= current_position <= max_position:
+            self.motors["scoop"].setVelocity(velocity * (1 if direction == 0 else -1))
+        else:
+            self.motors["scoop"].setVelocity(0.0)
+
+    def digging_operation(self):
+        initial_positions = {
+            "scoop": self.sensors["scoop"].getValue(),
+            "lower_arm": self.sensors["lower_arm"].getValue(),
+            "uppertolow": self.sensors["uppertolow"].getValue(),
+            "arm_connector": self.sensors["arm_connector"].getValue(),
+        }
+
+        targets = {
+            "scoop": 1.0,
+            "lower_arm": 0.1,
+            "uppertolow": 0.45,
+        }
+
+        step = 0
+        delay_start_time = None
+
+        while True:
+            current_positions = {
+                "scoop": self.sensors["scoop"].getValue(),
+                "lower_arm": self.sensors["lower_arm"].getValue(),
+                "uppertolow": self.sensors["uppertolow"].getValue(),
+            }
+
+            if step == 0:
+                # Adjust the target for uppertolow
+                adjusted_targets = {
+                    "scoop": -targets["scoop"],
+                    "lower_arm": -targets["lower_arm"],
+                    "uppertolow": -targets["uppertolow"],
+                }
+
+                self.move_scoop(
+                    0,
+                    min_position=initial_positions["scoop"],
+                    max_position=adjusted_targets["scoop"],
+                )
+                self.move_lower_arm(
+                    0,
+                    min_position=initial_positions["lower_arm"],
+                    max_position=adjusted_targets["lower_arm"],
+                )
+                self.move_uppertolow(1, min_position=adjusted_targets["uppertolow"])
+                self.move_arm_connector(1, toCenter=True)
+
+                print(f"Current positions: {current_positions}")
+                print(f"Adjusted targets: {adjusted_targets}")
+
+                # Check if all the joints have reached or exceeded their adjusted targets
+                if all(
+                    current_positions[joint] >= adjusted_targets[joint]
+                    for joint in adjusted_targets
+                ):
+                    delay_start_time = self.getTime()
+                    print("Step 0 done.")
+                    step = 1
+
+            elif step == 1:
+                print("Step 1")
+                if self.getTime() - delay_start_time >= 2.0:
+                    step = 2
+
+            elif step == 2:
+                print("Step 2")
+                # Move down
+                self.move_scoop(0, max_position=targets["scoop"] - 0.5)
+                self.move_lower_arm(0, max_position=targets["lower_arm"] - 0.1)
+                self.move_uppertolow(0, max_position=targets["uppertolow"])
+                self.move_arm_connector(1, toCenter=True)
+
+                adjusted_targets = {
+                    "lower_arm": targets["lower_arm"] - 0.1,
+                    "scoop": targets["scoop"] - 0.5,
+                }
+                # Check if all the joints have reached or exceeded their adjusted targets
+                if all(
+                    current_positions[joint] <= adjusted_targets.get(joint, target)
+                    for joint, target in adjusted_targets.items()
+                ):
+                    print("Step 2 done.")
+                    delay_start_time = self.getTime()
+                    step = 3
+
+            elif step == 3:
+                if self.getTime() - delay_start_time >= 1.0:
+                    return [
+                        initial_positions[joint]
+                        for joint in [
+                            "arm_connector",
+                            "lower_arm",
+                            "uppertolow",
+                            "scoop",
+                        ]
+                    ]
+
+            self.step(self.timestep)
 
 
 if __name__ == "__main__":
