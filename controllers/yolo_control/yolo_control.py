@@ -216,7 +216,7 @@ class YOLOControl(Supervisor):
 
         Returns:
             Tuple[np.ndarray, float, list]: The state array, distance to the target, and centroid of the target.
-        """        
+        """                        
         distance, centroid, inference_time = 300, [0, 0], 0.0
         x_min, y_min, x_max, y_max = 0, 0, 0, 0
         obs = np.zeros(4, dtype=np.uint16)
