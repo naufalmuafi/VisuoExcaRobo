@@ -60,7 +60,7 @@ class ColorControl(Supervisor):
 
         # Initialize the camera, motors, and sensors
         self.camera = self.init_camera()
-        self.display = self.getDevice("display_1")
+
         self.wheel_motors, self.motors, self.sensors = self.init_motors_and_sensors()
         self.left_wheels: List[Any] = [self.wheel_motors["lf"], self.wheel_motors["lb"]]
         self.right_wheels: List[Any] = [
@@ -95,6 +95,8 @@ class ColorControl(Supervisor):
 
         # Initial robot state and results tracking
         self.state: np.ndarray = np.zeros(4, dtype=np.int16)
+
+        # Results tracking
         self.inference_times: Dict[int, List[float]] = {
             i: [] for i in range(MAX_TRIALS)
         }
@@ -105,6 +107,26 @@ class ColorControl(Supervisor):
         self.success_trials: int = 0
         self.time_to_reach_target: List[float] = []
         self.total_steps: int = 0
+
+    def run(self):
+        """
+        Main loop of the controller that resets the simulation and continuously
+        processes camera input to control the robot.
+        """
+        self.reset()
+
+        while self.step(self.timestep) != -1:
+            self.state, distance, centroid = self.get_observation(
+                self.camera_width, self.camera_height
+            )
+            if self.is_done(distance, centroid):
+                print("sip.")
+                # self.digging_operation()
+
+                exit(1)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
 
     def reset(self):
         """
@@ -441,10 +463,10 @@ class ColorControl(Supervisor):
         """
         for trial in range(MAX_TRIALS):
             print(f"Starting trial {trial + 1}/{MAX_TRIALS}")
-            
+
             # Reset the simulation for the next trial
             self.reset()
-            
+
             start_time = time.time()
             step_count = 0
             trial_success = False
@@ -453,7 +475,7 @@ class ColorControl(Supervisor):
             position = []
 
             # Simulation loop
-            while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:                                
+            while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
                 step_start_time = time.time()
                 coordinate, distance, centroid = self.get_observation(
                     self.camera_width, self.camera_height
@@ -488,7 +510,7 @@ class ColorControl(Supervisor):
             self.inference_times[trial] = inf_time
             self.total_steps += step_count
             self.false_detections[trial] = false_detection_i
-            self.trajectory[trial] = position            
+            self.trajectory[trial] = position
 
         # Plot and save results
         self.plot_results()

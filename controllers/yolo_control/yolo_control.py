@@ -1,21 +1,37 @@
 """
-YOLO Target Control for Excavator Robot
+YOLO Target Control
+for Excavator Robot
 
 This controller is used to control the excavator robot to find the target object using the YOLO object detection model.
 
 Author: Naufal Mu'afi
 """
 
+import os
 import cv2
+import time
 import random
 import numpy as np
+import matplotlib.pyplot as plt
+
 from ultralytics import YOLO
 from controller import Supervisor
+from typing import Any, Tuple, List, Dict
 
 # Constants for the robot's control
-MAX_MOTOR_SPEED = 0.7  # Maximum speed for the motors
-LOWER_Y = -20  # Lower boundary for the y-coordinate
-DISTANCE_THRESHOLD = 1.0  # Distance threshold for considering the target as "reached"
+MAX_MOTOR_SPEED: float = 0.7  # Maximum speed for the motors
+LOWER_Y: int = -20  # Lower boundary for the y-coordinate
+DISTANCE_THRESHOLD: float = (
+    1.0  # Distance threshold for considering the target as "reached"
+)
+
+# Constants for the testing
+MAX_TRIALS: int = 6  # Number of trials to run the testing
+MAX_EPISODE_STEPS: int = 2000  # Maximum number of steps per trial
+
+# Create directory for saving plots
+output_dir = "test_results"
+os.makedirs(output_dir, exist_ok=True)
 
 
 class YOLOControl(Supervisor):
@@ -67,7 +83,6 @@ class YOLOControl(Supervisor):
 
         # Initialize the camera and display
         self.camera = self.init_camera()
-        self.display = self.getDevice("display_1")
 
         # Set the camera properties
         self.camera_width, self.camera_height = (
@@ -83,7 +98,6 @@ class YOLOControl(Supervisor):
         self.tolerance_x = 1
 
         # Load the YOLO model
-        self.yolo_model = YOLO("../../yolo_model/yolov8m.pt")
         self.yolo_model = YOLO("../../runs/detect/train_m_300/weights/best.pt")
 
         # Create a window for displaying the processed image
@@ -94,6 +108,19 @@ class YOLOControl(Supervisor):
 
         # Set the initial state
         self.state = np.zeros(4, dtype=np.uint16)
+        self.cords, self.label, self.conf = np.zeros(4, dtype=np.uint16), "", 0
+
+        # Results tracking
+        self.inference_times: Dict[int, List[float]] = {
+            i: [] for i in range(MAX_TRIALS)
+        }
+        self.confidence_score: Dict[int, int] = {i: 0 for i in range(MAX_TRIALS)}
+        self.trajectory: Dict[int, List[Tuple[float, float]]] = {
+            i: [] for i in range(MAX_TRIALS)
+        }
+        self.success_trials: int = 0
+        self.time_to_reach_target: List[float] = []
+        self.total_steps: int = 0
 
     def run(self):
         """
@@ -103,7 +130,7 @@ class YOLOControl(Supervisor):
         self.reset()
 
         while self.step(self.timestep) != -1:
-            self.state, distance, centroid = self.get_observation()
+            self.state, distance, centroid, _ = self.get_observation()
             if self.is_done(distance, centroid):
                 print("sip.")
                 exit(1)
@@ -189,54 +216,59 @@ class YOLOControl(Supervisor):
         Returns:
             Tuple[np.ndarray, float, list]: The state array, distance to the target, and centroid of the target.
         """
-        distance, centroid = None, [None, None]
-        self.cords = []
-
         # Get the image from the Webots camera (BGRA format)
         img_bgr = self._get_image_in_display()
+
+        distance, centroid, inference_time = 300, [0, 0], 0.0
+        x_min, y_min, x_max, y_max = 0, 0, 0, 0
+        self.cords, self.label, self.conf = np.zeros(4, dtype=np.uint16), "", 0
 
         # Perform object detection with YOLO
         results = self.yolo_model.predict(img_bgr)
         result = results[0]
-        
+
         # Get Inferece Time (ms)
-        inference_time = result.speed['inference']        
+        inference_time = result.speed["inference"]
 
         # Post-process the results (shows only if the object is a rock)
-        for box in result.boxes:
-            self.label = result.names[box.cls[0].item()]  # Get the label
-            self.cords = box.xyxy[0].tolist()  # Get the coordinates
-            self.cords = [round(x) for x in self.cords]  # Round the coordinates
-            self.conf = round(box.conf[0].item(), 2)  # Get the confidence
-
-            print(f"Obj. Type: {self.label}; Coords: {self.cords}; Prob.: {self.conf}; Inference Time: {inference_time:.2f} ms")
-
-            if self.label == "rock":
-                # Get the coordinates of the bounding box
-                x_min, y_min, x_max, y_max = self.cords
-
-                # Get the new state
-                self.state = [x_min, y_min, x_max, y_max]
-
-                # Calculate the centroid and the distance from the lower center
-                centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
-                distance = np.sqrt(
-                    (centroid[0] - self.target_coordinate[0]) ** 2
-                    + (centroid[1] - self.target_coordinate[1]) ** 2
-                )
+        if result.boxes:
+            for box in result.boxes:
+                self.label = result.names[box.cls[0].item()]  # Get the label
+                self.cords = box.xyxy[0].tolist()  # Get the coordinates
+                self.cords = [round(x) for x in self.cords]  # Round the coordinates
+                self.conf = round(box.conf[0].item(), 2)  # Get the confidence
 
                 print(
-                    f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
+                    f"Obj. Type: {self.label}; Coords: {self.cords}; Prob.: {self.conf}; Inference Time: {inference_time:.2f} ms"
                 )
-                print(f"Target Area: {(x_max - x_min) * (y_max - y_min)}")
-                self.move_towards_target(centroid, distance)
-            else:
-                self.search_target()
 
+                if self.label == "rock":
+                    # Get the coordinates of the bounding box
+                    x_min, y_min, x_max, y_max = self.cords
+
+                    # Get the new state
+                    obs = [x_min, y_min, x_max, y_max]
+
+                    # Calculate the centroid and the distance from the lower center
+                    centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
+                    distance = np.sqrt(
+                        (centroid[0] - self.target_coordinate[0]) ** 2
+                        + (centroid[1] - self.target_coordinate[1]) ** 2
+                    )
+
+                    print(
+                        f"Centroid: ({centroid[0]:.2f}, {centroid[1]:.2f}); Distance: {distance:.2f}"
+                    )
+                    print(f"Target Area: {(x_max - x_min) * (y_max - y_min)}")
+                    self.move_towards_target(centroid, distance)
+        else:
+            self.search_target()
+
+        test_param = [inference_time, self.conf]
         print(self.cords)
         print("---")
 
-        return self.state, distance, centroid
+        return obs, distance, centroid, test_param
 
     def _get_image_in_display(self):
         """
