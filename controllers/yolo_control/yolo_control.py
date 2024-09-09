@@ -114,7 +114,9 @@ class YOLOControl(Supervisor):
         self.inference_times: Dict[int, List[float]] = {
             i: [] for i in range(MAX_TRIALS)
         }
-        self.confidence_score: Dict[int, int] = {i: 0 for i in range(MAX_TRIALS)}
+        self.confidence_score: Dict[int, List[float]] = {
+            i: [] for i in range(MAX_TRIALS)
+        }
         self.trajectory: Dict[int, List[Tuple[float, float]]] = {
             i: [] for i in range(MAX_TRIALS)
         }
@@ -159,6 +161,59 @@ class YOLOControl(Supervisor):
 
         # Initialize the state
         self.state = np.zeros(4, dtype=np.uint16)
+
+    def test(self):
+        """
+        Runs the testing loop for the robot's target control using YOLO.
+        """
+        for trial in range(MAX_TRIALS):
+            print(f"Starting trial {trial + 1}/{MAX_TRIALS}")
+
+            # Reset the simulation environment
+            self.reset()
+
+            # Initialize the trial variables
+            step_count, trial_success = 0, False
+            conf_score, inf_times, positions = [], [], []
+
+            # Start the timer
+            start_time = time.time()
+
+            # Run the control loop
+            while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
+                # Get the observation (test_param = [inference_time, confidence])
+                self.state, distance, centroid, test_param = self.get_observation()
+
+                # Append the results of the observation
+                inf_times.append(test_param[0])
+                conf_score.append(test_param[1])
+
+                # Get the current position
+                position = self.robot.getPosition()
+                x, y, _ = position
+                positions.append((x, y))
+
+                # Check if the target is reached
+                if self.is_done(distance, centroid):
+                    trial_success = True
+                    time_taken = time.time() - start_time
+                    self.time_to_reach_target.append(time_taken)
+                    print(f"Target reached in {time_taken:.2f} seconds.")
+
+                    break
+
+                step_count += 1
+
+            if trial_success:
+                self.success_trials += 1
+
+            self.inference_times[trial] = inf_times
+            self.confidence_score[trial] = conf_score
+            self.trajectory[trial] = positions
+            self.total_steps += step_count
+
+        # Plot and save the results
+        self.plot_results()
 
     def get_observation(self):
         """
@@ -301,6 +356,95 @@ class YOLOControl(Supervisor):
             (255, 255, 255),
             1,
         )
+
+    def plot_results(self):
+        """
+        Generates and saves plots to visualize the robot's performance over all trials.
+        """
+        # Print Average Inference Time in ms
+        avg_inf_time = np.mean(
+            [np.mean(inf_time) for inf_time in self.inference_times.values()]
+        )
+        print(f"Average Inference Time: {avg_inf_time:.2f} ms")
+
+        # Print Average Confidence Score
+        avg_conf_score = np.mean(
+            [np.mean(conf_score) for conf_score in self.confidence_score.values()]
+        )
+        print(f"Average Confidence Score: {avg_conf_score:.2f}")
+
+        # Print Success Rate
+        success_rate = (self.success_trials / MAX_TRIALS) * 100
+        print(f"Success rate: {success_rate}%")
+
+        # Print average time to reach target
+        avg_time_to_reach_target = np.mean(self.time_to_reach_target)
+        print(f"Average Time to Reach Target: {avg_time_to_reach_target:.2f} seconds")
+
+        # Plot Inference Time Distribution
+        for trial_num, inf_time in self.inference_times.items():
+            plt.figure()
+            plt.plot(inf_time)
+            plt.title(f"Inference Time Distribution - Test {trial_num + 1}")
+            plt.xlabel("Step")
+            plt.ylabel("Time (ms)")
+            plt.savefig(
+                os.path.join(output_dir, f"inference_time_trial_{trial_num + 1}.png")
+            )
+            plt.show()
+
+        # Plot Confidence Score Distribution
+        for trial_num, conf_score in self.confidence_score.items():
+            plt.figure()
+            plt.plot(conf_score)
+            plt.title(f"Confidence Score Distribution - Test {trial_num + 1}")
+            plt.xlabel("Step")
+            plt.ylabel("Confidence Score")
+            plt.savefig(
+                os.path.join(output_dir, f"confidence_score_trial_{trial_num + 1}.png")
+            )
+            plt.show()
+
+        # Plot Time to Reach Target
+        plt.figure()
+        plt.hist(self.time_to_reach_target, bins=10)
+        plt.title("Time to Reach Target")
+        plt.xlabel("Time (seconds)")
+        plt.ylabel("Number of Trials")
+        plt.savefig(os.path.join(output_dir, "time_to_reach_target.png"))
+        plt.show()
+
+        # Plot The Trajectory
+        for trial_num, trajectory in self.trajectory.items():
+            x_positions, y_positions = zip(*trajectory)
+            plt.figure()
+            plt.plot(
+                x_positions, y_positions, color="b", label="Excavator Trajectory Path"
+            )
+            plt.scatter([-4], [0], color="g", label="Initial Position")
+            plt.scatter([3.5], [-2], color="r", marker="*", s=150, label="Target")
+            plt.title(f"Excavator Movement Trajectory - Test {trial_num + 1}")
+            plt.xlabel("X Position")
+            plt.ylabel("Y Position")
+            plt.legend()
+            plt.grid(True)
+            plt.xlim([-5, 5])
+            plt.ylim([-3, 3])
+            plt.savefig(
+                os.path.join(
+                    output_dir, f"excavator_movement_trial_{trial_num + 1}.png"
+                )
+            )
+            plt.show()
+
+        # Save results to a text file
+        with open(os.path.join(output_dir, "results.txt"), "w") as f:
+            f.write(f"Average Inference Time: {avg_inf_time:.2f} ms\n")
+            f.write(f"Average Confidence Score: {avg_conf_score:.2f}\n")
+            f.write(f"Success rate: {success_rate}%\n")
+            f.write(
+                f"Average Time to Reach Target: {avg_time_to_reach_target:.2f} seconds\n"
+            )
 
     def set_arena_boundaries(self):
         """
@@ -470,4 +614,4 @@ if __name__ == "__main__":
     Initializes the YOLOControl instance and starts the control loop.
     """
     controller = YOLOControl()
-    controller.run()
+    controller.test()
