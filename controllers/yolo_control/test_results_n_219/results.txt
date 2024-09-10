@@ -1,0 +1,4 @@
+Average Inference Time: 3.79 ms
+Average Confidence Score: 0.88
+Success rate: 100.0%
+Average Time to Reach Target: 6.92 seconds

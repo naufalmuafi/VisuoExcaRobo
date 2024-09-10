@@ -53,7 +53,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         """
         super().__init__()
         self.timestep = int(self.getBasicTimeStep())
-        random.seed(123)
+        random.seed(42)
 
         # Register the environment with Gym
         self.spec: EnvSpec = EnvSpec(id=ENV_ID, max_episode_steps=max_episode_steps)
@@ -97,7 +97,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.moiety = 2.0 * self.camera_height / 3.0 + 5
 
         # Load the YOLO model
-        self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
+        self.yolo_model = YOLO("../../runs/detect/train_n_219/weights/best.pt")
 
         # Create a window for displaying the processed image
         cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
@@ -333,7 +333,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
             Tuple: The reward and done flag.
         """
         # Calculate the reward based on the distance to the target
-        reward_yolo = self.f(distance) * (10**-3)
+        reward_yolo = self.f(distance) * 0.001
 
         # Check if the robot reaches the target
         reach_target = 0 <= distance <= self.target_th
@@ -430,9 +430,9 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple[np.ndarray, float, List[float], List[Any]]: The observation state, distance to the target, centroid of the target, and YOLO results.
         """
-        distance, centroid, inference_time = 300, [0, 0], 0.0
-        x_min, y_min, x_max, y_max = 0, 0, 0, 0
-        obs = np.zeros(4, dtype=np.uint16)
+        distance, centroid = 300, [0, 0]
+        # x_min, y_min, x_max, y_max = 0, 0, 0, 0
+        # obs = np.zeros(4, dtype=np.uint16)
         cords, label, conf = np.zeros(4, dtype=np.uint16), "", 0.0
 
         # Perform object detection with YOLO
@@ -443,7 +443,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         if result.boxes:
             for box in result.boxes:
                 cords = box.xyxy[0].tolist()  # Get the coordinates
-                cords = [round(x) for x in cords]  # Round the coordinates
+                cords = np.array([round(x) for x in cords], dtype=np.uint16)  # Round the coordinates
                 label = result.names[box.cls[0].item()]  # Get the label
                 conf = round(box.conf[0].item(), 2)  # Get the confidence
 
@@ -452,7 +452,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                     x_min, y_min, x_max, y_max = cords
 
                     # Get the new state
-                    obs = np.array([x_min, y_min, x_max, y_max], dtype=np.uint16)
+                    # obs = np.array([x_min, y_min, x_max, y_max], dtype=np.uint16)
 
                     # Calculate the centroid and the distance from the lower center
                     centroid = [(x_min + x_max) / 2, (y_min + y_max) / 2]
@@ -461,7 +461,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
                         + (centroid[1] - self.target_coordinate[1]) ** 2
                     )                
 
-        return obs, distance, label
+        return cords, distance, label
 
     def _get_image_in_display(self, img_bgr, coordinate, label):
         """
