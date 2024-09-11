@@ -30,7 +30,7 @@ MAX_TRIALS: int = 6  # Number of trials to run the testing
 MAX_EPISODE_STEPS: int = 2000  # Maximum number of steps per trial
 
 # Create directory for saving plots
-output_dir = "test_results_m_100"
+output_dir = "test_results_s_165"
 os.makedirs(output_dir, exist_ok=True)
 
 
@@ -98,7 +98,7 @@ class YOLOControl(Supervisor):
         self.tolerance_x = 1
 
         # Load the YOLO model
-        self.yolo_model = YOLO("../../runs/detect/train_m_100/weights/best.pt")
+        self.yolo_model = YOLO("../../runs/detect/train_s_165/weights/best.pt")
 
         # Create a window for displaying the processed image
         cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
@@ -613,4 +613,4 @@ if __name__ == "__main__":
     Initializes the YOLOControl instance and starts the control loop.
     """
     controller = YOLOControl()
-    controller.run()
+    controller.test()
