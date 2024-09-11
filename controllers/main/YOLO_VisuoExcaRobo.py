@@ -30,7 +30,7 @@ TARGET_AREA_TH = 2000
 # Constants for the logistic function
 LOWER_Y = -38
 STEPNESS = 5
-MIDPOINT = 20
+MIDPOINT = 13
 TARGET_TH = 3
 
 
@@ -97,7 +97,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         self.moiety = 2.0 * self.camera_height / 3.0 + 5
 
         # Load the YOLO model
-        self.yolo_model = YOLO("../../runs/detect/train_n_219/weights/best.pt")
+        self.yolo_model = YOLO("../../runs/detect/train_m_300/weights/best.pt")
 
         # Create a window for displaying the processed image
         cv2.namedWindow("Webots YOLO Display", cv2.WINDOW_AUTOSIZE)
