@@ -78,7 +78,7 @@ class VisuoExcaRobo:
 
         Returns:
             bool: True if the environment is valid, False otherwise.
-        """                 
+        """                        
         try:
             print(f"Checking the environment: {self.env}...")
             check_env(self.env)

@@ -613,4 +613,4 @@ if __name__ == "__main__":
     Initializes the YOLOControl instance and starts the control loop.
     """
     controller = YOLOControl()
-    controller.test()
+    controller.run()

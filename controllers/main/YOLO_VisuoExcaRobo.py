@@ -30,7 +30,7 @@ TARGET_AREA_TH = 2000
 # Constants for the logistic function
 LOWER_Y = -38
 STEPNESS = 5
-MIDPOINT = 13
+MIDPOINT = 20
 TARGET_TH = 3
 
 
@@ -399,13 +399,24 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        image = self.camera.getImage()
+        image = self.camera.getImage()        
 
         # Convert image to NumPy array and then to BGR
-        img_np = np.frombuffer(image, dtype=np.uint16).reshape(
-            (self.camera_height, self.camera_width, 4)
+        # img_np = np.frombuffer(image, dtype=np.uint8).reshape(
+        #     (self.camera_height, self.camera_width, 4)
+        # )
+        # img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+        
+        # Extract RGB channels from the image
+        red_channel, green_channel, blue_channel = self.extract_rgb_channels(
+            image, self.camera_width, self.camera_height
         )
-        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+        
+        # Stack the channels together into a NumPy array
+        img_bgr = np.stack((blue_channel, green_channel, red_channel), axis=-1)
+
+        # Convert to a NumPy array with the correct dtype
+        img_bgr = np.array(img_bgr, dtype=np.uint8)        
 
         # Perform recognition
         coordinate, distance, label = self.recognition_process(img_bgr)

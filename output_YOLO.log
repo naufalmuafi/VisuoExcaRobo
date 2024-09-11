@@ -1,0 +1,41 @@
+nohup: ignoring input
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF CABIN_CAMERA Camera: As 'physics' is set to NULL, collisions will have no effect.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF ARM HingeJoint > DEF ALL_ARM_SOLID Solid > DEF BLUE_ARM_CONNECTOR_POSE Pose > DEF BLUE_ARM_CONNECTOR_MATERIAL Shape > DEF PART1_MESH Mesh: Mesh '' has more than 100'000 vertices, it is recommended to reduce the number of vertices.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF ARM HingeJoint > DEF ALL_ARM_SOLID Solid > DEF LOWER_ARM HingeJoint > DEF LOWER_ARM_SOLID Solid: As 'physics' is set to NULL, collisions will have no effect.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF CABIN Pose > DEF BLUE_CABIN_BODY Shape > DEF compact_excavator_cabin_body Mesh: Mesh '' has more than 100'000 vertices, it is recommended to reduce the number of vertices.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF ARM HingeJoint > DEF ALL_ARM_SOLID Solid > DEF BLUE_ARM_CONNECTOR_POSE Pose > DEF BLUE_ARM_CONNECTOR_MATERIAL Shape > DEF PART1_MESH Mesh: Too many triangles (78976) in mesh: unable to cast shadows, please reduce the number of triangles below 21845 or set Shape.castShadows to FALSE to disable this warning.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF ARM HingeJoint > DEF ALL_ARM_SOLID Solid > DEF LOWER_ARM HingeJoint > DEF LOWER_ARM_SOLID Solid > DEF UPPERTOLOW HingeJoint > DEF UPPERTOLOW_SOLID Solid > DEF UPPERTOLOW_POSE Pose > DEF UPPERTOLOW_SHAPE Shape > Mesh "": Too many triangles (29856) in mesh: unable to cast shadows, please reduce the number of triangles below 21845 or set Shape.castShadows to FALSE to disable this warning.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF ARM HingeJoint > DEF ALL_ARM_SOLID Solid > DEF LOWER_ARM HingeJoint > DEF LOWER_ARM_SOLID Solid > DEF UPPERTOLOW HingeJoint > DEF UPPERTOLOW_SOLID Solid > USE UPPERTOLOW_SHAPE > Mesh "": Too many triangles (29856) in mesh: unable to cast shadows, please reduce the number of triangles below 21845 or set Shape.castShadows to FALSE to disable this warning.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF ARM HingeJoint > DEF ALL_ARM_SOLID Solid > USE BLUE_ARM_CONNECTOR_POSE > DEF BLUE_ARM_CONNECTOR_MATERIAL Shape > DEF PART1_MESH Mesh: Too many triangles (78976) in mesh: unable to cast shadows, please reduce the number of triangles below 21845 or set Shape.castShadows to FALSE to disable this warning.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > DEF CABIN Pose > DEF BLUE_CABIN_BODY Shape > DEF compact_excavator_cabin_body Mesh: Too many triangles (43480) in mesh: unable to cast shadows, please reduce the number of triangles below 21845 or set Shape.castShadows to FALSE to disable this warning.
+WARNING: DEF EXCAVATOR Robot > DEF YELLOW_TURRET_TO_CABIN_ARM HingeJoint > DEF YELLOW_TURRET_SOLID Solid > Group  > USE CABIN > DEF BLUE_CABIN_BODY Shape > DEF compact_excavator_cabin_body Mesh: Too many triangles (43480) in mesh: unable to cast shadows, please reduce the number of triangles below 21845 or set Shape.castShadows to FALSE to disable this warning.
+INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: Terminating extern controller for robot "wheeledExcavator".
+INFO: 'wheeledExcavator' extern controller: disconnected.
+INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
+INFO: "wheeledExcavator" extern controller: stopped.
+INFO: 'wheeledExcavator' extern controller: disconnected.
+INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: "wheeledExcavator" extern controller: stopped.
+INFO: 'wheeledExcavator' extern controller: disconnected.
+INFO: 'wheeledExcavator' extern controller: Waiting for local or remote connection on port 1234 targeting robot named 'wheeledExcavator'.
+INFO: 'wheeledExcavator' extern controller: connected.
+INFO: 'wheeledExcavator' extern controller: disconnected, waiting for new connection.
+INFO: 'wheeledExcavator' extern controller: disconnected.
