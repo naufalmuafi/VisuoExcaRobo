@@ -8,12 +8,13 @@ import gymnasium as gym
 import matplotlib.pyplot as plt
 from stable_baselines3 import PPO
 from typing import Tuple, Callable
+from matplotlib.patches import Circle
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 
-class VisuoExcaRobo():
+class VisuoExcaRobo:
     """
     A class representing the VisuoExcaRobo environment for training and testing
     a Proximal Policy Optimization (PPO) model.
@@ -38,7 +39,7 @@ class VisuoExcaRobo():
         Args:
             args: The arguments passed to the class, typically a parsed
                   command-line argument object.
-        """                
+        """
         # Extract the arguments
         (
             self.duty,
@@ -78,7 +79,7 @@ class VisuoExcaRobo():
 
         Returns:
             bool: True if the environment is valid, False otherwise.
-        """                        
+        """
         try:
             print(f"Checking the environment: {self.env}...")
             check_env(self.env)
@@ -88,22 +89,28 @@ class VisuoExcaRobo():
             print("Please check the environment and try again.")
             return False
 
-    def fit(
-        self, batch_size=64, learning_rate=0.0003
-    ) -> None:
+    def fit(self, batch_size=64, learning_rate=0.0003) -> None:
         """
         Fits the model by training or testing it based on the duty specified.
 
         Args:
             batch_size (int): The size of the batch for training.
-            learning_rate (float): The learning rate for the PPO model.            
+            learning_rate (float): The learning rate for the PPO model.
         """
         if self.duty == "train":
             self.train_PPO(batch_size=batch_size, learning_rate=learning_rate)
         elif self.duty == "test":
-            self.test_PPO(max_steps=self.timesteps, model_dir=str(self.model_path), plot_name=str(self.plot_name))
+            self.test_PPO(
+                max_steps=self.timesteps,
+                model_dir=str(self.model_path),
+                plot_name=str(self.plot_name),
+            )
         elif self.duty == "test_1":
-            self.test_1(max_steps=self.timesteps, model_dir=str(self.model_path), plot_name=str(self.plot_name))
+            self.test_1(
+                max_steps=self.timesteps,
+                model_dir=str(self.model_path),
+                plot_name=str(self.plot_name),
+            )
 
     def train_PPO(self, batch_size=64, learning_rate=0.0003) -> None:
         """
@@ -133,7 +140,9 @@ class VisuoExcaRobo():
         model.save(model_filename)
         print(f"Model saved as {model_filename}")
 
-    def test_PPO(self, max_steps: int=3000, model_dir: str = None, plot_name: str = None) -> None:
+    def test_PPO(
+        self, max_steps: int = 3000, model_dir: str = None, plot_name: str = None
+    ) -> None:
         """
         Tests the trained PPO model and visualizes the rewards over time.
 
@@ -171,19 +180,19 @@ class VisuoExcaRobo():
             step_list.append(step)
             reward_list.append(reward)
 
-            # Reset the environment if the episode is done            
+            # Reset the environment if the episode is done
             if done:
                 obs, _ = self.env.reset()
                 print("Test Success.")
-            
+
             if step >= max_steps:
                 print("Max Steps Reached.")
                 done = True
-            
+
             # Break the loop if 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 print("Test Interrupted.")
-                done = True                
+                done = True
 
             step += 1
 
@@ -194,9 +203,11 @@ class VisuoExcaRobo():
         # Save the plot as a PNG file
         plt.savefig(
             f"{self.log_dir}/test_reward_plot_{plot_name}_{self.today_date}.png"
-        )        
+        )
 
-    def test_1(self, max_steps: int=3000, model_dir: str = None, plot_name: str = None) -> None:
+    def test_1(
+        self, max_steps: int = 3000, model_dir: str = None, plot_name: str = None
+    ) -> None:
         """
         Tests the trained PPO model and visualizes the rewards over time.
 
@@ -218,7 +229,13 @@ class VisuoExcaRobo():
         print("Testing the Environment with Predicted Value")
 
         # Initialize lists for steps and rewards
-        step_list, reward_list, position_list, deviation_x_list, deviation_y_list = [], [], [], [], []
+        step_list, reward_list, position_list, deviation_x_list, deviation_y_list = (
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
         step, done = 0, False
 
         # Reset the environment before testing
@@ -229,13 +246,17 @@ class VisuoExcaRobo():
             # Predict the action using the model
             action, _states = model.predict(obs)
             obs, reward, done, _, info = self.env.step(action)
-            
+
             # Extract the information from the environment
-            position, deviation_x, deviation_y = info['positions'], info['deviation_x'], info['deviation_y']
+            position, deviation_x, deviation_y = (
+                info["positions"],
+                info["deviation_x"],
+                info["deviation_y"],
+            )
 
             # Print the information
             print(reward, done, position, deviation_x, deviation_y)
-            
+
             # Append the step and reward to the lists
             step_list.append(step)
             reward_list.append(reward)
@@ -243,17 +264,17 @@ class VisuoExcaRobo():
             deviation_x_list.append(deviation_x)
             deviation_y_list.append(deviation_y)
 
-            # Reset the environment if the episode is done            
+            # Reset the environment if the episode is done
             if done:
                 obs, _ = self.env.reset()
                 print("Test Success.")
-                
+
                 break
-            
+
             if step >= max_steps:
                 print("Max Steps Reached.")
                 break
-            
+
             # Break the loop if 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 print("Test Interrupted.")
@@ -261,47 +282,65 @@ class VisuoExcaRobo():
 
             step += 1
 
-        print("Test Job Done. Saving Results...")        
-        
+        print("Test Job Done. Saving Results...")
+
         # Plot the results
-        self.plot_results("test_1", reward_list, "Reward", "Plot Reward Over Time")      
-        self.plot_results("test_1", deviation_x_list, "Deviation X", "Plot Deviation X Over Time")
-        self.plot_results("test_1", deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time")
+        self.plot_results("test_1", reward_list, "Reward", "Plot Reward Over Time")
+        self.plot_results(
+            "test_1", deviation_x_list, "Deviation X", "Plot Deviation X Over Time"
+        )
+        self.plot_results(
+            "test_1", deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time"
+        )
         self.plot_trajectory("test_1", position_list)
-    
+
     def plot_results(self, test_type, feature, label_name, title) -> None:
         # blueprints of the plot
         output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
         os.makedirs(output_dir, exist_ok=True)
-        
+
         plt.figure()
         plt.plot(feature, label=label_name)
         plt.xlabel("Time Steps")
         plt.ylabel(label_name)
         plt.title(title)
         plt.savefig(output_dir + f"{label_name}.png")
-    
+
     def plot_trajectory(self, test_type, positions):
         output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
         os.makedirs(output_dir, exist_ok=True)
-        
+
         x_pos, y_pos = zip(*positions)
         plt.figure()
-        plt.plot(
-            x_pos, y_pos, color="b", label="Excavator Trajectory Path"
-        )
+
+        # Plot trajectory path
+        plt.plot(x_pos, y_pos, color="b", label="Excavator Trajectory Path")
+
+        # Plot initial and target positions
         plt.scatter([-4], [0], color="g", label="Initial Position")
         plt.scatter([3.5], [-2], color="r", marker="*", s=150, label="Target")
+
+        # Add 75% circle with midpoint (3.5, -2) and radius = 3
+        radius = 3
+        circle = Circle((3.5, -2), radius * 0.75, color="b", alpha=0.3, fill=True)
+        plt.gca().add_patch(circle)
+
+        # Set plot titles and labels
         plt.title(f"Excavator Movement Trajectory")
         plt.xlabel("X Position")
         plt.ylabel("Y Position")
+
+        # Add legend and grid
         plt.legend()
         plt.grid(True)
+
+        # Set limits
         plt.xlim([-5, 5])
         plt.ylim([-3, 3])
+
+        # Save figure
         plt.savefig(output_dir + "trajectory.png")
-        
-    
+
     def extract_args(self, args) -> Tuple[str, int, str, str]:
         """
         Extracts arguments from the input argument object.
