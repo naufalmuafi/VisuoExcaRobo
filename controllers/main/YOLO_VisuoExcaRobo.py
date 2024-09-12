@@ -19,8 +19,8 @@ except ImportError:
 
 # Constants used in the environment
 ENV_ID = "YOLO_VisuoExcaRobo"
-OBS_SPACE_SCHEMA = 2  # 1: coordinates of the target, 2: pure image
-REWARD_SCHEMA = 1  # 1: reward function based on pixel position, 2: reward function based on distance
+OBS_SPACE_SCHEMA = 1  # 1: coordinates of the target, 2: pure image
+REWARD_SCHEMA = 2  # 1: reward function based on pixel position, 2: reward function based on distance
 MAX_EPISODE_STEPS = 2000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
@@ -325,7 +325,8 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         info = {
             'positions': (x, y),
             'deviation_x': deviation_x,
-            'deviation_y': deviation_y
+            'deviation_y': deviation_y,
+            'target_area': target_area
         }
 
         # Update the previous target area
@@ -379,7 +380,17 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Check if the episode is done
         done = reach_target or robot_far_away or hit_arena
 
-        return reward, bool(done), {}
+        # === testing purposes variables ===
+        
+        # Get the robot position
+        x, y, _ = pos                        
+        
+        info = {
+            'positions': (x, y),
+            'distance': distance
+        }
+
+        return reward, bool(done), info
 
     def f(
         self,

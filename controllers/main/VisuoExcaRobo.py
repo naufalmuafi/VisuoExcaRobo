@@ -108,8 +108,12 @@ class VisuoExcaRobo:
         elif self.duty == "test_1":
             self.test_1(
                 max_steps=self.timesteps,
-                model_dir=str(self.model_path),
-                plot_name=str(self.plot_name),
+                model_dir=str(self.model_path),                
+            )
+        elif self.duty == "test_2":
+            self.test_2(
+                max_steps=self.timesteps,
+                model_dir=str(self.model_path),                
             )
 
     def train_PPO(self, batch_size=64, learning_rate=0.0003) -> None:
@@ -206,7 +210,7 @@ class VisuoExcaRobo:
         )
 
     def test_1(
-        self, max_steps: int = 3000, model_dir: str = None, plot_name: str = None
+        self, max_steps: int = 3000, model_dir: str = None
     ) -> None:
         """
         Tests the trained PPO model and visualizes the rewards over time.
@@ -229,7 +233,8 @@ class VisuoExcaRobo:
         print("Testing the Environment with Predicted Value")
 
         # Initialize lists for steps and rewards
-        step_list, reward_list, position_list, deviation_x_list, deviation_y_list = (
+        step_list, reward_list, position_list, deviation_x_list, deviation_y_list, target_area_list = (
+            [],
             [],
             [],
             [],
@@ -248,14 +253,15 @@ class VisuoExcaRobo:
             obs, reward, done, _, info = self.env.step(action)
 
             # Extract the information from the environment
-            position, deviation_x, deviation_y = (
+            position, deviation_x, deviation_y, target_area = (
                 info["positions"],
                 info["deviation_x"],
                 info["deviation_y"],
+                info["target_area"],
             )
 
             # Print the information
-            print(reward, done, position, deviation_x, deviation_y)
+            print(reward, done, position, deviation_x, deviation_y, target_area)
 
             # Append the step and reward to the lists
             step_list.append(step)
@@ -263,6 +269,7 @@ class VisuoExcaRobo:
             position_list.append(position)
             deviation_x_list.append(deviation_x)
             deviation_y_list.append(deviation_y)
+            target_area_list.append(target_area)
 
             # Reset the environment if the episode is done
             if done:
@@ -287,12 +294,98 @@ class VisuoExcaRobo:
         # Plot the results
         self.plot_results("test_1", reward_list, "Reward", "Plot Reward Over Time")
         self.plot_results(
-            "test_1", deviation_x_list, "Deviation X", "Plot Deviation X Over Time"
+            "test_2", deviation_x_list, "Deviation X", "Plot Deviation X Over Time"
         )
         self.plot_results(
-            "test_1", deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time"
+            "test_2", deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time"
         )
-        self.plot_trajectory("test_1", position_list)
+        self.plot_results(
+            "test_2", target_area_list, "Target Area", "Plot Target Area Over Time"
+        )
+        self.plot_trajectory("test_2", position_list)
+    
+    def test_2(
+        self, max_steps: int = 3000, model_dir: str = None
+    ) -> None:
+        """
+        Tests the trained PPO model and visualizes the rewards over time.
+
+        Args:
+            max_steps (int): The maximum number of steps to run the test.
+            model_dir (str): The directory path where the trained model is stored.
+            plot_name (str): The filename to save the test results.
+        """
+        # Load the pre-trained model
+        try:
+            model = PPO.load(model_dir, env=self.env)
+        except FileNotFoundError:
+            print(
+                "Model not found. Please train the model first/type your model name correctly."
+            )
+            return
+
+        print("Load Model Successful")
+        print("Testing the Environment with Predicted Value")
+
+        # Initialize lists for steps and rewards
+        step_list, reward_list, position_list, distance_list = (
+            [],
+            [],
+            [],
+            [],            
+        )
+        step, done = 0, False
+
+        # Reset the environment before testing
+        obs, _ = self.env.reset()
+
+        # Run the test loop
+        while step <= max_steps:
+            # Predict the action using the model
+            action, _states = model.predict(obs)
+            obs, reward, done, _, info = self.env.step(action)
+
+            # Extract the information from the environment
+            position, distance = (
+                info["positions"],
+                info["distance"],                
+            )
+
+            # Print the information
+            print(reward, done, position, distance)
+
+            # Append the step and reward to the lists
+            step_list.append(step)
+            reward_list.append(reward)
+            position_list.append(position)
+            distance_list.append(distance)
+
+            # Reset the environment if the episode is done
+            if done:
+                obs, _ = self.env.reset()
+                print("Test Success.")
+
+                break
+
+            if step >= max_steps:
+                print("Max Steps Reached.")
+                break
+
+            # Break the loop if 'q' is pressed
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                print("Test Interrupted.")
+                break
+
+            step += 1
+
+        print("Test Job Done. Saving Results...")
+
+        # Plot the results
+        self.plot_results("test_3", reward_list, "Reward", "Plot Reward Over Time")
+        self.plot_results(
+            "test_3", distance_list, "Distance", "Plot Distance Over Time"
+        )
+        self.plot_trajectory("test_3", position_list)
 
     def plot_results(self, test_type, feature, label_name, title) -> None:
         # blueprints of the plot
