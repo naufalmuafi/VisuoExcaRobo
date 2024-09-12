@@ -312,33 +312,16 @@ class VisuoExcaRobo:
 
         x_pos, y_pos = zip(*positions)
         plt.figure()
-
-        # Plot trajectory path
         plt.plot(x_pos, y_pos, color="b", label="Excavator Trajectory Path")
-
-        # Plot initial and target positions
         plt.scatter([-4], [0], color="g", label="Initial Position")
         plt.scatter([3.5], [-2], color="r", marker="*", s=150, label="Target")
-
-        # Add 75% circle with midpoint (3.5, -2) and radius = 3
-        radius = 3
-        circle = Circle((3.5, -2), radius * 0.75, color="b", alpha=0.3, fill=True)
-        plt.gca().add_patch(circle)
-
-        # Set plot titles and labels
         plt.title(f"Excavator Movement Trajectory")
         plt.xlabel("X Position")
         plt.ylabel("Y Position")
-
-        # Add legend and grid
         plt.legend()
         plt.grid(True)
-
-        # Set limits
         plt.xlim([-5, 5])
         plt.ylim([-3, 3])
-
-        # Save figure
         plt.savefig(output_dir + "trajectory.png")
 
     def extract_args(self, args) -> Tuple[str, int, str, str]:
