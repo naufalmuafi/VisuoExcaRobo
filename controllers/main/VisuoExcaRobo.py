@@ -13,7 +13,7 @@ from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 
-class VisuoExcaRobo:
+class VisuoExcaRobo():
     """
     A class representing the VisuoExcaRobo environment for training and testing
     a Proximal Policy Optimization (PPO) model.
@@ -38,7 +38,7 @@ class VisuoExcaRobo:
         Args:
             args: The arguments passed to the class, typically a parsed
                   command-line argument object.
-        """
+        """                
         # Extract the arguments
         (
             self.duty,
@@ -102,6 +102,8 @@ class VisuoExcaRobo:
             self.train_PPO(batch_size=batch_size, learning_rate=learning_rate)
         elif self.duty == "test":
             self.test_PPO(max_steps=self.timesteps, model_dir=str(self.model_path), plot_name=str(self.plot_name))
+        elif self.duty == "test_1":
+            self.test_1(max_steps=self.timesteps, model_dir=str(self.model_path), plot_name=str(self.plot_name))
 
     def train_PPO(self, batch_size=64, learning_rate=0.0003) -> None:
         """
@@ -194,6 +196,112 @@ class VisuoExcaRobo:
             f"{self.log_dir}/test_reward_plot_{plot_name}_{self.today_date}.png"
         )        
 
+    def test_1(self, max_steps: int=3000, model_dir: str = None, plot_name: str = None) -> None:
+        """
+        Tests the trained PPO model and visualizes the rewards over time.
+
+        Args:
+            max_steps (int): The maximum number of steps to run the test.
+            model_dir (str): The directory path where the trained model is stored.
+            plot_name (str): The filename to save the test results.
+        """
+        # Load the pre-trained model
+        try:
+            model = PPO.load(model_dir, env=self.env)
+        except FileNotFoundError:
+            print(
+                "Model not found. Please train the model first/type your model name correctly."
+            )
+            return
+
+        print("Load Model Successful")
+        print("Testing the Environment with Predicted Value")
+
+        # Initialize lists for steps and rewards
+        step_list, reward_list, position_list, deviation_x_list, deviation_y_list = [], [], [], [], []
+        step, done = 0, False
+
+        # Reset the environment before testing
+        obs, _ = self.env.reset()
+
+        # Run the test loop
+        while step <= max_steps:
+            # Predict the action using the model
+            action, _states = model.predict(obs)
+            obs, reward, done, _, info = self.env.step(action)
+            
+            # Extract the information from the environment
+            position, deviation_x, deviation_y = info['positions'], info['deviation_x'], info['deviation_y']
+
+            # Print the information
+            print(reward, done, position, deviation_x, deviation_y)
+            
+            # Append the step and reward to the lists
+            step_list.append(step)
+            reward_list.append(reward)
+            position_list.append(position)
+            deviation_x_list.append(deviation_x)
+            deviation_y_list.append(deviation_y)
+
+            # Reset the environment if the episode is done            
+            if done:
+                obs, _ = self.env.reset()
+                print("Test Success.")
+                
+                break
+            
+            if step >= max_steps:
+                print("Max Steps Reached.")
+                break
+            
+            # Break the loop if 'q' is pressed
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                print("Test Interrupted.")
+                break
+
+            step += 1
+
+        print("Test Job Done. Saving Results...")        
+        
+        # Plot the results
+        self.plot_results("test_1", reward_list, "Reward", "Plot Reward Over Time")      
+        self.plot_results("test_1", deviation_x_list, "Deviation X", "Plot Deviation X Over Time")
+        self.plot_results("test_1", deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time")
+        self.plot_trajectory("test_1", position_list)
+    
+    def plot_results(self, test_type, feature, label_name, title) -> None:
+        # blueprints of the plot
+        output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
+        os.makedirs(output_dir, exist_ok=True)
+        
+        plt.figure()
+        plt.plot(feature, label=label_name)
+        plt.xlabel("Time Steps")
+        plt.ylabel(label_name)
+        plt.title(title)
+        plt.savefig(output_dir + f"{label_name}.png")
+    
+    def plot_trajectory(self, test_type, positions):
+        output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
+        os.makedirs(output_dir, exist_ok=True)
+        
+        x_pos, y_pos = zip(*positions)
+        plt.figure()
+        plt.plot(
+            x_pos, y_pos, color="b", label="Excavator Trajectory Path"
+        )
+        plt.scatter([-4], [0], color="g", label="Initial Position")
+        plt.scatter([3.5], [-2], color="r", marker="*", s=150, label="Target")
+        plt.title(f"Excavator Movement Trajectory")
+        plt.xlabel("X Position")
+        plt.ylabel("Y Position")
+        plt.legend()
+        plt.grid(True)
+        plt.xlim([-5, 5])
+        plt.ylim([-3, 3])
+        plt.savefig(output_dir + "trajectory.png")
+        
+    
     def extract_args(self, args) -> Tuple[str, int, str, str]:
         """
         Extracts arguments from the input argument object.

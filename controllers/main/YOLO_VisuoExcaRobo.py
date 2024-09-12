@@ -19,8 +19,8 @@ except ImportError:
 
 # Constants used in the environment
 ENV_ID = "YOLO_VisuoExcaRobo"
-OBS_SPACE_SCHEMA = 1  # 1: coordinates of the target, 2: pure image
-REWARD_SCHEMA = 2  # 1: reward function based on pixel position, 2: reward function based on distance
+OBS_SPACE_SCHEMA = 2  # 1: coordinates of the target, 2: pure image
+REWARD_SCHEMA = 1  # 1: reward function based on pixel position, 2: reward function based on distance
 MAX_EPISODE_STEPS = 2000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7
@@ -208,11 +208,11 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Calculate the reward and check if the episode is done
         if self.reward_schema == 1:  # schema 1: reward function based on pixel position
-            reward, done = self.get_reward_and_done_1(target_coordinate)
+            reward, done, info = self.get_reward_and_done_1(target_coordinate)
         elif self.reward_schema == 2:  # schema 2: reward function based on distance
-            reward, done = self.get_reward_and_done_2(target_distance)
+            reward, done, info = self.get_reward_and_done_2(target_distance)
 
-        return self.state, reward, done, False, {}
+        return self.state, reward, done, False, info
 
     def render(self, mode: str = "human") -> Any:
         """
@@ -312,11 +312,26 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Check if the episode is done
         done = reach_target or robot_far_away or hit_arena or in_target
+        
+        # === testing purposes variables ===
+        
+        # Get the robot position
+        x, y, _ = pos        
+        
+        # get the deviation error  of x and y from the target
+        deviation_x = abs(centroid[0] - self.center_x)        
+        deviation_y = abs(self.moiety - centroid[1])
+        
+        info = {
+            'positions': (x, y),
+            'deviation_x': deviation_x,
+            'deviation_y': deviation_y
+        }
 
         # Update the previous target area
         self.prev_target_area = target_area
 
-        return reward, bool(done)
+        return reward, bool(done), info
 
     def get_reward_and_done_2(self, distance: float = 300) -> Tuple[float, bool]:
         """
@@ -364,7 +379,7 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         # Check if the episode is done
         done = reach_target or robot_far_away or hit_arena
 
-        return reward, bool(done)
+        return reward, bool(done), {}
 
     def f(
         self,

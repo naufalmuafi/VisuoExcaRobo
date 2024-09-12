@@ -55,7 +55,7 @@ def parse_arguments(timesteps: int) -> argparse.Namespace:
         type=str,
         default="test",
         help="Choose the Duty: train or test",
-        choices=["train", "test"],
+        choices=["train", "test", 'test_1', 'test_2', 'test_3'],
         required=True,
         action=DutyAction,
     )
