@@ -18,8 +18,8 @@ except ImportError:
 
 # Constants used in the environment
 ENV_ID = "Color_VisuoExcaRobo"
-OBS_SPACE_SCHEMA = 1  # 1: coordinates of the target, 2: pure image
-REWARD_SCHEMA = 2  # 1: reward function based on pixel position, 2: reward function based on distance
+OBS_SPACE_SCHEMA = 2  # 1: coordinates of the target, 2: pure image
+REWARD_SCHEMA = 1  # 1: reward function based on pixel position, 2: reward function based on distance
 MAX_EPISODE_STEPS = 2000
 MAX_WHEEL_SPEED = 5.0
 MAX_MOTOR_SPEED = 0.7

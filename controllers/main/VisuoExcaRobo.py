@@ -294,15 +294,15 @@ class VisuoExcaRobo:
         # Plot the results
         self.plot_results("test_1", reward_list, "Reward", "Plot Reward Over Time")
         self.plot_results(
-            "test_2", deviation_x_list, "Deviation X", "Plot Deviation X Over Time"
+            "test_1", deviation_x_list, "Deviation X", "Plot Deviation X Over Time"
         )
         self.plot_results(
-            "test_2", deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time"
+            "test_1", deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time"
         )
         self.plot_results(
-            "test_2", target_area_list, "Target Area", "Plot Target Area Over Time"
+            "test_1", target_area_list, "Target Area", "Plot Target Area Over Time"
         )
-        self.plot_trajectory("test_2", position_list)
+        self.plot_trajectory("test_1", position_list)
     
     def test_2(
         self, max_steps: int = 3000, model_dir: str = None
