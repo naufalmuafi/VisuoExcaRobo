@@ -475,14 +475,23 @@ class VisuoExcaRobo:
         plt.figure()
         plt.plot(x_pos, y_pos, color="b", label="Centroid Trajectory Path")
         plt.scatter(x_init, y_init, color="g", label="Initial Position")
-        plt.scatter(120, 90, color="r", marker="*", s=150, label="Target")
-        plt.title(f"Centorid Movement Trajectory in Frame")
+        plt.scatter(120, 90, color="r", marker="*", s=150, label="Target Point")
+        
+        # Add the dashed circle with radius 3
+        circle = plt.Circle((120, 90), 3, color='r', fill=False, linestyle='--', label='Goal Area')
+        plt.gca().add_patch(circle)
+
+        # Invert Y axis so (0,0) is at top-left corner
+        plt.gca().invert_yaxis()
+
+        plt.title("Centroid Movement Trajectory in Frame")
         plt.xlabel("X Position")
         plt.ylabel("Y Position")
         plt.legend()
         plt.grid(True)
         plt.xlim([0, 256])
         plt.ylim([0, 128])
+
         plt.savefig(output_dir + "centroid_trajectory.png")
 
     def extract_args(self, args) -> Tuple[str, int, str, str]:
