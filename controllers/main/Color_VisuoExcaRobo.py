@@ -215,6 +215,8 @@ class Color_VisuoExcaRobo(Supervisor, Env):
             reward, done, info = self.get_reward_and_done_1(target_coordinate)
         elif self.reward_schema == 2:  # schema 2: reward function based on distance
             reward, done, info = self.get_reward_and_done_2(target_distance)                
+            
+        info['coordinates'] = target_coordinate
 
         return self.state, reward, done, False, info
 

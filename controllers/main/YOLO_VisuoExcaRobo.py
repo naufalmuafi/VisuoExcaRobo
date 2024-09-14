@@ -212,6 +212,8 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         elif self.reward_schema == 2:  # schema 2: reward function based on distance
             reward, done, info = self.get_reward_and_done_2(target_distance)
 
+        info["coordinates"] = target_coordinate
+
         return self.state, reward, done, False, info
 
     def render(self, mode: str = "human") -> Any:
@@ -312,21 +314,21 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
 
         # Check if the episode is done
         done = reach_target or robot_far_away or hit_arena or in_target
-        
+
         # === testing purposes variables ===
-        
+
         # Get the robot position
-        x, y, _ = pos        
-        
+        x, y, _ = pos
+
         # get the deviation error  of x and y from the target
-        deviation_x = abs(centroid[0] - self.center_x)        
+        deviation_x = abs(centroid[0] - self.center_x)
         deviation_y = abs(self.moiety - centroid[1])
-        
+
         info = {
-            'positions': (x, y),
-            'deviation_x': deviation_x,
-            'deviation_y': deviation_y,
-            'target_area': target_area
+            "positions": (x, y),
+            "deviation_x": deviation_x,
+            "deviation_y": deviation_y,
+            "target_area": target_area,
         }
 
         # Update the previous target area
@@ -381,14 +383,11 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         done = reach_target or robot_far_away or hit_arena
 
         # === testing purposes variables ===
-        
+
         # Get the robot position
-        x, y, _ = pos                        
-        
-        info = {
-            'positions': (x, y),
-            'distance': distance
-        }
+        x, y, _ = pos
+
+        info = {"positions": (x, y), "distance": distance}
 
         return reward, bool(done), info
 
@@ -425,24 +424,24 @@ class YOLO_VisuoExcaRobo(Supervisor, Env):
         Returns:
             Tuple: The current state and the distance to the target.
         """
-        image = self.camera.getImage()        
+        image = self.camera.getImage()
 
         # Convert image to NumPy array and then to BGR
         # img_np = np.frombuffer(image, dtype=np.uint8).reshape(
         #     (self.camera_height, self.camera_width, 4)
         # )
         # img_bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
-        
+
         # Extract RGB channels from the image
         red_channel, green_channel, blue_channel = self.extract_rgb_channels(
             image, self.camera_width, self.camera_height
         )
-        
+
         # Stack the channels together into a NumPy array
         img_bgr = np.stack((blue_channel, green_channel, red_channel), axis=-1)
 
         # Convert to a NumPy array with the correct dtype
-        img_bgr = np.array(img_bgr, dtype=np.uint8)        
+        img_bgr = np.array(img_bgr, dtype=np.uint8)
 
         # Perform recognition
         coordinate, distance, label = self.recognition_process(img_bgr)

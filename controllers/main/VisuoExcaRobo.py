@@ -106,15 +106,24 @@ class VisuoExcaRobo:
                 plot_name=str(self.plot_name),
             )
         elif self.duty == "test_1":
-            self.test_1(
+            self.test(
+                "test_1",
                 max_steps=self.timesteps,
-                model_dir=str(self.model_path),                
+                model_dir=str(self.model_path),
             )
         elif self.duty == "test_2":
-            self.test_2(
+            self.test(
+                "test_2",
                 max_steps=self.timesteps,
-                model_dir=str(self.model_path),                
+                model_dir=str(self.model_path),
             )
+        elif self.duty == "test_3":
+            self.final_test(
+                max_steps=self.timesteps,
+                model_dir=str(self.model_path),
+            )
+        else:
+            print("Invalid duty. Please specify 'train' or 'test'!")
 
     def train_PPO(self, batch_size=64, learning_rate=0.0003) -> None:
         """
@@ -209,8 +218,8 @@ class VisuoExcaRobo:
             f"{self.log_dir}/test_reward_plot_{plot_name}_{self.today_date}.png"
         )
 
-    def test_1(
-        self, max_steps: int = 3000, model_dir: str = None
+    def test(
+        self, test_type: str = "test_1", max_steps: int = 3000, model_dir: str = None
     ) -> None:
         """
         Tests the trained PPO model and visualizes the rewards over time.
@@ -233,7 +242,16 @@ class VisuoExcaRobo:
         print("Testing the Environment with Predicted Value")
 
         # Initialize lists for steps and rewards
-        step_list, reward_list, position_list, deviation_x_list, deviation_y_list, target_area_list = (
+        (
+            step_list,
+            reward_list,
+            position_list,
+            deviation_x_list,
+            deviation_y_list,
+            target_area_list,
+            centroid_list,
+        ) = (
+            [],
             [],
             [],
             [],
@@ -253,15 +271,24 @@ class VisuoExcaRobo:
             obs, reward, done, _, info = self.env.step(action)
 
             # Extract the information from the environment
-            position, deviation_x, deviation_y, target_area = (
+            position, deviation_x, deviation_y, target_area, coordinate = (
                 info["positions"],
                 info["deviation_x"],
                 info["deviation_y"],
                 info["target_area"],
+                info["coordinate"],
             )
 
+            # Calculate centroid of the target area
+            x_min, y_min, x_max, y_max = coordinate
+            x_centroid = (x_min + x_max) / 2
+            y_centroid = (y_min + y_max) / 2
+            centroid = (x_centroid, y_centroid)
+
             # Print the information
-            print(reward, done, position, deviation_x, deviation_y, target_area)
+            print(
+                reward, done, position, deviation_x, deviation_y, target_area, centroid
+            )
 
             # Append the step and reward to the lists
             step_list.append(step)
@@ -270,6 +297,7 @@ class VisuoExcaRobo:
             deviation_x_list.append(deviation_x)
             deviation_y_list.append(deviation_y)
             target_area_list.append(target_area)
+            centroid_list.append(centroid)
 
             # Reset the environment if the episode is done
             if done:
@@ -290,30 +318,31 @@ class VisuoExcaRobo:
             step += 1
 
         print("Test Job Done. Saving Results...")
-        
+
         # print last values of each list
-        print(self.env_type, " test_2")
+        centroid_init = centroid_list[0]
+
+        print(self.env_type, test_type)
         print(f"reward_list: {reward_list[-1]}")
         print(f"target_area_list: {target_area_list[-1]}")
         print(f"deviation_x_list: {deviation_x_list[-1]}")
         print(f"deviation_y_list: {deviation_y_list[-1]}")
 
         # Plot the results
-        self.plot_results("test_2", reward_list, "Reward", "Plot Reward Over Time")
+        self.plot_results(test_type, reward_list, "Reward", "Plot Reward Over Time")
         self.plot_results(
-            "test_2", deviation_x_list, "Deviation X", "Plot Deviation X Over Time"
+            test_type, deviation_x_list, "Deviation X", "Plot Deviation X Over Time"
         )
         self.plot_results(
-            "test_2", deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time"
+            test_type, deviation_y_list, "Deviation Y", "Plot Deviation Y Over Time"
         )
         self.plot_results(
-            "test_2", target_area_list, "Target Area", "Plot Target Area Over Time"
+            test_type, target_area_list, "Target Area", "Plot Target Area Over Time"
         )
-        self.plot_trajectory("test_2", position_list)
-    
-    def test_2(
-        self, max_steps: int = 3000, model_dir: str = None
-    ) -> None:
+        self.excavator_trajectory(test_type, position_list)
+        self.centroid_trajectory(test_type, centroid_list, centroid_init)
+
+    def final_test(self, max_steps: int = 3000, model_dir: str = None) -> None:
         """
         Tests the trained PPO model and visualizes the rewards over time.
 
@@ -335,11 +364,12 @@ class VisuoExcaRobo:
         print("Testing the Environment with Predicted Value")
 
         # Initialize lists for steps and rewards
-        step_list, reward_list, position_list, distance_list = (
+        step_list, reward_list, position_list, distance_list, centroid_list = (
             [],
             [],
             [],
-            [],            
+            [],
+            [],
         )
         step, done = 0, False
 
@@ -353,19 +383,27 @@ class VisuoExcaRobo:
             obs, reward, done, _, info = self.env.step(action)
 
             # Extract the information from the environment
-            position, distance = (
+            position, distance, coordinate = (
                 info["positions"],
-                info["distance"],                
+                info["distance"],
+                info["coordinate"],
             )
 
+            # Calculate centroid of the target area
+            x_min, y_min, x_max, y_max = coordinate
+            x_centroid = (x_min + x_max) / 2
+            y_centroid = (y_min + y_max) / 2
+            centroid = (x_centroid, y_centroid)
+
             # Print the information
-            print(reward, done, position, distance)
+            print(reward, done, position, distance, centroid)
 
             # Append the step and reward to the lists
             step_list.append(step)
             reward_list.append(reward)
             position_list.append(position)
             distance_list.append(distance)
+            centroid_list.append(centroid)
 
             # Reset the environment if the episode is done
             if done:
@@ -388,11 +426,14 @@ class VisuoExcaRobo:
         print("Test Job Done. Saving Results...")
 
         # Plot the results
+        centroid_init = centroid_list[0]
+
         self.plot_results("test_3", reward_list, "Reward", "Plot Reward Over Time")
         self.plot_results(
             "test_3", distance_list, "Distance", "Plot Distance Over Time"
         )
-        self.plot_trajectory("test_3", position_list)
+        self.excavator_trajectory("test_3", position_list)
+        self.centroid_trajectory("test_3", centroid_list, centroid_init)
 
     def plot_results(self, test_type, feature, label_name, title) -> None:
         # blueprints of the plot
@@ -406,7 +447,7 @@ class VisuoExcaRobo:
         plt.title(title)
         plt.savefig(output_dir + f"{label_name}.png")
 
-    def plot_trajectory(self, test_type, positions):
+    def excavator_trajectory(self, test_type, positions):
         output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
         os.makedirs(output_dir, exist_ok=True)
 
@@ -422,7 +463,25 @@ class VisuoExcaRobo:
         plt.grid(True)
         plt.xlim([-5, 5])
         plt.ylim([-3, 3])
-        plt.savefig(output_dir + "trajectory.png")
+        plt.savefig(output_dir + "excavator_trajectory.png")
+
+    def centroid_trajectory(self, test_type, centroid, init_position):
+        output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
+        os.makedirs(output_dir, exist_ok=True)
+
+        x_pos, y_pos = zip(*centroid)
+        plt.figure()
+        plt.plot(x_pos, y_pos, color="b", label="Centroid Trajectory Path")
+        plt.scatter(init_position, color="g", label="Initial Position")
+        plt.scatter(120, 90, color="r", marker="*", s=150, label="Target")
+        plt.title(f"Centorid Movement Trajectory in Frame")
+        plt.xlabel("X Position")
+        plt.ylabel("Y Position")
+        plt.legend()
+        plt.grid(True)
+        plt.xlim([0, 256])
+        plt.ylim([0, 128])
+        plt.savefig(output_dir + "centroid_trajectory.png")
 
     def extract_args(self, args) -> Tuple[str, int, str, str]:
         """
