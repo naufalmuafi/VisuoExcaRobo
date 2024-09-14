@@ -104,6 +104,12 @@ class ColorControl(Supervisor):
         self.trajectory: Dict[int, List[Tuple[float, float]]] = {
             i: [] for i in range(MAX_TRIALS)
         }
+        self.coordinates: Dict[int, List[Tuple[float, float]]] = {
+            i: [] for i in range(MAX_TRIALS)
+        }
+        self.init_pos: Dict[int, List[Tuple[float, float]]] = {
+            i: [] for i in range(MAX_TRIALS)
+        }
         self.success_trials: int = 0
         self.time_to_reach_target: List[float] = []
         self.total_steps: int = 0
@@ -473,6 +479,7 @@ class ColorControl(Supervisor):
             inf_time = []
             false_detection_i = 0
             position = []
+            coord = []
 
             # Simulation loop
             while self.step(self.timestep) != -1 and step_count < MAX_EPISODE_STEPS:
@@ -485,6 +492,11 @@ class ColorControl(Supervisor):
                 pos = self.robot.getPosition()
                 x, y, _ = pos
                 position.append((x, y))
+
+                # calculate the centroid
+                x_min, y_min, x_max, y_max = coordinate
+                centroid = [(x_max + x_min) / 2, (y_max + y_min) / 2]
+                coord.append(centroid)
 
                 # Check for false detections based on the target size
                 width = coordinate[2] - coordinate[0]
@@ -511,9 +523,83 @@ class ColorControl(Supervisor):
             self.total_steps += step_count
             self.false_detections[trial] = false_detection_i
             self.trajectory[trial] = position
+            self.coordinates[trial] = coord
 
         # Plot and save results
         self.plot_results()
+
+        self.excavator_trajectory("test_1", position)
+
+    def excavator_trajectory(self, test_type, positions):
+        output_dir = f"results_{test_type}/{self.env_type}_{self.today_date}/"
+        os.makedirs(output_dir, exist_ok=True)
+
+        x_pos, y_pos = zip(*positions)
+        plt.figure()
+        plt.plot(x_pos, y_pos, color="b", label="Excavator Trajectory Path")
+        plt.scatter([-4], [0], color="g", label="Excavator Initial Position")
+        plt.scatter([3.5], [-2], color="r", marker="*", s=150, label="Rock Position")
+        plt.title(f"Excavator Movement Trajectory")
+        plt.xlabel("X Position")
+        plt.ylabel("Y Position")
+        plt.legend()
+        plt.grid(True)
+        plt.xlim([-5, 5])
+        plt.ylim([-3, 3])
+        plt.savefig(output_dir + "excavator_trajectory.png")
+
+    def centroid_trajectory(self, test_type, centroid, init_position):
+        output_dir = f"results_{test_type}/{self.env_type}_{self.today_date}/"
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Filter out (0, 0) positions from the centroid list
+        filtered_centroid = [(x, y) for x, y in centroid if not (x == 0 and y == 0)]
+
+        if filtered_centroid:
+            x_pos, y_pos = zip(*filtered_centroid)
+        else:
+            x_pos, y_pos = [], []
+        x_init, y_init = init_position
+
+        plt.figure()
+        plt.plot(x_pos, y_pos, color="b", label="Centroid Trajectory Path", zorder=3)
+        plt.scatter(x_init, y_init, color="g", label="Initial Position", zorder=4)
+
+        if test_type == "test_3":
+            plt.scatter(
+                120, 90, color="r", marker="*", s=150, label="Target Point", zorder=2
+            )
+            plt.scatter(
+                120, 90, color="yellow", alpha=0.5, s=300, label="Goal Area", zorder=1
+            )
+        elif test_type == "test_1" or test_type == "test_2":
+            # Create rectangle for the goal area
+            rect_width = 129 - 127  # x_max - x_min
+            rect_height = (
+                128 - 85.33
+            )  # Assuming y_max is the full height (128) since it's not provided
+            rectangle = plt.Rectangle(
+                (127, 85.33),
+                rect_width,
+                rect_height,
+                color="r",
+                alpha=0.6,
+                zorder=1,
+                label="Goal Area",
+            )
+            plt.gca().add_patch(rectangle)
+
+        # Invert Y axis so (0,0) is at top-left corner
+        plt.xlim([0, 256])
+        plt.ylim([128, 0])  # Inverted Y-axis
+
+        plt.title("Centroid Movement Trajectory in Frame")
+        plt.xlabel("X Position")
+        plt.ylabel("Y Position")
+        plt.legend()
+        plt.grid(True)
+
+        plt.savefig(output_dir + "centroid_trajectory.png")
 
     def plot_results(self):
         """
@@ -574,7 +660,7 @@ class ColorControl(Supervisor):
         total_false_detections = sum(self.false_detections.values())
         print(f"Total False Detections: {total_false_detections} in {MAX_TRIALS} Test")
 
-        # Plot The Trajectory
+        # Plot The Excavator Trajectory
         for trial_num, trajectory in self.trajectory.items():
             x_positions, y_positions = zip(*trajectory)
             plt.figure()
@@ -594,6 +680,53 @@ class ColorControl(Supervisor):
                 os.path.join(
                     output_dir, f"excavator_movement_trial_{trial_num + 1}.png"
                 )
+            )
+            plt.show()
+
+        # Plot The Centroid Trajectory
+        for trial_num, coordinates in self.coordinates.items():
+            # get the initial centroid position for each trial
+            init_position = self.trajectory[trial_num][0]
+            self.init_pos[trial_num] = init_position
+
+        for trial_num, coordinates in self.coordinates.items():
+            # Filter out (0, 0) positions from the centroid list
+            filtered_centroid = [
+                (x, y) for x, y in coordinates if not (x == 0 and y == 0)
+            ]
+
+            if filtered_centroid:
+                x_pos, y_pos = zip(*filtered_centroid)
+            else:
+                x_pos, y_pos = [], []
+
+            # get the initial position
+            x_init, y_init = self.init_pos[trial_num][0]
+
+            plt.figure()
+            plt.plot(
+                x_pos, y_pos, color="b", label="Centroid Trajectory Path", zorder=3
+            )
+            plt.scatter(x_init, y_init, color="g", label="Initial Position", zorder=4)
+
+            plt.scatter(
+                120, 90, color="r", marker="*", s=150, label="Target Point", zorder=2
+            )
+            plt.scatter(
+                120, 90, color="yellow", alpha=0.5, s=300, label="Goal Area", zorder=1
+            )
+
+            # Invert Y axis so (0,0) is at top-left corner
+            plt.xlim([0, 256])
+            plt.ylim([128, 0])  # Inverted Y-axis
+
+            plt.title("Centroid Movement Trajectory in Frame")
+            plt.xlabel("X Position")
+            plt.ylabel("Y Position")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(
+                os.path.join(output_dir, f"centroid_movement_trial_{trial_num + 1}.png")
             )
             plt.show()
 
