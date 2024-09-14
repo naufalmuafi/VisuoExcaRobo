@@ -9,8 +9,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation -0.2186333147621049 0.4539016749979638 0.8638129097843913 1.0173554569642635
-  position -15.63322141199886 -15.416219462971139 11.243616240057591
+  orientation -0.20243596054577273 0.3127183551596583 0.9280231205224083 1.218173844274205
+  position -8.230938171075366 -15.998044368195353 9.145008518874086
 }
 TexturedBackground {
 }
@@ -52,8 +52,8 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint DEF YELLOW_TURRET_SOLID Solid {
-        translation 1.9999990144762405 -2.4404483959781134e-05 0.299967463129989
-        rotation 4.210104922521398e-06 -5.033915520744713e-07 0.999999999991011 3.1415823273265655
+        translation 1.9999990144762032 -2.440448395978769e-05 0.2999674631299869
+        rotation 4.210104922521323e-06 -5.033915520745026e-07 0.9999999999910109 3.1415823273265655
         children [
           DEF DISPLAY_1 Display {
             translation 1.33 0 0.93
@@ -134,8 +134,8 @@ DEF EXCAVATOR Robot {
               }
             ]
             endPoint DEF ALL_ARM_SOLID Solid {
-              translation 1.8226531395271195e-12 1.006026344602777e-06 3.133937553911892e-12
-              rotation 0.9999999999998438 -5.589035247804822e-07 -7.415209363253167e-13 3.14159
+              translation 1.8501866705378234e-12 1.0060263446027641e-06 3.184341679229874e-12
+              rotation 0.9999999999998438 -5.589035247804827e-07 -7.41520936248451e-13 3.14159
               children [
                 DEF BLUE_ARM_CONNECTOR_POSE Pose {
                   translation 0.82 0 -0.47
@@ -386,7 +386,7 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8499963686871789 0.9000000069437967 4.867436358663218e-06
+        translation 0.8499963686871789 0.9000000069437967 4.8674363586663415e-06
         rotation 0 -1 0 0.6397774093923156
         children [
           DEF WHEEL Pose {
@@ -426,7 +426,7 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation 0.8500055297496232 -0.8999999932661558 7.442713376436031e-06
+        translation 0.8500055297496232 -0.8999999932661558 7.442713376451154e-06
         rotation 0 1 0 0.6397758174017341
         children [
           USE WHEEL
@@ -448,7 +448,7 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation -0.8500014975076144 0.9000000065073429 2.001733095611948e-06
+        translation -0.8500014975076144 0.9000000065073429 2.001733095586974e-06
         rotation 0 -1 0 0.6397793028763147
         children [
           USE WHEEL
@@ -470,7 +470,7 @@ DEF EXCAVATOR Robot {
         }
       ]
       endPoint Solid {
-        translation -0.8499966025563264 -0.8999999937026129 4.575894397897811e-06
+        translation -0.8499966025563264 -0.8999999937026129 4.5758943979111385e-06
         rotation 0 1 0 0.6397776037321812
         children [
           USE WHEEL
