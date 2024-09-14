@@ -1,8 +1,9 @@
 import Color_VisuoExcaRobo
 import YOLO_VisuoExcaRobo
 
-import cv2
 import os
+import cv2
+import time
 import datetime
 import gymnasium as gym
 import matplotlib.pyplot as plt
@@ -195,7 +196,10 @@ class VisuoExcaRobo:
 
             # Reset the environment if the episode is done
             if done:
+                time.sleep(5)
+                
                 obs, _ = self.env.reset()
+                time
                 print("Test Success.")
 
             if step >= max_steps:
