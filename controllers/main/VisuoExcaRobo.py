@@ -276,7 +276,7 @@ class VisuoExcaRobo:
                 info["deviation_x"],
                 info["deviation_y"],
                 info["target_area"],
-                info["coordinate"],
+                info["coordinates"],
             )
 
             # Calculate centroid of the target area
@@ -386,7 +386,7 @@ class VisuoExcaRobo:
             position, distance, coordinate = (
                 info["positions"],
                 info["distance"],
-                info["coordinate"],
+                info["coordinates"],
             )
 
             # Calculate centroid of the target area
@@ -426,7 +426,7 @@ class VisuoExcaRobo:
         print("Test Job Done. Saving Results...")
 
         # Plot the results
-        centroid_init = centroid_list[0]
+        centroid_init = centroid_list[0]        
 
         self.plot_results("test_3", reward_list, "Reward", "Plot Reward Over Time")
         self.plot_results(
@@ -437,7 +437,7 @@ class VisuoExcaRobo:
 
     def plot_results(self, test_type, feature, label_name, title) -> None:
         # blueprints of the plot
-        output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
+        output_dir = f"results_{test_type}/{self.env_type}_{self.today_date}/"
         os.makedirs(output_dir, exist_ok=True)
 
         plt.figure()
@@ -448,7 +448,7 @@ class VisuoExcaRobo:
         plt.savefig(output_dir + f"{label_name}.png")
 
     def excavator_trajectory(self, test_type, positions):
-        output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
+        output_dir = f"results_{test_type}/{self.env_type}_{self.today_date}/"
         os.makedirs(output_dir, exist_ok=True)
 
         x_pos, y_pos = zip(*positions)
@@ -466,13 +466,15 @@ class VisuoExcaRobo:
         plt.savefig(output_dir + "excavator_trajectory.png")
 
     def centroid_trajectory(self, test_type, centroid, init_position):
-        output_dir = f"test_results_{test_type}/{self.env_type}_{self.today_date}/"
+        output_dir = f"results_{test_type}/{self.env_type}_{self.today_date}/"
         os.makedirs(output_dir, exist_ok=True)
 
         x_pos, y_pos = zip(*centroid)
+        x_init, y_init = init_position
+        
         plt.figure()
         plt.plot(x_pos, y_pos, color="b", label="Centroid Trajectory Path")
-        plt.scatter(init_position, color="g", label="Initial Position")
+        plt.scatter(x_init, y_init, color="g", label="Initial Position")
         plt.scatter(120, 90, color="r", marker="*", s=150, label="Target")
         plt.title(f"Centorid Movement Trajectory in Frame")
         plt.xlabel("X Position")
