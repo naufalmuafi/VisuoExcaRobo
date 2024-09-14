@@ -426,7 +426,11 @@ class VisuoExcaRobo:
         print("Test Job Done. Saving Results...")
 
         # Plot the results
-        centroid_init = centroid_list[0]        
+        centroid_init = centroid_list[0]    
+        
+        print(self.env_type, "test_3")
+        print(f"reward_list: {reward_list[-1]}")    
+        print(f"distance_list: {distance_list[-1]}")
 
         self.plot_results("test_3", reward_list, "Reward", "Plot Reward Over Time")
         self.plot_results(
@@ -454,8 +458,8 @@ class VisuoExcaRobo:
         x_pos, y_pos = zip(*positions)
         plt.figure()
         plt.plot(x_pos, y_pos, color="b", label="Excavator Trajectory Path")
-        plt.scatter([-4], [0], color="g", label="Initial Position")
-        plt.scatter([3.5], [-2], color="r", marker="*", s=150, label="Target")
+        plt.scatter([-4], [0], color="g", label="Excavator Initial Position")
+        plt.scatter([3.5], [-2], color="r", marker="*", s=150, label="Rock Position")
         plt.title(f"Excavator Movement Trajectory")
         plt.xlabel("X Position")
         plt.ylabel("Y Position")
@@ -469,28 +473,38 @@ class VisuoExcaRobo:
         output_dir = f"results_{test_type}/{self.env_type}_{self.today_date}/"
         os.makedirs(output_dir, exist_ok=True)
 
-        x_pos, y_pos = zip(*centroid)
+        # Filter out (0, 0) positions from the centroid list
+        filtered_centroid = [(x, y) for x, y in centroid if not (x == 0 and y == 0)]
+        
+        if filtered_centroid:
+            x_pos, y_pos = zip(*filtered_centroid)
+        else:
+            x_pos, y_pos = [], []
         x_init, y_init = init_position
         
         plt.figure()
-        plt.plot(x_pos, y_pos, color="b", label="Centroid Trajectory Path")
-        plt.scatter(x_init, y_init, color="g", label="Initial Position")
-        plt.scatter(120, 90, color="r", marker="*", s=150, label="Target Point")
-        
-        # Add the dashed circle with radius 3
-        circle = plt.Circle((120, 90), 3, color='r', fill=False, linestyle='--', label='Goal Area')
-        plt.gca().add_patch(circle)
+        plt.plot(x_pos, y_pos, color="b", label="Centroid Trajectory Path", zorder=3)
+        plt.scatter(x_init, y_init, color="g", label="Initial Position", zorder=4)
+                
+        if test_type == "test_3":
+            plt.scatter(120, 90, color="r", marker="*", s=150, label="Target Point", zorder=2)                
+            plt.scatter(120, 90, color="yellow", alpha=0.5, s=300, label="Goal Area", zorder=1)                
+        elif test_type == "test_1" or test_type == "test_2":
+            # Create rectangle for the goal area
+            rect_width = 129 - 127  # x_max - x_min
+            rect_height = 128 - 85.33  # Assuming y_max is the full height (128) since it's not provided
+            rectangle = plt.Rectangle((127, 85.33), rect_width, rect_height, color="r", alpha=0.6, zorder=1, label="Goal Area")
+            plt.gca().add_patch(rectangle)
 
         # Invert Y axis so (0,0) is at top-left corner
-        plt.gca().invert_yaxis()
+        plt.xlim([0, 256])
+        plt.ylim([128, 0])  # Inverted Y-axis
 
         plt.title("Centroid Movement Trajectory in Frame")
         plt.xlabel("X Position")
         plt.ylabel("Y Position")
         plt.legend()
         plt.grid(True)
-        plt.xlim([0, 256])
-        plt.ylim([0, 128])
 
         plt.savefig(output_dir + "centroid_trajectory.png")
 
