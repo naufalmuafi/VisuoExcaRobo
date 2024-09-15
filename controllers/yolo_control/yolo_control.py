@@ -30,7 +30,7 @@ MAX_TRIALS: int = 6  # Number of trials to run the testing
 MAX_EPISODE_STEPS: int = 2000  # Maximum number of steps per trial
 
 # Create directory for saving plots
-output_dir = "test_results_m_300"
+output_dir = "results_m_300"
 os.makedirs(output_dir, exist_ok=True)
 
 
@@ -119,6 +119,9 @@ class YOLOControl(Supervisor):
         self.trajectory: Dict[int, List[Tuple[float, float]]] = {
             i: [] for i in range(MAX_TRIALS)
         }
+        self.coordinates: Dict[int, List[Tuple[float, float]]] = {
+            i: [] for i in range(MAX_TRIALS)
+        }
         self.success_trials: int = 0
         self.time_to_reach_target: List[float] = []
         self.total_steps: int = 0
@@ -173,7 +176,7 @@ class YOLOControl(Supervisor):
 
             # Initialize the trial variables
             step_count, trial_success = 0, False
-            conf_score, inf_times, positions = [], [], []
+            conf_score, inf_times, positions, coord = [], [], [], []
 
             # Start the timer
             start_time = time.time()
@@ -191,6 +194,9 @@ class YOLOControl(Supervisor):
                 position = self.robot.getPosition()
                 x, y, _ = position
                 positions.append((x, y))
+                
+                # calculate the centroid                
+                coord.append(centroid)
 
                 # Check if the target is reached
                 if self.is_done(distance, centroid):
@@ -201,8 +207,8 @@ class YOLOControl(Supervisor):
 
                     break
 
-                step_count += 1
-
+                step_count += 1            
+            
             if trial_success:
                 self.success_trials += 1
 
@@ -210,6 +216,7 @@ class YOLOControl(Supervisor):
             self.confidence_score[trial] = conf_score
             self.trajectory[trial] = positions
             self.total_steps += step_count
+            self.coordinates[trial] = coord
 
         # Plot and save the results
         self.plot_results()
@@ -433,6 +440,44 @@ class YOLOControl(Supervisor):
                 os.path.join(
                     output_dir, f"excavator_movement_trial_{trial_num + 1}.png"
                 )
+            )
+            plt.show()                
+        
+        for trial_num, coordinates in self.coordinates.items():
+            # Filter out (0, 0) positions from the centroid list
+            filtered_centroid = [
+                (x, y) for x, y in coordinates if not (x == 0 and y == 0)
+            ]
+
+            if filtered_centroid:
+                x_pos, y_pos = zip(*filtered_centroid)
+            else:
+                x_pos, y_pos = [], []            
+
+            plt.figure()
+            plt.plot(
+                x_pos, y_pos, color="b", label="Centroid Trajectory Path", zorder=3
+            )
+            plt.scatter(237, 49, color="g", label="Initial Position", zorder=4)
+
+            plt.scatter(
+                128, 110, color="r", marker="*", s=150, label="Target Point", zorder=2
+            )
+            plt.scatter(
+                128, 110, color="yellow", alpha=0.5, s=300, label="Goal Area", zorder=1
+            )
+
+            # Invert Y axis so (0,0) is at top-left corner
+            plt.xlim([0, 256])
+            plt.ylim([128, 0])  # Inverted Y-axis
+
+            plt.title("Centroid Movement Trajectory in Frame")
+            plt.xlabel("X Position")
+            plt.ylabel("Y Position")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(
+                os.path.join(output_dir, f"centroid_movement_trial_{trial_num + 1}.png")
             )
             plt.show()
 

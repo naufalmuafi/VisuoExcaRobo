@@ -1,0 +1,4 @@
+Average Inference Time: 17.00 ms
+Success rate: 100.0%
+Total False Detections: 30
+Average Time to Reach Target: 8.89 seconds
