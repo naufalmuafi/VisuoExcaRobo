@@ -136,6 +136,8 @@ class YOLOControl(Supervisor):
         while self.step(self.timestep) != -1:
             self.state, distance, centroid, _ = self.get_observation()
             if self.is_done(distance, centroid):
+                # save image
+                self.camera.saveImage("target_raw.png", 100)
                 print("sip.")
                 exit(1)
 
@@ -658,4 +660,4 @@ if __name__ == "__main__":
     Initializes the YOLOControl instance and starts the control loop.
     """
     controller = YOLOControl()
-    controller.test()
+    controller.run()
