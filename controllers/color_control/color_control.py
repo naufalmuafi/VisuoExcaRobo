@@ -828,4 +828,4 @@ class ColorControl(Supervisor):
 if __name__ == "__main__":
     # Initialize the controller and start the test
     controller = ColorControl()
-    controller.test()
+    controller.run()
